@@ -7,6 +7,7 @@
 ;;           James McKinna, Mark Ruys, Martin Steffen, Perdita Stevens  
 
 
+
 ;; TO DO:
 
 ;; o Need to think about fixing up errors caused by pbp-generated commands
@@ -21,6 +22,9 @@
 ;;   beginning of the module? 
 
 ;; $Log$
+;; Revision 1.10.2.16  1997/10/10 19:24:33  djs
+;; Attempt to create a fresh branch because of Attic-Attack.
+;;
 ;; Revision 1.10.2.15  1997/10/10 19:20:01  djs
 ;; Added multiple file support, changed the way comments work, fixed a
 ;; few minor bugs, and merged in coq support by hhg.

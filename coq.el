@@ -2,7 +2,11 @@
 ;; Copyright (C) 1994, 1995, 1996, 1997 LFCS Edinburgh. 
 ;; Author: Healfdene Goguen and Thomas Kleymann
 
+
 ;; $Log$
+;; Revision 1.1.2.4  1997/10/10 19:24:26  djs
+;; Attempt to create a fresh branch because of Attic-Attack.
+;;
 ;; Revision 1.1.2.3  1997/10/10 19:19:58  djs
 ;; Added multiple file support, changed the way comments work, fixed a
 ;; few minor bugs, and merged in coq support by hhg.

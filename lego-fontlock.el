@@ -3,7 +3,11 @@
 ;; Author: Healfdene Goguen, Thomas Kleymann and Dilip Sequiera
 ;; Maintainer: LEGO Team <lego@dcs.ed.ac.uk>
 
+
 ;; $Log$
+;; Revision 1.1.2.3  1997/10/10 19:24:27  djs
+;; Attempt to create a fresh branch because of Attic-Attack.
+;;
 ;; Revision 1.1.2.2  1997/10/08 08:22:31  hhg
 ;; Updated undo, fixed bugs, more modularization
 ;;

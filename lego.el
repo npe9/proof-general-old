@@ -3,7 +3,11 @@
 ;; Author: Thomas Schreiber and Dilip Sequeira
 ;; Maintainer: LEGO Team <lego@dcs.ed.ac.uk>
 
+
 ;; $Log$
+;; Revision 1.20.2.10  1997/10/10 19:24:29  djs
+;; Attempt to create a fresh branch because of Attic-Attack.
+;;
 ;; Revision 1.20.2.9  1997/10/10 19:20:00  djs
 ;; Added multiple file support, changed the way comments work, fixed a
 ;; few minor bugs, and merged in coq support by hhg.
