@@ -4,6 +4,9 @@
 
 
 ;; $Log$
+;; Revision 1.1.2.6  1997/10/14 19:50:07  djs
+;; Fixed syntax error in coq.el
+;;
 ;; Revision 1.1.2.5  1997/10/14 17:30:10  djs
 ;; Fixed a bunch of bugs to do with comments, moved annotations out-of-band
 ;; to exploit a feature which will exist in XEmacs 20.
@@ -247,7 +250,7 @@
       (setq str (span-property sext 'cmd))
       (if (string-match coq-undoable-commands-regexp str)
 	  (setq ct (+ 1 ct)))
-      (setq sext (span-at (span-end-position sext) nil 'type nil 'after)))
+      (setq sext (next-span (span-end sext) 'type)))
   (concat "Undo " (int-to-string ct) proof-terminal-string)))
 
 (defconst coq-keywords-decl-defn-regexp
@@ -273,9 +276,8 @@
 				"\\)\\s-*\\(\\w+\\)\\s-*:") str)
 	  (setq ans (concat coq-forget-id-command
 			    (match-string 2 str) proof-terminal-string))))
-      (setq sext (span-at (next-span sext 'type))))
+      (setq sext (next-span sext 'type)))
 
-; I don't know what the equivalent of "echo" is in Coq -- hhg
     (or ans "COMMENT")))
 
 (defun coq-retract-target (target delete-region)
@@ -304,7 +306,7 @@
     (if (> end start) 
 	(setq actions (nconc actions (proof-setup-retract-action
 				      start end
-				      (coq-forget-target target)
+				      (coq-find-and-forget target)
 				      delete-region))))
 
     (proof-start-queue (min start end) (proof-end-of-locked) actions)))
