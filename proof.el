@@ -12,19 +12,20 @@
 
 ;; o Need to think about fixing up errors caused by pbp-generated commands
 
-;; o Proof mode breaks if an error is encountered during the import
-;;   phase. 
-
-;; o proof-undo-last-successful-command needs to be extended so that
-;;   it deletes regions of the script buffer when invoked outside a proof 
-
 ;; o undo support needs to consider Discharge; perhaps unrol to the
 ;;   beginning of the module? 
 
+;; o pbp code is horribly inefficient and doesn't accord with the tech
+;;   report
+
 ;; $Log$
+;; Revision 1.10.2.18  1997/10/14 19:30:55  djs
+;; Bug fixes for comments.
+;;
 ;; Revision 1.10.2.17  1997/10/14 17:30:15  djs
 ;; Fixed a bunch of bugs to do with comments, moved annotations out-of-band
-;; to exploit a feature which will exist in XEmacs 20.
+;; to exploit a feature which will exist in XEmacs 20. (One day there *will
+;; be* lemon-scented paper napkins). Added code to detect failing imports.
 ;;
 ;; Revision 1.10.2.16  1997/10/10 19:24:33  djs
 ;; Attempt to create a fresh branch because of Attic-Attack.
@@ -648,7 +649,8 @@
 (defun proof-shell-process-output (cmd string)
   (cond 
    ((string-match proof-shell-error-regexp string)
-    (cons 'error (proof-shell-strip-annotations string)))
+    (cons 'error (proof-shell-strip-annotations 
+		  (substring string (match-beginning 0)))))
 
    ((string-match proof-shell-abort-goal-regexp string)
     (setq proof-shell-delayed-output (cons 'insert "\n\nAborted"))
