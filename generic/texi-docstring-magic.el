@@ -1,82 +1,21 @@
 ;; texi-docstring-magic.el -- munge internal docstrings into texi
 ;;
-;; Keywords: lisp, docs, tex
+;; Keywords: texi, docstrings
 ;; Author: David Aspinall <da@dcs.ed.ac.uk>
 ;; Copyright (C) 1998 David Aspinall
-;; Maintainer:  David Aspinall <da@dcs.ed.ac.uk>
+;; Maintainer:  Proof General maintainer <proofgen@dcs.ed.ac.uk>
 ;;
 ;; $Id$
 ;;
-;; This package is distributed under the terms of the 
-;; GNU General Public License, Version 2.   
-;; You should have a copy of the GPL with your version of 
-;; GNU Emacs or the Texinfo distribution.
-;; 
-;;
-;; This package generates Texinfo source fragments from Emacs 
-;; docstrings.   This avoids documenting functions and variables
-;; in more than one place, and automatically adds Texinfo markup
-;; to docstrings.
-;;
-;; It relies heavily on you following the Elisp documentation
-;; conventions to produce sensible output, check the Elisp manual
-;; for details.  In brief:
-;;
-;;  * The first line of a docstring should be a complete sentence.
-;;  * Arguments to functions should be written in upper case: ARG1..ARGN
-;;  * User options (variables users may want to set) should have docstrings
-;;    beginning with an asterisk.
-;;  
-;; Usage:
-;;
-;;  Write comments of the form:
-;;
-;;    @c TEXI DOCSTRING MAGIC: my-package-function-or-variable-name
-;;
-;;  In your texi source, mypackage.texi.  From within an Emacs session
-;;  where my-package is loaded, visit mypackage.texi and run
-;;  M-x texi-docstring-magic to update all of the documentation strings.
-;;
-;;  This will insert @defopt, @deffn and the like underneath the
-;;  magic comment strings.
-;;  
-;;  The default value for user options will be printed.
-;;
-;;  Symbols are recognized if they are defined for faces, functions,
-;;  or variables (in that order).
-;;
-;; Automatic markup rules:
-;;
-;; 1. Indented lines are gathered into @lisp environment.
-;; 2. Pieces of text `stuff' or surrounded in quotes marked up with @samp. 
-;; 3. Words *emphasized* are made @strong{emphasized}
-;; 4. Words sym-bol which are symbols become @code{sym-bol}.
-;; 5. Upper cased words ARG corresponding to arguments become @var{arg}.
-;;    In fact, you can any word longer than three letters, so that
-;;    metavariables can be used easily.
-;;    FIXME: to escape this, use `ARG'
-;; 6. Words 'sym which are lisp-quoted are marked with @code{'sym}.
-;;
 ;; -----
 ;;
-;; Useful key binding when writing Texinfo:
-;;
+;; Useful binding
 ;;  (define-key TeXinfo-mode-map "C-cC-d" 'texi-docstring-magic-insert-magic)
 ;;
-;; -----
-;;
 ;; Useful enhancements to do:
+;;  1. Mention default value for user options
+;;  2. Use customize properties (e.g. group, simple types)
 ;;
-;;  * Insert a line break after the first sentence of docstring.
-;;  * Use customize properties (e.g. group, simple types)
-;;  * Look for a "texi-docstring" property for symbols
-;;    so TeXInfo can be defined directly in case automatic markup
-;;    goes badly wrong.
-;;  * Add tags to special comments so that user can specify face,
-;;    function, or variable binding for a symbol in case more than
-;;    one binding exists.
-;;
-;; ------
 
 (defun texi-docstring-magic-splice-sep (strings sep)
   "Return concatenation of STRINGS spliced together with separator SEP."
@@ -121,7 +60,7 @@
     ("\\(\\*\\(\\w+\\)\\*\\)"
      t
      (concat "@strong{" (match-string 2 docstring) "}"))
-    ;; 4. Words sym-bol which are symbols become @code{sym-bol}.
+    ;; 4. Words sym which are symbols become @code{sym}.
     ;; Must have at least one hyphen to be recognized,
     ;; terminated in whitespace, end of line, or punctuation.
     ;; (Only consider symbols made from word constituents
@@ -138,21 +77,20 @@
     ;; lowercased form of an argument as a symbol)
     ;; FIXME: maybe we don't want to downcase stuff already
     ;; inside @samp
-    ;; FIXME: should - terminate?  should _ be included?
-    ("\\([A-Z0-9\\-]+\\)\\(/\\|\)\\|}\\|\\s-\\|\\s.\\|$\\)"
+    ("\\([A-Z0-9\\-_]+\\)\\(/\\|-\\|\)\\|}\\|\\s-\\|\\s.\\|$\\)"
      (or (> (length (match-string 1 docstring)) 3)
 	 (member (downcase (match-string 1 docstring)) args))
      (concat "@var{" (downcase (match-string 1 docstring)) "}"
 	     (match-string 2 docstring)))
 
-    ;; 6. Words 'sym which are lisp quoted are
+    ;; 7. Words 'sym which are lisp quoted are
     ;; marked with @code.
     ("\\(\\(\\s-\\|^\\)'\\(\\(\\w\\|\\-\\)+\\)\\)\\(\\s\)\\|\\s-\\|\\s.\\|$\\)"
      t
      (concat (match-string 2 docstring)
 	     "@code{'" (match-string 3 docstring) "}"
 	     (match-string 5 docstring)))
-    ;; 7,8. Clean up for @lisp environments left with spurious newlines
+    ;; 8,9. Clean up for @lisp environments left with spurious newlines
     ;; after 1.
     ("\\(\\(^\\s-*$\\)\n@lisp\\)" t "@lisp")
     ("\\(\\(^\\s-*$\\)\n@end lisp\\)" t "@end lisp"))
@@ -236,7 +174,7 @@ Markup as @code{stuff} or @lisp stuff @end lisp."
       (texi-docstring-magic-texi "fn" "Face" name docstring nil)))
    ((fboundp symbol)
     ;; Functions.
-    ;; We don't handle macros,  aliases, or compiled fns properly.
+    ;; Don't handle macros,  aliases, compiled fns properly.
     (let*
 	((function  symbol)
 	 (name	    (symbol-name function))
