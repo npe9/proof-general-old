@@ -77,8 +77,7 @@
     ;; lowercased form of an argument as a symbol)
     ;; FIXME: maybe we don't want to downcase stuff already
     ;; inside @samp
-    ;; FIXME: should - terminate?  should _ be included?
-    ("\\([A-Z0-9\\-]+\\)\\(/\\|\)\\|}\\|\\s-\\|\\s.\\|$\\)"
+    ("\\([A-Z0-9\\-_]+\\)\\(/\\|-\\|\)\\|}\\|\\s-\\|\\s.\\|$\\)"
      (or (> (length (match-string 1 docstring)) 3)
 	 (member (downcase (match-string 1 docstring)) args))
      (concat "@var{" (downcase (match-string 1 docstring)) "}"
