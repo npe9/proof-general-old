@@ -1,3 +1,0 @@
-(* Id *)
-
-INSERT HANDY COQ EXAMPLE HERE!
