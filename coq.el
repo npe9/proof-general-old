@@ -4,6 +4,10 @@
 
 
 ;; $Log$
+;; Revision 1.1.2.5  1997/10/14 17:30:10  djs
+;; Fixed a bunch of bugs to do with comments, moved annotations out-of-band
+;; to exploit a feature which will exist in XEmacs 20.
+;;
 ;; Revision 1.1.2.4  1997/10/10 19:24:26  djs
 ;; Attempt to create a fresh branch because of Attic-Attack.
 ;;
@@ -240,10 +244,10 @@
 (defun coq-count-undos (sext)
   (let ((ct 0) str)
     (while sext
-      (setq str (extent-property sext 'cmd))
+      (setq str (span-property sext 'cmd))
       (if (string-match coq-undoable-commands-regexp str)
 	  (setq ct (+ 1 ct)))
-      (setq sext (extent-at (extent-end-position sext) nil 'type nil 'after)))
+      (setq sext (span-at (span-end-position sext) nil 'type nil 'after)))
   (concat "Undo " (int-to-string ct) proof-terminal-string)))
 
 (defconst coq-keywords-decl-defn-regexp
@@ -253,27 +257,57 @@
 
 (defun coq-find-and-forget (sext)
   (let (str ans)
-    (while sext
-      (if (eq (extent-property sext 'type) 'goalsave)
-	  (setq ans (concat coq-forget-id-command
-			    (extent-property sext 'name) proof-terminal-string)
-		sext nil)
-	(setq str (extent-property sext 'cmd))
-	(cond
+    (while (and sext (not ans))
+      (setq str (span-property sext 'cmd))
+
+      (cond 
+
+       ((eq (span-property sext 'type) 'comment))
+      
+       ((eq (span-property sext 'type) 'goalsave)	  
+	(setq ans (concat coq-forget-id-command 
+			  (span-property sext 'name) proof-terminal-string)))
+	
 
 	 ((string-match (concat "\\`\\(" coq-keywords-decl-defn-regexp
 				"\\)\\s-*\\(\\w+\\)\\s-*:") str)
 	  (setq ans (concat coq-forget-id-command
-			    (match-string 2 str) proof-terminal-string)
-		sext nil))
+			    (match-string 2 str) proof-terminal-string))))
+      (setq sext (span-at (next-span sext 'type))))
 
-	 (t 
-	  (setq sext 
-		(extent-at (extent-end-position sext) nil 'type nil 
-			   'after))))))
 ; I don't know what the equivalent of "echo" is in Coq -- hhg
-    (or ans
-	(concat "echo \"Nothing more to Forget.\"" proof-terminal-string))))
+    (or ans "COMMENT")))
+
+(defun coq-retract-target (target delete-region)
+  (let ((end (proof-end-of-locked))
+	(start (span-start target))
+	(ext (proof-last-goal-or-goalsave))
+	actions)
+    
+    (if (and ext (not (eq (span-property ext 'type) 'goalsave)))
+	(if (< (span-end ext) (span-end target))
+	    (progn
+	      (setq ext target)
+	      (while (and ext (eq (span-property ext 'type) 'comment))
+		(setq ext (next-span ext 'type)))
+	      (setq actions (proof-setup-retract-action
+			     start end 
+			     (if (null ext) "COMMENT" (coq-count-undos ext))
+			     delete-region)
+		    end start))
+	  
+	  (setq actions (proof-setup-retract-action (span-start ext) end
+						    coq-kill-goal-command
+						    delete-region)
+		end (span-start ext))))
+    
+    (if (> end start) 
+	(setq actions (nconc actions (proof-setup-retract-action
+				      start end
+				      (coq-forget-target target)
+				      delete-region))))
+
+    (proof-start-queue (min start end) (proof-end-of-locked) actions)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   Commands specific to coq                                      ;;
@@ -348,8 +382,7 @@
   (setq proof-comment-start "(*")
   (setq proof-comment-end "*)")
 
-  (setq proof-undo-target-fn 'coq-count-undos)
-  (setq proof-forget-target-fn 'coq-find-and-forget)
+  (setq proof-retract-target-fn 'coq-retract-target)
 
   (setq proof-save-command-regexp coq-save-command-regexp
 	proof-save-with-hole-regexp coq-save-with-hole-regexp

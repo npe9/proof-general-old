@@ -22,6 +22,10 @@
 ;;   beginning of the module? 
 
 ;; $Log$
+;; Revision 1.10.2.17  1997/10/14 17:30:15  djs
+;; Fixed a bunch of bugs to do with comments, moved annotations out-of-band
+;; to exploit a feature which will exist in XEmacs 20.
+;;
 ;; Revision 1.10.2.16  1997/10/10 19:24:33  djs
 ;; Attempt to create a fresh branch because of Attic-Attack.
 ;;
@@ -92,8 +96,7 @@
 (defvar proof-goal-command-regexp nil "Matches a goal command")
 (defvar proof-goal-with-hole-regexp nil "Matches a saved goal command")
 
-(defvar proof-undo-target-fn nil "Compute how to undo to this extent")
-(defvar proof-forget-target-fn nil "Compute how to forget back to this ext")
+(defvar proof-retract-target-fn  nil "Compute how to retract a target segment")
 (defvar proof-kill-goal-command nil "How to kill a goal.")
 
 (defvar pbp-change-goal nil
@@ -151,7 +154,7 @@
 (defvar proof-shell-end-goals-regexp ""
   "String indicating the end of the proof state.")
 
-(defvar proof-shell-sanitise t "sanitise output?")
+(defvar proof-shell-sanitise nil "sanitise output?")
 
 (defvar pbp-error-regexp nil
   "A regular expression indicating that the PROOF process has
@@ -254,46 +257,46 @@
 ;;  Note that we need to go back to using marks too                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun make-span (start end)
+(defsubst make-span (start end)
   (make-extent start end))
 
-(defun set-span-endpoints (span start end)
+(defsubst set-span-endpoints (span start end)
   (set-extent-endpoints span start end))
 
-(defun set-span-start (span value)
+(defsubst set-span-start (span value)
   (set-extent-endpoints span value (extent-end-position span)))
 
-(defun set-span-end (span value)
+(defsubst set-span-end (span value)
   (set-extent-endpoints span (extent-start-position span) value))
 
-(defun span-property (span name)
+(defsubst span-property (span name)
   (extent-property span name))
 
-(defun set-span-property (span name value)
+(defsubst set-span-property (span name value)
   (set-extent-property span name value))
 
-(defun delete-span (span)
+(defsubst delete-span (span)
   (delete-extent span))
 
-(defun delete-spans (start end prop)
+(defsubst delete-spans (start end prop)
   (mapcar-extents 'delete-extent nil (current-buffer) start end  nil prop))
 
-(defun span-at (pt prop)
+(defsubst span-at (pt prop)
   (extent-at pt nil prop))
 
-(defun span-at-before (pt prop)
+(defsubst span-at-before (pt prop)
   (extent-at pt nil prop nil 'before))
   
-(defun span-start (span)
+(defsubst span-start (span)
   (extent-start-position span))
 
-(defun span-end (span)
+(defsubst span-end (span)
   (extent-end-position span))
 
-(defun prev-span (span prop)
+(defsubst prev-span (span prop)
   (extent-at (extent-start-position span) nil prop nil 'before))
 
-(defun next-span (span prop)
+(defsubst next-span (span prop)
   (extent-at (extent-end-position span) nil prop nil 'after))
 
 (defvar proof-locked-ext nil
@@ -571,10 +574,10 @@
 	   ((= c proof-shell-goal-char)
 	    (setq topl (append topl (list (+ 1 op)))))
 	   ((= c proof-shell-start-char)	    
-	    (setq ap (- (aref string (incf ip)) 32))
+	    (setq ap (- (aref string (incf ip)) 128))
 	    (incf ip)
 	    (while (not (= (aref string ip) proof-shell-end-char))
-	      (aset ann ap (- (aref string ip) 32))
+	      (aset ann ap (- (aref string ip) 128))
 	      (incf ap)
 	      (incf ip))
 	    (setq stack (cons op (cons (substring ann 0 ap) stack))))
@@ -660,7 +663,7 @@
       (while (progn (setq start (match-end 0))
 		    (string-match proof-shell-start-goals-regexp 
 				  string start)))
-      (string-match proof-shell-end-goals-regexp string start)
+      (setq end (string-match proof-shell-end-goals-regexp string start))
       (setq proof-shell-delayed-output 
 	    (cons 'analyse (substring string start end)))))
        
@@ -832,6 +835,19 @@ at the end of locked region (after inserting a newline)."
 	       (t (if (proof-shell-exec-loop)
 		      (proof-shell-handle-delayed-output)))))))))
 
+(defun proof-last-goal-or-goalsave ()
+  (save-excursion
+    (let ((ext (span-at-before (proof-end-of-locked) 'type)))
+    (while (and ext 
+		(not (eq (span-property ext 'type) 'goalsave))
+		(or (eq (span-property ext 'type) 'comment)
+		    (not (string-match proof-goal-command-regexp 
+				       (span-property ext 'cmd)))))
+      (setq ext (prev-span ext 'type)))
+    ext)))
+    
+
+
 (defun proof-steal-process ()
   (proof-start-shell)
   (if proof-shell-busy (error "Proof Process Busy!"))
@@ -855,12 +871,9 @@ at the end of locked region (after inserting a newline)."
 	(if (not (y-or-n-p "Reprocess this file?" )) (error "Aborted")))
       (save-excursion
 	(set-buffer proof-script-buffer)
-	(setq ext (span-at-before (proof-end-of-locked) 'type))
-	(while (and ext (not (eq (span-property ext 'type) 'goalsave))
-		    (not (string-match "^Goal" (span-property ext 'cmd))))
-	  (setq ext (prev-span ext 'type)))
-	(setq cmd (if (and ext (string-match "^Goal" (span-property ext 'cmd)))
-		      "KillRef; " ""))
+	(setq ext (proof-last-goal-or-goalsave))
+	(setq cmd (if (and ext (not (eq (span-property ext 'type) 'goalsave)))
+		      proof-kill-goal-command ""))
 	(proof-segment-buffer nil nil)
 	(delete-spans (point-min) (point-max) 'type))      
       (setq proof-script-buffer (current-buffer))
@@ -940,7 +953,7 @@ at the end of locked region (after inserting a newline)."
       (if (null nam)
 	    (if (string-match proof-goal-with-hole-regexp
 			      (span-property gext 'cmd))
-		(setq nam (match-string 1 cmd))
+		(setq nam (match-string 2 cmd))
 	      (error "Oops... can't find Goal name!!!")))
 	(set-span-end gext end)
 	(set-span-property gext 'highlight 'mouse-face)
@@ -1023,17 +1036,18 @@ at the end of locked region (after inserting a newline)."
 the documentation for `proof-retract-until-point'. It optionally
 deletes the region corresponding to the proof sequence."
   (let ((start (span-start ext))
-        (end (span-end ext)))
+        (end (span-end ext))
+	(kill (span-property ext 'delete-me)))
     (proof-segment-buffer start proof-queue-loose-end)
     (delete-spans start end 'type)
     (delete-span ext)
-    (if delete-region (delete-region start end))))
+    (if kill delete-region start end)))
 
+(defun proof-setup-retract-action (start end proof-command delete-region)
+  (let ((span (make-span start end)))
+    (set-span-property span 'delete-me delete-region)
+    (list (list span proof-command 'proof-done-retracting))))
 
-(defun proof-retract-setup-actions (start end proof-command delete-region)
-  (list (list (make-span start end)
-	      proof-command
-	      `(lambda (ext) (proof-done-retracting ext ,delete-region)))))
 
 (defun proof-retract-until-point (&optional delete-region)
   "Sets up the proof process for retracting until point. In
@@ -1043,46 +1057,11 @@ deletes the region corresponding to the proof sequence."
    the proof script corresponding to the proof command sequence."
   (interactive)
   (proof-check-process-available)
-  (let ((sext (span-at (point) 'type))
-	(end (proof-end-of-locked))
-	ext start actions)
-    (if (null end) (error "No locked region"))
-    (if (or (null sext) (< end (point))) (error "Outside locked region"))
+  (let ((sext (span-at (point) 'type)))
+    (if (null (proof-end-of-locked)) (error "No locked region"))
+    (if (null sext) (error "Outside locked region"))
+    (funcall proof-retract-target-fn sext delete-region)))
 
-    (setq start (span-start sext))
-    (setq ext (span-at-before end 'type))
-    (while (and ext (not (string-match proof-goal-command-regexp 
-					(span-property ext 'cmd)))
-		(not (eq (span-property ext 'type) 'goalsave)))
-      (setq ext (prev-span ext 'type)))
-
-    (if (and ext (string-match proof-goal-command-regexp 
-				   (span-property ext 'cmd)))
-	(if (<= (span-end ext) (point))
-	    (progn
-	      (setq ext sext)
-	      (while (and ext (eq (span-property ext 'type) 'comment))
-		(setq ext (next-span ext 'type)))
-	      (setq actions (proof-retract-setup-actions
-			     start end 
-			     (if (null ext) "COMMENT" 
-			       (funcall proof-undo-target-fn ext))
-			     delete-region)
-		    end start))
-	  
-	  (setq actions	(proof-retract-setup-actions (span-start ext) end
-						     proof-kill-goal-command
-						     delete-region)
-		end (span-start ext))))
-
-    (if (> end start) 
-	(setq actions 
-	      (nconc (proof-retract-setup-actions 
-		      start end
-		      (funcall proof-forget-target-fn sext)
-		      delete-region)
-		     actions)))
-    (proof-start-queue (min start end) (proof-end-of-locked) actions)))
 
 (defun proof-undo-last-successful-command ()
   "Undo last successful command, both in the buffer recording the
@@ -1095,14 +1074,16 @@ deletes the region corresponding to the proof sequence."
 (defun proof-restart-script ()
   (interactive)
   (save-excursion
-    (set-buffer proof-script-buffer)
-    (delete-spans (point-min) (point-max) 'type)
-    (proof-segment-buffer nil nil)
+    (if (buffer-live-p proof-script-buffer)
+	(progn
+	  (set-buffer proof-script-buffer)
+	  (delete-spans (point-min) (point-max) 'type)
+	  (proof-segment-buffer nil nil)))
     (setq proof-shell-busy nil
 	  proof-script-buffer nil)
-    (if (get-buffer proof-shell-buffer) 
+    (if (buffer-live-p proof-shell-buffer) 
 	(kill-buffer proof-shell-buffer))
-    (if (get-buffer proof-pbp-buffer)
+    (if (buffer-live-p proof-pbp-buffer)
 	(kill-buffer proof-pbp-buffer))))
 
 	  
@@ -1147,8 +1128,7 @@ current command."
 (defun proof-process-active-terminator ()
   "Insert the terminator in an intelligent way and send the commands
   between the previous and the new terminator to the proof process."
-  (proof-check-process-available)
-  (let ((mrk (point)) ins semis)
+  (let ((mrk (point)) ins semis vanillas crowbar)
     (if (looking-at "\\s-\\|\\'\\|\\w") 
 	(if (not (re-search-backward "\\S-" (proof-end-of-locked) t))
 	    (error "Nothing to do!")))
@@ -1159,9 +1139,11 @@ current command."
     (if (eq 'unclosed-comment (car semis)) 
 	(progn (if ins (backward-delete-char 1))
 	       (goto-char mrk) (insert proof-terminal-string))
-      (goto-char (cadar (last semis)))
-      (proof-start-queue (proof-end-of-locked) (point)
-			 (proof-semis-to-vanillas semis)))))
+      (setq crowbar (proof-steal-process))
+      (goto-char (caddar semis))
+      (setq vanillas (proof-semis-to-vanillas (nreverse semis)))
+      (if crowbar (setq vanillas (cons crowbar vanillas)))
+      (proof-start-queue (proof-end-of-locked) (point) vanillas))))
 
 
 
@@ -1232,6 +1214,20 @@ current command."
   (add-hook 'comint-output-filter-functions 'proof-shell-filter nil t)
 ;  (add-hook 'comint-output-filter-functions 'comint-truncate-buffer nil t)
 ;  (setq comint-buffer-maximum-size 10000)
+;
+
+;; Can't get this to work in XEmacs 19.15, probably because specifiers
+;; are not fully implemented. So instead:
+
+  (setq proof-shell-sanitise t)
+
+;  (let ((disp (make-display-table))
+;	(i 128))
+;	(while (< i 256)
+;	  (aset disp i "")
+;	  (incf i))
+;	(set-specifier current-display-table disp))
+		  
   (setq comint-append-old-input nil)
   (setq proof-mark-ext (make-extent nil nil (current-buffer)))
   (set-span-property proof-mark-ext 'detachable nil)
