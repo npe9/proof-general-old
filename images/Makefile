@@ -36,8 +36,6 @@ GIMP=export GIMP_DIRECTORY=$(GIMP_DIRECTORY); gimp --no-interface --no-data  --c
 
 default: all
 
-images: all
-
 all: buttons webpix
 
 dist:   all install distclean
