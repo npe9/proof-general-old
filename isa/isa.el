@@ -416,7 +416,7 @@ isa-proofscript-mode."
   (save-some-buffers)
   (isa-update-thy-only file nil nil))
 
-(defcustom isa-retract-thy-file-command "ThyInfo.remove_thy \"%s\";"
+(defcustom isa-retract-thy-file-command "ThyInfo.remove_thy \"%r\";"
   "Sent to Isabelle to forget theory file and descendants.
 Resulting output from Isabelle will be parsed by Proof General."
   :type 'string
