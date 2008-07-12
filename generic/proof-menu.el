@@ -192,8 +192,8 @@ without adjusting window layout."
 (defun proof-assistant-menu-update ()
   "Update proof assistant menu in scripting buffers."
   (proof-map-buffers (proof-buffers-in-mode proof-mode-for-script)
-    ;; NB: easy-menu-remove is odd in XEmacs, it considerably changes the mode popup menu.  
-    ;; In GNU Emacs this first instruction does nothing.
+    ;; NB: easy-menu-remove is odd in XEmacs, it considerably changes
+    ;; the mode popup menu.  GNU Emacs: first instruction does nothing.
     (easy-menu-remove proof-assistant-menu)
     (proof-menu-define-settings-menu)
     (proof-menu-define-specific)
@@ -213,10 +213,9 @@ without adjusting window layout."
     ["Send Bug Report" proof-submit-bug-report t])
   "Proof General help menu.")
 
-(defvar proof-show-hide-menu
-  '(("Show All"
-     ["Proofs"    (pg-show-all-portions "proof") t]
-     ["Comments"  (pg-show-all-portions "comment") t])
+(defvar proof-show-hide-menu '(("Show All"
+  ["Proofs" (pg-show-all-portions "proof") t]
+  ["Comments" (pg-show-all-portions "comment") t])
     ("Hide All"
      ["Proofs"    (pg-show-all-portions "proof" 'hide) t]
      ["Comments"  (pg-show-all-portions "comment" 'hide) t]))
@@ -278,8 +277,8 @@ without adjusting window layout."
    (proof-ass-sym x-symbol-enable) 'proof-x-symbol-toggle)
   (proof-deftoggle-fn 
    (proof-ass-sym unicode-tokens-enable) 'proof-unicode-tokens-toggle)
-;  (proof-deftoggle-fn 
-;   (proof-ass-sym unicode-tokens2-enable) 'proof-unicode-tokens2-toggle)
+  (proof-deftoggle-fn 
+   (proof-ass-sym unicode-tokens2-enable) 'proof-unicode-tokens2-toggle)
   (proof-deftoggle-fn 
    (proof-ass-sym maths-menu-enable) 'proof-maths-menu-toggle)
   (proof-deftoggle-fn (proof-ass-sym mmm-enable) 'proof-mmm-toggle))
@@ -334,15 +333,15 @@ without adjusting window layout."
       :selected (and (boundp 'unicode-tokens-mode) 
 		     unicode-tokens-mode)]
 
-;;;      ["Unicode Tokens 2" 
-;;;       (progn
-;;; 	(unless unicode-tokens2-mode (proof-x-symbol-toggle 0))
-;;; 	(proof-unicode-tokens2-toggle (if unicode-tokens2-mode 0 1)))
-;;;       :active (and (not (and (boundp 'x-symbol-mode) x-symbol-mode))
-;;; 		   (proof-unicode-tokens2-support-available))
-;;;       :style toggle
-;;;       :selected (and (boundp 'unicode-tokens2-mode) 
-;;; 		     unicode-tokens2-mode)]
+     ["Unicode Tokens 2" 
+      (progn
+	(unless unicode-tokens2-mode (proof-x-symbol-toggle 0))
+	(proof-unicode-tokens2-toggle (if unicode-tokens2-mode 0 1)))
+      :active (and (not (and (boundp 'x-symbol-mode) x-symbol-mode))
+		   (proof-unicode-tokens2-support-available))
+      :style toggle
+      :selected (and (boundp 'unicode-tokens2-mode) 
+		     unicode-tokens2-mode)]
 
      ["Unicode Maths Menu" (proof-maths-menu-toggle (if maths-menu-mode 0 1))
       :active (proof-maths-menu-support-available)

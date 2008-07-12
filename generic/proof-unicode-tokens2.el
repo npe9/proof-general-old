@@ -24,17 +24,11 @@
      (if (boundp (proof-ass-symv var))
 	 (set (intern (concat "unicode-tokens2-" (symbol-name var)))
 	      (eval `(proof-ass ,var)))))
-   '(charref-format
+   '(token-alist
      token-format
-     control-token-format
-     token-name-alist
-     glyph-list
-     token-match
-     control-token-match
-     hexcode-match
-     next-character-regexp
-     token-prefix
-     token-suffix
+     fontsymb-properties
+     font-lock-extra-managed-props
+     extra-font-lock-keywords
      shortcut-alist))
   (unicode-tokens2-initialise)
   (setq proof-unicode-tokens2-initialised t))
@@ -117,26 +111,26 @@ Updates the input mapping for reading shortcuts."
      proof-xsym-deactivate-command)))
 
 ;;; NB: we shouldn't bother load this if it's not enabled.
-;;;###autoload
-(defun proof-unicode-tokens2-shell-config ()
-  (when (proof-ass unicode-tokens2-enable)
-    (add-hook 'proof-shell-insert-hook
-	      'proof-unicode-tokens2-encode-shell-input)
-    (proof-unicode-tokens2-activate-prover))
-  (unless (proof-ass unicode-tokens2-enable)
-    (remove-hook 'proof-shell-insert-hook
-		 'proof-unicode-tokens2-encode-shell-input)
-    (proof-unicode-tokens2-deactivate-prover)))
+;; ;;;###autoload
+;; (defun proof-unicode-tokens2-shell-config ()
+;;   (when (proof-ass unicode-tokens2-enable)
+;;     (add-hook 'proof-shell-insert-hook
+;; 	      'proof-unicode-tokens2-encode-shell-input)
+;;     (proof-unicode-tokens2-activate-prover))
+;;   (unless (proof-ass unicode-tokens2-enable)
+;;     (remove-hook 'proof-shell-insert-hook
+;; 		 'proof-unicode-tokens2-encode-shell-input)
+;;     (proof-unicode-tokens2-deactivate-prover)))
 
-(defun proof-unicode-tokens2-encode-shell-input ()
-  "Encode shell input in the variable STRING.
-A value for proof-shell-insert-hook."
-  (if (proof-ass unicode-tokens2-enable)
-      (with-temp-buffer ;; TODO: better to do directly in *prover*
-	(insert string)
-	(unicode-tokens2-unicode-to-tokens)
-	(setq string (buffer-substring-no-properties
-		      (point-min) (point-max))))))
+;; (defun proof-unicode-tokens2-encode-shell-input ()
+;;   "Encode shell input in the variable STRING.
+;; A value for proof-shell-insert-hook."
+;;   (if (proof-ass unicode-tokens2-enable)
+;;       (with-temp-buffer ;; TODO: better to do directly in *prover*
+;; 	(insert string)
+;; 	(unicode-tokens2-unicode-to-tokens)
+;; 	(setq string (buffer-substring-no-properties
+;; 		      (point-min) (point-max))))))
 
 (provide 'proof-unicode-tokens2)
 ;; End of proof-unicode-tokens2.el
