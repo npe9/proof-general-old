@@ -387,18 +387,19 @@ for you, you should disable this behaviour."
 ;; X-Symbol language configuration, and adding to completion table
 ;;
 
-(eval-after-load "x-symbol-isar"
-  ;; Add x-symbol tokens to isa-completion-table and rebuild
-  ;; internal completion table if completion is already active
-  '(progn
-     (defpgdefault completion-table
-       (append isar-completion-table
-	       (mapcar (lambda (xsym) (nth 2 xsym))
-		       x-symbol-isar-table)))
-     (setq proof-xsym-font-lock-keywords
-	   x-symbol-isar-font-lock-keywords)
-     (if (featurep 'completion)
-	 (proof-add-completions))))
+;; FIXME: do this for unicode tokens
+;; (eval-after-load "x-symbol-isar"
+;;   ;; Add x-symbol tokens to isa-completion-table and rebuild
+;;   ;; internal completion table if completion is already active
+;;   '(progn
+;;      (defpgdefault completion-table
+;;        (append isar-completion-table
+;; 	       (mapcar (lambda (xsym) (nth 2 xsym))
+;; 		       x-symbol-isar-table)))
+;;      (setq proof-xsym-font-lock-keywords
+;; 	   x-symbol-isar-font-lock-keywords)
+;;      (if (featurep 'completion)
+;; 	 (proof-add-completions))))
 
 
 

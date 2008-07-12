@@ -90,9 +90,7 @@ May enable proof-by-pointing or similar features.
 ;;;###autoload
 (defun proof-goals-config-done ()
   "Initialise the goals buffer after the child has been configured."
-  (proof-font-lock-configure-defaults nil)
-  (proof-x-symbol-config-output-buffer))
-
+  (proof-font-lock-configure-defaults nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

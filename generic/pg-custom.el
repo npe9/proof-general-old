@@ -29,21 +29,6 @@
 (require 'proof-utils)		   ; defpgcustom
 (require 'proof-config)		   ; for proof-toolbar-entries-default
 
-(defpgcustom x-symbol-enable nil
-  "*Whether to use x-symbol in Proof General for this assistant.
-If you activate this variable, whether or not you really get x-symbol
-support depends on whether your proof assistant supports it and
-whether X-Symbol is installed in your Emacs."
-  :type 'boolean
-  :set 'proof-set-value
-  :group 'proof-user-options)
-
-;; todo: can remove this one now, rename isabelle-x-symbol -> isar-x-symbol
-(defpgcustom x-symbol-language proof-assistant-symbol
-  "Setting for x-symbol-language for the current proof assistant.
-It defaults to proof-assistant-symbol, which makes X Symbol
-look for files named x-symbol-<PA>.el.")
-
 (defpgcustom maths-menu-enable nil
   "*Non-nil for Unicode maths menu in Proof General for this assistant."
   :type 'boolean
@@ -51,12 +36,6 @@ look for files named x-symbol-<PA>.el.")
   :group 'proof-user-options)
 
 (defpgcustom unicode-tokens-enable nil
-  "*Non-nil for using Unicode token input mode in Proof General."
-  :type 'boolean
-  :set 'proof-set-value
-  :group 'proof-user-options)
-
-(defpgcustom unicode-tokens2-enable nil
   "*Non-nil for using Unicode token input mode in Proof General."
   :type 'boolean
   :set 'proof-set-value

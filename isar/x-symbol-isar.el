@@ -9,6 +9,8 @@
 ;;
 ;; This file is part of the Proof General distribution.
 
+(error "This file is defunct")
+
 (eval-when-compile
   (require 'cl))			; to properly compile 'block'
 

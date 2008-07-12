@@ -1949,9 +1949,9 @@ processing."
 		  (if proof-assistant-settings
 		      (proof-shell-invisible-command (proof-assistant-settings-cmd) t)))
 
-	      ;; Configure for x-symbol or unicode input
-	      (proof-x-symbol-shell-config)
-	      (proof-unicode-tokens-shell-config)))))))
+	      ;; Configure for unicode input
+	      ;(proof-unicode-tokens-shell-config)
+	      ))))))
 
 
 (provide 'proof-shell)

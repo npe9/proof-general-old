@@ -7,30 +7,16 @@ on recent Linux systems:
  Emacs 22.2.1	       -- recommended and supported
  Emacs 23.0.X          -- CVS/beta snapshots, use time of PG release
 
- Emacs 21.4.1          -- tested; poorer X-Symbol sub/superscript support
- XEmacs 21.5 (beta28)  -- tested; PG has workarounds for several bugs
- XEmacs 21.4.XX	       -- tested
-
 and (main) prover versions:
 
- Coq 8.0, 8.1
- Isabelle2005, Isabelle2007, Isabelle2008
+ Coq 8.1
+ Isabelle2008
 
 See below for notes about other operating systems.
 
 Maintaining compatibility across proof assistant versions, Emacs
-versions and operating systems is virtually impossible.  Backward
-compatibility has to be sacrificed.  Some old version compatibility
-has been removed here, specifically affecting:
-
- Coq 7
- Isabelle 2004
- Earlier buggy versions of GNU Emacs 21  
-
-*******************************************************************
-*** IMPORTANT NOTE: XEmacs compatibility may be dropped soon,   ***
-*** switching to GNU Emacs is recommended.			***
-*******************************************************************
+versions and operating systems is virtually impossible.  In this
+major release, ** XEmacs compatibility has been dropped **
 
 Running on Windows
 ------------------

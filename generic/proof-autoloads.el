@@ -71,7 +71,7 @@ Dead or nil buffers are not represented in the list.
 ;;;***
 
 ;;;### (autoloads (proof-goals-config-done) "pg-goals" "pg-goals.el"
-;;;;;;  (18544 41603))
+;;;;;;  (18552 49542))
 ;;; Generated autoloads from pg-goals.el
 
 (autoload (quote proof-goals-config-done) "pg-goals" "\
@@ -105,8 +105,8 @@ Send an <askprefs> message to the prover.
 
 ;;;### (autoloads (pg-response-has-error-location proof-next-error
 ;;;;;;  pg-response-display-with-face pg-response-maybe-erase proof-response-config-done
-;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18544
-;;;;;;  41603))
+;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18552
+;;;;;;  49594))
 ;;; Generated autoloads from pg-response.el
 
 (autoload (quote proof-response-mode) "pg-response" "\
@@ -372,7 +372,7 @@ in future if we have just activated it for this buffer.
 
 ;;;### (autoloads (defpacustom proof-defpacustom-fn proof-aux-menu
 ;;;;;;  proof-menu-define-specific proof-menu-define-main proof-menu-define-keys)
-;;;;;;  "proof-menu" "proof-menu.el" (18550 34521))
+;;;;;;  "proof-menu" "proof-menu.el" (18552 50370))
 ;;; Generated autoloads from proof-menu.el
 
 (autoload (quote proof-menu-define-keys) "proof-menu" "\
@@ -437,7 +437,7 @@ in future if we have just activated it for this buffer.
 ;;;### (autoloads (proof-config-done proof-mode proof-insert-sendback-command
 ;;;;;;  proof-insert-pbp-command pg-set-span-helphighlights proof-locked-region-empty-p
 ;;;;;;  proof-locked-region-full-p proof-locked-end proof-unprocessed-begin)
-;;;;;;  "proof-script" "proof-script.el" (18550 34521))
+;;;;;;  "proof-script" "proof-script.el" (18552 50216))
 ;;; Generated autoloads from proof-script.el
 
 (autoload (quote proof-unprocessed-begin) "proof-script" "\
@@ -497,7 +497,7 @@ finish setup which depends on specific proof assistant configuration.
 ;;;;;;  proof-shell-invisible-cmd-get-result proof-shell-invisible-command
 ;;;;;;  proof-shell-wait proof-extend-queue proof-start-queue proof-shell-insert
 ;;;;;;  proof-shell-available-p proof-shell-live-buffer proof-shell-ready-prover)
-;;;;;;  "proof-shell" "proof-shell.el" (18550 34521))
+;;;;;;  "proof-shell" "proof-shell.el" (18552 49738))
 ;;; Generated autoloads from proof-shell.el
 
 (autoload (quote proof-shell-ready-prover) "proof-shell" "\
@@ -664,9 +664,8 @@ Menu made from the Proof General toolbar commands.
 
 ;;;***
 
-;;;### (autoloads (proof-unicode-tokens-shell-config proof-unicode-tokens-set-global
-;;;;;;  proof-unicode-tokens-enable) "proof-unicode-tokens" "proof-unicode-tokens.el"
-;;;;;;  (18544 41604))
+;;;### (autoloads (proof-unicode-tokens-set-global proof-unicode-tokens-enable)
+;;;;;;  "proof-unicode-tokens" "proof-unicode-tokens.el" (18552 50409))
 ;;; Generated autoloads from proof-unicode-tokens.el
 
 (autoload (quote proof-unicode-tokens-enable) "proof-unicode-tokens" "\
@@ -684,82 +683,15 @@ Turn on/off menu in all script buffers and ensure new buffers follow suit.
 
 \(fn FLAG)" nil nil)
 
-(autoload (quote proof-unicode-tokens-shell-config) "proof-unicode-tokens" "\
-Not documented
-
-\(fn)" nil nil)
-
-;;;***
-
-;;;### (autoloads (proof-unicode-tokens2-shell-config proof-unicode-tokens2-set-global
-;;;;;;  proof-unicode-tokens2-enable) "proof-unicode-tokens2" "proof-unicode-tokens2.el"
-;;;;;;  (18543 36204))
-;;; Generated autoloads from proof-unicode-tokens2.el
-
-(autoload (quote proof-unicode-tokens2-enable) "proof-unicode-tokens2" "\
-Turn on or off Unicode tokens mode in Proof General script buffer.
-This invokes `unicode-tokens2-mode' to toggle the setting for the current
-buffer, and then sets PG's option for default to match.
-Also we arrange to have unicode tokens mode turn itself on automatically 
-in future if we have just activated it for this buffer.
-
-\(fn)" t nil)
-
-(autoload (quote proof-unicode-tokens2-set-global) "proof-unicode-tokens2" "\
-Set global status of unicode tokens mode for PG buffers to be FLAG.
-Turn on/off menu in all script buffers and ensure new buffers follow suit.
-
-\(fn FLAG)" nil nil)
-
-(autoload (quote proof-unicode-tokens2-shell-config) "proof-unicode-tokens2" "\
-Not documented
-
-\(fn)" nil nil)
-
-;;;***
-
-;;;### (autoloads (proof-x-symbol-config-output-buffer proof-x-symbol-shell-config
-;;;;;;  proof-x-symbol-decode-region proof-x-symbol-enable proof-x-symbol-support-maybe-available)
-;;;;;;  "proof-x-symbol" "proof-x-symbol.el" (18544 41604))
-;;; Generated autoloads from proof-x-symbol.el
-
-(autoload (quote proof-x-symbol-support-maybe-available) "proof-x-symbol" "\
-A test to see whether x-symbol support may be available.
-
-\(fn)" nil nil)
-
-(autoload (quote proof-x-symbol-enable) "proof-x-symbol" "\
-Turn on or off X-Symbol in current Proof General script buffer.
-This invokes `x-symbol-mode' to change the setting for the current
-buffer. 
-
-\(fn)" nil nil)
-
-(autoload (quote proof-x-symbol-decode-region) "proof-x-symbol" "\
-Not documented
-
-\(fn START END)" nil nil)
-
-(autoload (quote proof-x-symbol-shell-config) "proof-x-symbol" "\
-Configure the proof shell for x-symbol, if proof-x-symbol-support<>nil.
-Assumes that the current buffer is the proof shell buffer.
-
-\(fn)" nil nil)
-
-(autoload (quote proof-x-symbol-config-output-buffer) "proof-x-symbol" "\
-Configure the current output buffer (goals/response/trace) for X-Symbol.
-
-\(fn)" nil nil)
-
 ;;;***
 
 ;;;### (autoloads nil nil ("../lib/holes-load.el" "../lib/local-vars-list.el"
 ;;;;;;  "../lib/pg-dev.el" "../lib/pg-fontsets.el" "../lib/proof-compat.el"
 ;;;;;;  "../lib/span-extent.el" "../lib/span-overlay.el" "../lib/span.el"
-;;;;;;  "../lib/unicode-chars.el" "../lib/unicode-tokens.el" "../lib/unicode-tokens2.el"
-;;;;;;  "../lib/xml-fixed.el" "pg-autotest.el" "pg-custom.el" "pg-pbrpm.el"
+;;;;;;  "../lib/unicode-chars.el" "../lib/unicode-tokens.el" "../lib/xml-fixed.el"
+;;;;;;  "comptest.el" "pg-autotest.el" "pg-custom.el" "pg-pbrpm.el"
 ;;;;;;  "pg-vars.el" "proof-auxmodes.el" "proof-config.el" "proof-site.el"
-;;;;;;  "proof-utils.el" "proof.el") (18552 46770 435742))
+;;;;;;  "proof-utils.el" "proof.el") (18552 50475 330635))
 
 ;;;***
 

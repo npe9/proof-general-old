@@ -28,8 +28,7 @@
 ;;     5b. regexps
 ;;     5c. hooks and others
 ;;  6. Goals buffer configuration
-;;  7. X-Symbol support
-;;  8. Global constants
+;;  7. Global constants
 ;;
 ;; The user options don't need to be set on a per-prover basis,
 ;; and the global constants probably should not be touched.
@@ -50,7 +49,6 @@
 ;;      proof-script	     :     settings for proof script mode (4)
 ;;      proof-shell	     :     settings for proof shell mode (5)
 ;;      proof-goals	     :     settings for goals buffer (6)
-;;      proof-x-symbol	     :     settings for X-Symbol (8)
 ;;    <Prover name>-config   :  Specific internal settings for a prover
 ;;
 ;; ======================================================================
@@ -2185,9 +2183,7 @@ stripped of carriage returns before being sent.
 Example uses:
 LEGO uses this hook for setting the pretty printer width if
 the window width has changed;
-Plastic uses it to remove literate-style markup from `string'.
-The x-symbol support uses this hook to convert special characters
-into tokens for the proof assistant."
+Plastic uses it to remove literate-style markup from `string'."
   :type '(repeat function)
   :group 'proof-shell)
 
@@ -2426,57 +2422,7 @@ the current restriction, and must return the final value of (point-max).
 
 
 ;;
-;; 7. X-Symbol configuration (see also `pg-custom.el')
-;;
-
-(defgroup proof-x-symbol nil
-  "Configuration of X-Symbol for Proof General."
-  :group 'prover-config
-  :prefix "proof-xsym-")
-
-(defcustom proof-xsym-extra-modes nil
-  "List of additional mode names to use X-Symbol with Proof General tokens.
-These modes will have X-Symbol enabled for the proof assistant token language,
-in addition to the four modes for Proof General (script, shell, response, pbp).
-
-Set this variable if you want additional modes to also display
-tokens (for example, editing documentation or source code files)."
-  :type '(repeat symbol)
-  :group 'proof-x-symbol)
-
-;; FIXME: should perhaps be one of these per prover
-;; FIXME: actually this setting doesn't seem to be needed:
-;; instead X-Symbol uses x-symbol-<lang>-font-lock-keywords.
-(defcustom proof-xsym-font-lock-keywords nil
-  "Font lock keywords to use for the proof assistants X-Symbol token language.
-This should be set to the additional font-lock-keywords used for the
-proof assistant when X-Symbol is enabled.  (For example, additional
-keywords used for bold or superscript text: see isa/x-symbol-isabelle.el)"
-  :type 'sexp
-  :group 'proof-x-symbol)
-
-(defcustom proof-xsym-activate-command nil
-  "Command to activate token input/output for X-Symbol.
-If non-nil, this command is sent to the proof assistant when
-X-Symbol support is activated."
-  :type 'string
-  :group 'proof-x-symbol)
-
-(defcustom proof-xsym-deactivate-command nil
-  "Command to deactivate token input/output for X-Symbol.
-If non-nil, this command is sent to the proof assistant when
-X-Symbol support is deactivated."
-  :type 'string
-  :group 'proof-x-symbol)
-
-
-
-		     
-
-
-
-;;
-;; 8. Global constants
+;; 7. Global constants
 ;;
 
 (defcustom proof-general-name "Proof-General"

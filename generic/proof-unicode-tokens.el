@@ -24,17 +24,11 @@
      (if (boundp (proof-ass-symv var))
 	 (set (intern (concat "unicode-tokens-" (symbol-name var)))
 	      (eval `(proof-ass ,var)))))
-   '(charref-format
+   '(token-alist
      token-format
-     control-token-format
-     token-name-alist
-     glyph-list
-     token-match
-     control-token-match
-     hexcode-match
-     next-character-regexp
-     token-prefix
-     token-suffix
+     fontsymb-properties
+     font-lock-extra-managed-props
+     extra-font-lock-keywords
      shortcut-alist))
   (unicode-tokens-initialise)
   (setq proof-unicode-tokens-initialised t))
@@ -66,7 +60,8 @@ Turn on/off menu in all script buffers and ensure new buffers follow suit."
     (proof-map-buffers 
       (proof-buffers-in-mode proof-mode-for-script)
       (unicode-tokens-mode (if flag 1 0)))
-    (proof-unicode-tokens-shell-config)))
+    ;(proof-unicode-tokens-shell-config)
+    ))
 
   
 ;;;
@@ -109,34 +104,32 @@ Updates the input mapping for reading shortcuts."
 
 (defun proof-unicode-tokens-deactivate-prover ()
   (when (and proof-xsym-deactivate-command 
-	     ;; NB: clash with X-symbols since use same commands in prover!
-	     (not (proof-ass x-symbol-enable))
 	     (proof-shell-live-buffer)
 	     (proof-shell-available-p))
     (proof-shell-invisible-command-invisible-result
      proof-xsym-deactivate-command)))
 
 ;;; NB: we shouldn't bother load this if it's not enabled.
-;;;###autoload
-(defun proof-unicode-tokens-shell-config ()
-  (when (proof-ass unicode-tokens-enable)
-    (add-hook 'proof-shell-insert-hook
-	      'proof-unicode-tokens-encode-shell-input)
-    (proof-unicode-tokens-activate-prover))
-  (unless (proof-ass unicode-tokens-enable)
-    (remove-hook 'proof-shell-insert-hook
-		 'proof-unicode-tokens-encode-shell-input)
-    (proof-unicode-tokens-deactivate-prover)))
+;; ;;;###autoload
+;; (defun proof-unicode-tokens-shell-config ()
+;;   (when (proof-ass unicode-tokens-enable)
+;;     (add-hook 'proof-shell-insert-hook
+;; 	      'proof-unicode-tokens-encode-shell-input)
+;;     (proof-unicode-tokens-activate-prover))
+;;   (unless (proof-ass unicode-tokens-enable)
+;;     (remove-hook 'proof-shell-insert-hook
+;; 		 'proof-unicode-tokens-encode-shell-input)
+;;     (proof-unicode-tokens-deactivate-prover)))
 
-(defun proof-unicode-tokens-encode-shell-input ()
-  "Encode shell input in the variable STRING.
-A value for proof-shell-insert-hook."
-  (if (proof-ass unicode-tokens-enable)
-      (with-temp-buffer ;; TODO: better to do directly in *prover*
-	(insert string)
-	(unicode-tokens-unicode-to-tokens)
-	(setq string (buffer-substring-no-properties
-		      (point-min) (point-max))))))
+;; (defun proof-unicode-tokens-encode-shell-input ()
+;;   "Encode shell input in the variable STRING.
+;; A value for proof-shell-insert-hook."
+;;   (if (proof-ass unicode-tokens-enable)
+;;       (with-temp-buffer ;; TODO: better to do directly in *prover*
+;; 	(insert string)
+;; 	(unicode-tokens-unicode-to-tokens)
+;; 	(setq string (buffer-substring-no-properties
+;; 		      (point-min) (point-max))))))
 
 (provide 'proof-unicode-tokens)
 ;; End of proof-unicode-tokens.el

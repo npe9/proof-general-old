@@ -240,9 +240,7 @@ The prover command is processed via pg-pbrpm-run-command."
 		 (cond
 		  ((featurep 'phox)
 		   (if phox-sym-lock-enabled
-		       (font-lock-fontify-buffer)
-		     (if phox-x-symbol-enable
-			 (x-symbol-decode))))
+		       (font-lock-fontify-buffer)))
 		  (t
 		   (proof-fontify-region (point-min) (point-max))))
 

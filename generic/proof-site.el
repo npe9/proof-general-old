@@ -330,23 +330,5 @@ If ASSISTANT-NAME is omitted, look up in `proof-assistant-table'."
 	
 	(setq assistants (cdr assistants)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Disable any other XEmacs x-symbol packages: we load ours manually
-;;;
-
-(if (and
-     (featurep 'xemacs)
-     (not (featurep 'x-symbol-hooks)) ;; unless already loaded
-     (file-exists-p (concat proof-home-directory ;; or our version removed
-			    "x-symbol/lisp/"))
-     ;; proof-try-require: make robust against missing advice package
-     (condition-case () (require 'advice) (file-error nil) (featurep 'advice)))
-    (defadvice packages-new-autoloads (after ignore-other-x-symbols activate)
-      (setq ad-return-value 
-	    (delete-if (lambda (pkg)
-			 (string-match "x-symbol" pkg))
-		       ad-return-value))))
-
 (provide 'proof-site)
 ;; proof-site.el ends here

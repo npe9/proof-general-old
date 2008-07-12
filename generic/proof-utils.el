@@ -415,20 +415,12 @@ font-lock-mode; in those buffers, we enable syntactic fontification also."
 (defun proof-fontify-region (start end &optional keepspecials)
   "Fontify and decode X-Symbols in region START...END.
 Fontifies (keywords only) according to the buffer's font lock defaults.
-Uses `proof-x-symbol-decode-region' to decode tokens
-if X-Symbol is enabled.
-Uses `unicode-tokens-tokens-to-unicode' to decode tokens
-if unicode symbols are enabled.
 
 If `pg-use-specials-for-fontify' is set, remove characters
 with top bit set after fontifying so they don't spoil cut and paste,
 unless KEEPSPECIALS is set to override this.
 
 Returns new END value."
-  ;; We fontify first because X-sym decoding changes char positions.
-  ;; It's okay because x-symbol-decode works even without font lock.
-  ;; Possible disadvantage is that font lock patterns can't refer
-  ;; to X-Symbol characters.
   ;; NB: perhaps we can narrow within the whole function, but there
   ;; was an earlier problem with doing that.
   (when proof-output-fontify-enable
@@ -467,10 +459,9 @@ Returns new END value."
 
       (prog1 ;; prog1 because we return new END value.
 	  (cond
-	   ((proof-ass x-symbol-enable)
-	    (proof-x-symbol-decode-region start end))
 	   ((proof-ass unicode-tokens-enable)
-	    (unicode-tokens-tokens-to-unicode start end)))
+	    ;(unicode-tokens-tokens-to-unicode start end)
+	    ))
 	(proof-font-lock-clear-font-lock-vars)
 	(setq font-lock-verbose normal-font-lock-verbose)))))
 

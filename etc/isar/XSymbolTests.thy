@@ -68,6 +68,12 @@ thm P1_def P2_def	(* check display from Isabelle *)
 
 constdefs (* long sub/sups, new 29/12/03, added by Gerwin Klein *)
 
+\<^bitalic>test italics\<^eitalic>
+\<^bserif>serif\<^eserif>
+\<^bfrakt>fraktur\<^efrakt>
+\<^bbold>test\<^ebold>
+
+\<^bsub> asda low\<^esub>
  Plow :: bool ("P\<^bsub>low\<^esub>")		(* spanning subscript *)
   "P\<^bsub>low\<^esub> \<equiv> True"
  Phigh :: bool ("P\<^bsup>high\<^esup>")		(* spanning superscript *)
@@ -80,8 +86,8 @@ by (simp add: P1_def P2_def)  (* .. and response window *)
 
 consts
  "P\<^sup>\<alpha>" :: bool   (* superscript of a token char *)
- "\<^bold>X"  :: bool   (* bold character 
-			    [not supported in current X-Symbols] *)
+ "\<^bold>P"  :: bool   (* bold character *)
+ "\<^italic>i"  :: int 
 
 
 (* test: using a symbol as a subscript *)
@@ -91,6 +97,10 @@ consts
 consts
  intof :: "nat \<Rightarrow> int"  ("_\<^sub>\<int>" 50)
  mynat :: nat ("\<gamma>")
+\<one> \<two> \<C> \<J>      \<S> \<h> h \<AA> 
+
+\<^bscript>foo\<^escript>
+bar
 
 term "intof 3"
 
@@ -118,3 +128,12 @@ primrec
 
 end
 
+\<A>
+\<AA> \<ABC> \<ss> \<pounds> \<yen>
+
+SYMBOL Ideas:
+
+ \<0x888>  for unicode character
+ \<alpha:foo> for variants, same display
+
+ \<color:foo> for colour, no sems (dropped in translation)

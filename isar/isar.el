@@ -559,20 +559,14 @@ Checks the width in the `proof-goals-buffer'"
   "Configure Proof General proof shell for Isabelle/Isar."
   (isar-init-output-syntax-table)
   (setq font-lock-keywords
-	(append
-	 isar-output-font-lock-keywords-1
-	 (if (boundp 'x-symbol-isar-font-lock-keywords)
-	     x-symbol-isar-font-lock-keywords)))
+	isar-output-font-lock-keywords-1)
   (isar-shell-mode-config-set-variables)
   (proof-shell-config-done))
 
 (defun isar-response-mode-config ()
   (isar-init-output-syntax-table)
   (setq font-lock-keywords
-	(append
-	 isar-output-font-lock-keywords-1
-	 (if isar-x-symbol-enable
-	     x-symbol-isar-font-lock-keywords)))
+	 isar-output-font-lock-keywords-1)
   (proof-response-config-done))
 
 (defun isar-goals-mode-config ()
@@ -580,10 +574,7 @@ Checks the width in the `proof-goals-buffer'"
   (setq pg-goals-error-regexp proof-shell-error-regexp)
   (isar-init-output-syntax-table)
   (setq font-lock-keywords
-	(append
-	 isar-goals-font-lock-keywords
-	 (if isar-x-symbol-enable
-	     x-symbol-isar-font-lock-keywords)))
+	 isar-goals-font-lock-keywords)
   (proof-goals-config-done))
 
 (defun isar-goalhyplit-test ()

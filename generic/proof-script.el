@@ -189,12 +189,7 @@ scripting buffer may have an active queue span.")
 
 (defun proof-strict-read-only ()
   "Set locked spans in script buffers according to `proof-strict-read-only'."
-  ;; NB: this implements the behaviour that read-only is synchronized
-  ;; in all script buffers to follow the current setting of
-  ;; `proof-strict-read-only'.  Another possibility would be to
-  ;; just change for local buffer, while at the same time changing
-  ;; the default/global setting.   This would be consistent with
-  ;; behaviour of "expensive" x-symbol/mmm options.
+  ;; NB: read-only is synchronized in all script buffers
   (interactive)
   (proof-map-buffers
    (proof-buffers-in-mode proof-mode-for-script)
@@ -2591,7 +2586,7 @@ This is intended for proof assistant buffers which are similar to
 script buffers, but for which scripting is not enabled.  In
 particular, we: lock the buffer if it appears on
 `proof-included-files-list'; configure font-lock support from
-`font-lock-keywords'; maybe turn on X-Symbol minor mode.
+`font-lock-keywords'.
 
 This is used for Isabelle theory files, which share some scripting
 mode features, but are only ever processed atomically by the proof
@@ -2781,9 +2776,6 @@ finish setup which depends on specific proof assistant configuration."
 
   (put major-mode 'mode-class 'pg-sticky)
 
-  ;; Make X-symbol ignore that we've asked for fixed mode
-  (put major-mode 'x-symbol-mode-disable 'ignore)
-  
   (if (and proof-non-undoables-regexp
 	   (not proof-ignore-for-undo-count))
       (setq proof-ignore-for-undo-count
@@ -2837,9 +2829,6 @@ finish setup which depends on specific proof assistant configuration."
 	(if img
 	    (set-glyph-image invisible-text-glyph 
 			     img (current-buffer)))))
-
-  (if (proof-ass x-symbol-enable)
-      (proof-x-symbol-enable))
 
   ;; Finally, make sure the user has been welcomed!
   ;; [NB: this doesn't work well, can get zapped by loading messages]
