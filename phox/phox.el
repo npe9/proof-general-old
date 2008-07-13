@@ -34,7 +34,7 @@
   :group 'phox)
 
 (defcustom phox-sym-lock-enabled t
-  "*Whether to use x-symbol or not."
+  "*Whether to use yum symbol or not."
   :type 'boolean
   :group 'phox)
 
@@ -107,9 +107,7 @@
 (defun phox-config ()
   "Configure Proof General scripting for PhoX."
   (if phox-sym-lock-enabled
-      (progn
-	(phox-sym-lock-start)
-	(setq phox-x-symbol-enable nil)))
+      (phox-sym-lock-start))
   (setq
    proof-terminal-char		?\.	; ends every command
    proof-script-command-end-regexp "[.]\\([ \t\n\r]\\)"
@@ -189,14 +187,7 @@
     ;; it is nice to do : xmodmap -e "keysym KP_Enter = Linefeed"
 
     (define-key phox-mode-map [(control c) (meta d)] 
-      'phox-delete-symbol-on-cursor)
-    ;(if phox-x-symbol-enable    
-;	(progn
-	;  (setq x-symbol-language 'phox)
-	 ; (x-symbol-mode t))) ; just to be sure
-;    (font-lock-mode t) ; just to be sure (not always activated on OSX ??)
-
-)
+      'phox-delete-symbol-on-cursor))
 
 (define-derived-mode phox-shell-mode proof-shell-mode
    "PhoX shell" nil
@@ -243,25 +234,6 @@
 (defpgdefault completion-table
   (append phox-top-keywords phox-proof-keywords)
 )
-
-;;;
-;;; X-Symbol
-;;;
-
-(defpgdefault x-symbol-language 'phox)
-
-(eval-after-load "x-symbol-phox"
- ;; Add x-symbol tokens to phox-completion-table and rebuild
- ;; internal completion table if completion is already active
-'(progn
-   (defpgdefault completion-table
-     (append phox-completion-table
-	     (mapcar (lambda (xsym) (nth 2 xsym))
-		     x-symbol-phox-table)))
-   (setq proof-xsym-font-lock-keywords
-	 x-symbol-phox-font-lock-keywords)
-   (if (featurep 'completion)
-       (proof-add-completions))))
 
 (provide 'phox)
 
