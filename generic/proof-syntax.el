@@ -174,8 +174,6 @@ Meant to be used from `font-lock-keywords'."
 ;; Functions for doing something like "format" but with customizable
 ;; control characters.
 ;;
-;; Added for version 3.1 to help quote funny characters in filenames.
-;;
 
 ;;;###autoload
 (defun proof-format (alist string)
@@ -237,8 +235,6 @@ return the resulting (string) value."
 
 ;;
 ;; Functions for inserting text into buffer.
-;;
-;; Added for version 3.2 to provide more prover specific shortcuts.
 ;;
 
 ; Taken from Isamode

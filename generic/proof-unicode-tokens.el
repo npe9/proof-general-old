@@ -24,13 +24,15 @@
      (if (boundp (proof-ass-symv var))
 	 (set (intern (concat "unicode-tokens-" (symbol-name var)))
 	      (eval `(proof-ass ,var)))))
-   '(token-alist
+   '(token-symbol-map
      token-format
+     token-variant-format-regexp
      fontsymb-properties
-     font-lock-extra-managed-props
-     extra-font-lock-keywords
-     shortcut-alist))
-  (unicode-tokens-initialise)
+     shortcut-alist
+     control-region-format-regexp
+     control-char-format-regexp
+     control-regions
+     control-characters))
   (setq proof-unicode-tokens-initialised t))
   
 ;;;###autoload

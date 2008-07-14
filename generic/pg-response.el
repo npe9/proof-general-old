@@ -41,8 +41,6 @@
 (define-derived-mode proof-response-mode proof-universal-keys-only-mode
   "PGResp" "Responses from Proof Assistant"
   (setq proof-buffer-type 'response)
-  ;; font-lock-keywords isn't automatically buffer-local in Emacs 21.2
-  (make-local-variable 'font-lock-keywords)
   (define-key proof-response-mode-map [(button2)] 'pg-goals-button-action)
   (define-key proof-response-mode-map [q] 'bury-buffer)
   (define-key proof-response-mode-map [c] 'pg-response-clear-displays)
@@ -66,8 +64,7 @@
 ;;;###autoload
 (defun proof-response-config-done ()
   "Complete initialisation of a response-mode derived buffer."
-  (proof-font-lock-configure-defaults nil))
-
+  (setq font-lock-defaults '(proof-response-font-lock-keywords)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
@@ -76,41 +73,9 @@
 ;;   -- three window mode
 ;;
 
-;; FIXME: 3.5: things are better than before but still quite bad.
-;; To really do this well I think we simply have to write specialised
-;; frame handling code --- and do it twice, once for each Emacs.
-;;
-;; Choice comment from XEmacs frame.el before special-display-popup-frame:
-;; "#### Change, not compatible with FSF: This stuff is all so incredibly
-;; junky anyway that I doubt it makes any difference."
-
 (defvar pg-response-special-display-regexp nil
   "Regexp for `special-display-regexps' for multiple frame use.
 Internal variable, setting this will have no effect!")
-
-;; NB: this list uses XEmacs defaults in the non-multiframe case.
-;; We handle specifiers quit crudely, bute (1) to set for the
-;; frame specifically we'd need to get hold of the frame,
-;; (2) specifiers have been (still are) quite buggy.
-(defconst proof-multiframe-specifiers
-  (if (featurep 'xemacs)
-      (list
-       (list has-modeline-p nil nil) ;; nil even in ordinary case.
-       (list menubar-visible-p nil t)
-       (list default-gutter-visible-p nil t)
-       (list default-toolbar-visible-p nil t)))
-  "List of XEmacs specifiers and their values for non-multiframe and multiframe.")
-
-(defun proof-map-multiple-frame-specifiers (multiframep locale)
-  "Set XEmacs specifiers according to MULTIFRAMEP in LOCALE."
-  (dolist (spec proof-multiframe-specifiers)
-    ;; FIXME: Unfortunately these specifiers seem to get lost very
-    ;; easily --- the toolbar, gutter, modeline all come back
-    ;; for no good reason.  Can we construct a simple bug example?
-    (if (fboundp 'set-specifier) ; nuke compile warning
-	(set-specifier (car spec)
-		       (if multiframep (cadr spec) (caddr spec))
-		       locale))))
 
 (defconst proof-multiframe-parameters
   '((minibuffer . nil)
@@ -122,17 +87,9 @@ Internal variable, setting this will have no effect!")
   "List of GNU Emacs frame parameters for secondary frames.")
 
 (defun proof-multiple-frames-enable ()
-  (if (featurep 'xemacs)
-      (proof-map-buffers
-       (proof-associated-buffers)
-       (proof-map-multiple-frame-specifiers proof-multiple-frames-enable
-					    (current-buffer))))
-  (let ((spdres
-	 (if (featurep 'xemacs)
-	     pg-response-special-display-regexp
-	   (cons ; GNU Emacs uses this to set frame params too, handily
-	    pg-response-special-display-regexp
-	    proof-multiframe-parameters))))
+  (let ((spdres (cons 
+		 pg-response-special-display-regexp
+		 proof-multiframe-parameters)))
     (if proof-multiple-frames-enable
 	(add-to-list 'special-display-regexps spdres)
       (setq special-display-regexps
@@ -141,7 +98,6 @@ Internal variable, setting this will have no effect!")
 
 (defun proof-three-window-enable ()
   (proof-layout-windows))
-
 
 (defun proof-select-three-b (b1 b2 b3 &optional nohorizontalsplit)
   "Select three buffers. Put them into three windows, selecting the last one."
@@ -163,8 +119,6 @@ Internal variable, setting this will have no effect!")
   (interactive)
   (proof-select-three-b
    (or proof-script-buffer (first (buffer-list)))
-   ;; Pierre had response buffer first, I think goals
-   ;; is a bit nicer though?
    (if (buffer-live-p proof-goals-buffer)
        proof-goals-buffer (first (buffer-list)))
    (if (buffer-live-p proof-response-buffer)
@@ -206,7 +160,6 @@ For multiple frame mode, this function obeys the setting of
     ;; Restore an existing frame configuration (seems buggy, typical)
     (if pg-frame-configuration
 	(set-frame-configuration pg-frame-configuration 'nodelete)))
-   ;; Three window mode: use the Pierre-layout by default
    (proof-three-window-enable
     (proof-delete-other-frames)
     (set-window-dedicated-p (selected-window) nil)
@@ -325,21 +278,34 @@ Returns non-nil if response buffer was cleared."
 	(setq start (point))
 	(insert str)
 	(unless (bolp) (newline))
-
-	;; Do pbp markup here, e.g. for "sendback" commands.
-	;; NB: we might loose if markup has been split between chunks, but this
-	;; will could only happen in cases of huge (spilled) output
-	(pg-assoc-analyse-structure start (point-max))
-	
-	(proof-fontify-region start (point))
-
-	;; Fontify message: one reason why we don't keep the buffer in
-	;; font-lock minor mode is these properties would be lost.
-	(if (and face proof-output-fontify-enable)
+	;(font-lock-fontify-buffer)
+	(if face
 	    (font-lock-append-text-property 
-	     start (point-max) 'face face))
+	     start (point-max) 'face 
+	     (face-all-attributes face)))
 
 	(set-buffer-modified-p nil))))))
+
+(defun pg-append-face-property (start end value &optional object)
+  "Append to face property of the text from START to END, using font-lock-face.
+Arguments PROP and VALUE specify the property and value to append to the value
+already in place.  The resulting property values are always lists.
+Optional argument OBJECT is the string or buffer containing the text."
+  (let ((val (if (listp value) value (list value))) next prev)
+    (while (/= start end)
+      (setq next (next-single-property-change start prop object end)
+	    prev (get-text-property start prop object))
+      ;; Canonicalize old forms of face property.
+      (and (memq prop '(face font-lock-face))
+	   (listp prev)
+	   (or (keywordp (car prev))
+	       (memq (car prev) '(foreground-color background-color)))
+	   (setq prev (list prev)))
+      (put-text-property start next prop
+			 (append (if (listp prev) prev (list prev)) val)
+			 object)
+      (setq start next))))
+
 
 
 (defun pg-response-clear-displays ()
@@ -481,31 +447,33 @@ We fontify the output only if we're not too busy to do so."
   (with-current-buffer proof-trace-buffer
     (goto-char (point-max))
     (newline)
-    (or proof-trace-last-fontify-pos
-	(setq proof-trace-last-fontify-pos (point)))
     (insert str)
     (unless (bolp)
-      (newline))
-    ;; If tracing output is prolific, we try to avoid
-    ;; fontifying every chunk and batch it up instead.
-    (unless pg-tracing-slow-mode
-      (let ((fontifystart (proof-trace-fontify-pos)))
-	;; Catch errors here: this is to deal with ugly problem when
-	;; fontification of large output gives error Nesting too deep
-	;; for parser [see etc/isar/nesting-too-deep-for-parser.txt],
-	;; a serious flaw in XEmacs version of parse-partial-sexp
-	(unwind-protect
-	    (proof-fontify-region fontifystart (point))
-	  (setq proof-trace-last-fontify-pos nil))
-	(set-buffer-modified-p nil)))))
+      (newline))))
+;;; FIXME: reinstate this, turning font lock off then on, mebbe
+;;;     (or proof-trace-last-fontify-pos
+;;; 	(setq proof-trace-last-fontify-pos (point)))
+;;;     (insert str)
+;;;     (unless (bolp)
+;;;       (newline))
+;;;     ;; If tracing output is prolific, we try to avoid
+;;;     ;; fontifying every chunk and batch it up instead.
+;;;     (unless pg-tracing-slow-mode
+;;;       (let ((fontifystart (proof-trace-fontify-pos)))
+;;; 	;; Catch errors, in case fontification buggy
+;;; 	(unwind-protect
+;;; 	    (proof-fontify-region fontifystart (point))
+;;; 	  (setq proof-trace-last-fontify-pos nil))
+;;; 	(set-buffer-modified-p nil)))))
 
 (defun proof-trace-buffer-finish ()
   "Complete fontification in tracing buffer now that there's time to do so."
-  (let ((fontifystart (proof-trace-fontify-pos)))
-    (if (and fontifystart (not quit-flag));; may be done already/user desparately trying to avoid
-	(save-excursion
-	   (set-buffer proof-trace-buffer)
-	   (proof-fontify-region fontifystart (point-max))))))
+  )
+;;;   (let ((fontifystart (proof-trace-fontify-pos)))
+;;;     (if (and fontifystart (not quit-flag));; may be done already
+;;; 	(save-excursion
+;;; 	   (set-buffer proof-trace-buffer)
+;;; 	   (proof-fontify-region fontifystart (point-max))))))
 
 
 
@@ -529,7 +497,6 @@ We fontify the output only if we're not too busy to do so."
       (setq start (point))
       (insert str)
       (unless (bolp) (newline))
-      (proof-fontify-region start (point))
       (set-buffer-modified-p nil))))
 
 

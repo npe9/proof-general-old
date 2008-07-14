@@ -57,7 +57,7 @@ This uses and updates `proof-element-counters'."
   (let ((next (1+ (or (cdr-safe (assq idiom proof-element-counters)) 0))))
     (setq proof-element-counters
 	  (cons (cons idiom next)
-		(remassq idiom proof-element-counters)))
+		(assq-delete-all idiom proof-element-counters)))
     next))
 
 (defun proof-element-id (idiom number)
@@ -512,15 +512,8 @@ This is used for cleaning `buffer-invisibility-spec' in
   "Clear record of script portion names and types from internal list.
 Also clear all visibility specifications."
   (setq pg-script-portions nil)
-  (setq buffer-invisibility-spec
-	(if (listp buffer-invisibility-spec)
-	    (apply 'append
-		   (mapcar (lambda (propellips)
-			     (if (memq (car-safe propellips) 
-				       pg-visibility-specs)
-				 nil (list propellips)))
-		     buffer-invisibility-spec))
-	  pg-default-invisibility-spec)))
+  (mapcar 'remove-from-invisibility-spec 
+	  pg-visibility-specs))
 
 (defun pg-add-script-element (elt)
   (add-to-list pg-script-portions elt))
@@ -530,8 +523,8 @@ Also clear all visibility specifications."
 	 (newelts  (remq id elts)))
     (setq pg-script-portions
 	  (if newelts
-	      (cons (cons ns newelts) (remassq ns pg-script-portions))
-	    (remassq ns pg-script-portions)))))
+	      (cons (cons ns newelts) (assq-delete-all ns pg-script-portions))
+	    (assq-delete-all ns pg-script-portions)))))
 
 (defsubst pg-visname (namespace id)
   "Return a unique symbol made from strings NAMESPACE and unique ID."
@@ -592,28 +585,23 @@ NAME does not need to be unique."
 (defun pg-make-element-invisible (idiom id)
   "Make element ID of type IDIOM invisible, with ellipsis."
   (let ((visspec  (cons (pg-visname idiom id) t)))
-    (add-to-list 'buffer-invisibility-spec visspec)
+    (add-to-invisibility-spec visspec)
     (add-to-list 'pg-visibility-specs visspec)))
 
 (defun pg-make-element-visible (idiom id)
   "Make element ID of type IDIOM visible."
-  (setq buffer-invisibility-spec
-	(remassq (pg-visname idiom id) buffer-invisibility-spec)))
+  (remove-from-invisibility-spec (pg-visname idiom id)))
 
 (defun pg-toggle-element-visibility (idiom id)
   "Toggle visibility of script element of type IDIOM, named ID."
-  (if (and (listp buffer-invisibility-spec)
-	   (assq (pg-visname idiom id) buffer-invisibility-spec))
+  (if (assq (pg-visname idiom id) buffer-invisibility-spec)
       (pg-make-element-visible idiom id)
     (pg-make-element-invisible idiom id))
   (pg-redisplay-for-gnuemacs))
 
 (defun pg-redisplay-for-gnuemacs ()
   "GNU Emacs requires redisplay for changes in buffer-invisibility-spec."
-  (if (not (featurep 'xemacs))
-      ;; GNU Emacs requires redisplay here to see result
-      ;; (sit-for 0) not enough
-      (redraw-frame (selected-frame))))
+  (redraw-frame (selected-frame)))
 
 (defun pg-show-all-portions (idiom &optional hide)
   "Show or hide all portions of kind IDIOM."
@@ -1093,12 +1081,8 @@ a scripting buffer is killed it is always retracted."
 	      ;; Turn off Scripting indicator here.
 	      (setq proof-active-buffer-fake-minor-mode nil)
 
-	      ;; Make status of inactive scripting buffer show up
-	      ;; FIXME da:
-	      ;; not really necessary when called by kill buffer, at least.
-	      (if (fboundp 'redraw-modeline)
-		  (redraw-modeline)
-		(force-mode-line-update))
+	      ;; Make status of inactive scripting buffer show up (necessary?)
+	      (force-mode-line-update)
 	      
 	      ;; Finally, run hooks (added in 3.5 22.04.04)
 	      (run-hooks 'proof-deactivate-scripting-hook))))))
@@ -1180,9 +1164,7 @@ activation is considered to have failed and an error is given."
 
       ;; Turn on the minor mode, make it show up.
       (setq proof-active-buffer-fake-minor-mode t)
-      (if (fboundp 'redraw-modeline)
-	  (redraw-modeline)
-	(force-mode-line-update))
+      (force-mode-line-update)
       
       ;; This may be a good time to ask if the user wants to save some
       ;; buffers.  On the other hand, it's jolly annoying to be
@@ -2459,23 +2441,6 @@ command."
 
   (setq proof-buffer-type 'script)
 
-  ;; font-lock-keywords isn't automatically buffer-local in Emacs 21.2
-  (make-local-variable 'font-lock-keywords)
-
-  ;; Syntax table in XEmacs 21.5.b28 does not classify newline as space,
-  ;; breaking regexps using \\s- that rely on that (showed up for Coq).
-  ;; In fact it seems to be broken rather more seriously than that:
-  ;; default syntax table of fundamental mode is not merged at all!
-  (if (and (featurep 'xemacs)
-	   ;; hopefully fixed for later versions but we don't know yet
-	   (>= 21 emacs-major-version)
-	   (>= 5 emacs-minor-version))
-      (progn
-	(derived-mode-merge-syntax-tables 
-	 (standard-syntax-table) (syntax-table))
-	;; We also need this
-	(modify-syntax-entry ?\n " ")))
-
   ;; Set default indent function (can be overriden in derived modes)
   (make-local-variable 'indent-line-function)
   (setq indent-line-function 'proof-indent-line)
@@ -2586,12 +2551,14 @@ This is intended for proof assistant buffers which are similar to
 script buffers, but for which scripting is not enabled.  In
 particular, we: lock the buffer if it appears on
 `proof-included-files-list'; configure font-lock support from
-`font-lock-keywords'.
+`proof-script-font-lock-keywords'.
 
 This is used for Isabelle theory files, which share some scripting
 mode features, but are only ever processed atomically by the proof
 assistant."
   (setq proof-script-buffer-file-name buffer-file-name)
+
+  (setq font-lock-defaults '(proof-script-font-lock-keywords))
 
   ;; Has buffer already been processed?
   ;; NB: call to file-truename is needed for GNU Emacs which
@@ -2628,13 +2595,7 @@ assistant."
 
   (make-local-variable 'comment-start-skip)
   (setq comment-start-skip
-    (concat proof-script-comment-start-regexp "+\\s_?"))
-
-  ;;
-  ;; Fontlock support.
-  ;;
-  (proof-font-lock-configure-defaults 'autofontify)
-)
+    (concat proof-script-comment-start-regexp "+\\s_?")))
   
 
 

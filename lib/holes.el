@@ -130,11 +130,11 @@ is), which is annoying.
 
 (cond
  ((featurep 'xemacs)
-  (defalias 'holes-region-exists-p 'region-exists-p)
+  (defalias 'holes-region-active-p 'region-active-p)
   (defalias 'holes-get-selection 'get-selection))
  (t
-  ;;Pierre: should do almost what region-exists-p does in XEmacs
-  (defun holes-region-exists-p nil
+  ;;Pierre: should do almost what region-active-p does in XEmacs
+  (defun holes-region-active-p nil
     "Return t if the mark is active, nil otherwise."
     mark-active)
   (defun holes-get-selection nil "See `current-kill'."
@@ -204,17 +204,17 @@ which should be removed when making the text into a hole.")
 
 (defun holes-region-beginning-or-nil ()
   "Internal."
-  (and (holes-region-exists-p) (region-beginning))
+  (and (holes-region-active-p) (region-beginning))
   )
 
 (defun holes-region-end-or-nil ()
   "Internal."
-  (and (holes-region-exists-p) (region-end))
+  (and (holes-region-active-p) (region-end))
   )
 
 (defun holes-copy-active-region ()
   "Internal."
-  (assert (holes-region-exists-p) nil "the region is not active now.")
+  (assert (holes-region-active-p) nil "the region is not active now.")
   (copy-region-as-kill (region-beginning) (region-end))
   (car kill-ring)
   )
@@ -557,7 +557,7 @@ following hole if it exists."
     (let ((nxthole (holes-next-after-active-hole)))
       (holes-replace-active-hole
        (or str
-	   (and (holes-region-exists-p) (holes-copy-active-region))
+	   (and (holes-region-active-p) (holes-copy-active-region))
 	   (holes-get-selection) (error "Nothing to put in hole")))
       (if nxthole (holes-set-active-hole nxthole)
 	(setq holes-active-hole holes-default-hole))
@@ -628,9 +628,9 @@ Sets `holes-active-hole' to the next hole if it exists."
   (save-excursion
     ;;HACK: nothing if one click (but a second is perhaps coming)
     (if (and (eq (holes-track-mouse-clicks) 1)
-	     (not (holes-region-exists-p)))
+	     (not (holes-region-active-p)))
 	()
-      (if (not (holes-region-exists-p))
+      (if (not (holes-region-active-p))
 	  (error "Nothing to put in hole")
 	(holes-replace-update-active-hole (holes-get-selection))
 	(message "hole replaced")
@@ -696,10 +696,10 @@ Sets `holes-active-hole' to the next hole if it exists."
   (holes-track-mouse-selection event)
 
   (if (and (eq (holes-track-mouse-clicks) 1)
-	   (not (holes-region-exists-p)))
+	   (not (holes-region-active-p)))
       (holes-set-make-active-hole (point) (point))
 
-    (if (holes-region-exists-p)
+    (if (holes-region-active-p)
 	(holes-set-make-active-hole)
       (let ((ext (holes-hole-at-event event)))
 	(if (and ext (holes-is-hole-p ext))

@@ -2367,13 +2367,6 @@ This is currently used only by @samp{@code{proof-easy-config}} mechanism,
 to set @samp{@code{font-lock-keywords}} before calling @code{proof-config-done}.
 See also proof-@{shell,resp,goals@}-@code{font-lock-keywords}.
 @end defvar
-@c TEXI DOCSTRING MAGIC: proof-shell-font-lock-keywords
-@defvar proof-shell-font-lock-keywords 
-Value of @samp{@code{font-lock-keywords}} used to fontify the proof shell.@*
-This is currently used only by @samp{@code{proof-easy-config}} mechanism, to set
-@samp{@code{font-lock-keywords}} before calling @samp{@code{proof-config-done}}.
-See also proof-@{script,resp,goals@}-@code{font-lock-keywords}.
-@end defvar
 @c TEXI DOCSTRING MAGIC: proof-goals-font-lock-keywords
 @defvar proof-goals-font-lock-keywords 
 Value of @samp{@code{font-lock-keywords}} used to fontify the goals output.@*

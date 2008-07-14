@@ -197,7 +197,8 @@
 (define-derived-mode phox-response-mode proof-response-mode
   "PhoX response" nil
   (setq 
-   font-lock-keywords (append phox-font-lock-keywords proof-xsym-font-lock-keywords)
+   proof-resp-font-lock-keywords 
+   (append phox-font-lock-keywords proof-xsym-font-lock-keywords)
    proof-output-fontify-enable     t)
   (phox-sym-lock-start)
   (if (and (featurep 'phox-sym-lock) phox-sym-lock-enabled)
@@ -209,7 +210,8 @@
 (define-derived-mode phox-goals-mode proof-goals-mode
   "PhoX goals" nil
   (setq 
-   font-lock-keywords (append phox-font-lock-keywords proof-xsym-font-lock-keywords)
+   proof-goals-font-lock-keywords 
+   (append phox-font-lock-keywords proof-xsym-font-lock-keywords)
    proof-output-fontify-enable     t)
   (phox-sym-lock-start)
   (if (and (featurep 'phox-sym-lock) phox-sym-lock-enabled)

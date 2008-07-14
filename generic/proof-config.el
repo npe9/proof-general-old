@@ -151,15 +151,6 @@ terminator somewhere nearby.  Electric!"
   :type 'boolean
   :group 'proof-user-options)
   
-(defcustom proof-output-fontify-enable t
-  "*Whether to fontify output from the proof assistant.
-If non-nil, output from the proof assistant will be highlighted
-in the goals and response buffers.
-\(This is providing `font-lock-keywords' have been set for the
-buffer modes)."
-  :type 'boolean
-  :group 'proof-user-options)
-
 ;; FIXME: next one could be integer value for catchup delay
 (defcustom proof-trace-output-slow-catchup t
   "*If non-nil, try to redisplay less often during frequent trace output.
@@ -599,7 +590,7 @@ Warning messages can come from proof assistant or from Proof General itself."
   "*Face for showing active areas (clickable regions), outside of subterm markup."
   :group 'proof-faces)
 
-;;; Compatibility: these are required for use in onder GNU Emacs/font-lock-keywords
+;;; Compatibility: these are required for use in GNU Emacs/font-lock-keywords
 (defconst proof-face-compat-doc "Evaluates to a face name, for compatibility.")
 (defconst proof-queue-face 'proof-queue-face proof-face-compat-doc)
 (defconst proof-locked-face 'proof-locked-face proof-face-compat-doc)
@@ -1376,9 +1367,9 @@ assistant, for example, to compile a completed file."
 
 (defcustom proof-script-font-lock-keywords nil
   "Value of `font-lock-keywords' used to fontify proof scripts.
-This is currently used only by `proof-easy-config' mechanism,
-to set `font-lock-keywords' before calling proof-config-done.
-See also proof-{shell,resp,goals}-font-lock-keywords."
+The proof script mode should set this before calling proof-config-done.
+Used also by `proof-easy-config' mechanism.
+See also proof-{resp,goals}-font-lock-keywords."
   :type 'sexp
   :group 'proof-script)
 
@@ -2249,14 +2240,6 @@ This hook is used within Proof General to refresh the toolbar."
   :type '(repeat function)
   :group 'proof-shell)
 
-(defcustom proof-shell-font-lock-keywords nil
-  "Value of `font-lock-keywords' used to fontify the proof shell.
-This is currently used only by `proof-easy-config' mechanism, to set
-`font-lock-keywords' before calling `proof-config-done'.
-See also proof-{script,resp,goals}-font-lock-keywords."
-  :type 'sexp
-  :group 'proof-shell)
-
 (defcustom proof-shell-syntax-table-entries nil
   "List of syntax table entries for proof script mode.
 A flat list of the form
@@ -2377,31 +2360,19 @@ for parsing the prover output is disabled."
   :type 'character
   :group 'proof-goals)
 
-
-
 (defcustom proof-goals-font-lock-keywords nil
   "Value of `font-lock-keywords' used to fontify the goals output.
-NB: the goals output is not kept in font lock mode because the
-fontification may rely on annotations which are erased before
-displaying.  This means internal functions of PG must be used
-to display to the goals buffer to ensure fontification is done!
-This is currently used only by `proof-easy-config' mechanism,
-to set `font-lock-keywords' before calling proof-config-done.
-See also proof-{script,shell,resp}-font-lock-keywords."
+The goals shell mode should set this before calling `proof-goals-config-done'.
+Used also by `proof-easy-config' mechanism.
+See also `proof-{script,goals}-font-lock-keywords'."
   :type 'sexp
   :group 'proof-goals)
 
-;; FIXME: perhaps we need new customize group here, "goals" is
-;; not quite right for response buffer!
 (defcustom proof-resp-font-lock-keywords nil
   "Value of `font-lock-keywords' used to fontify the response output.
-NB: the goals output is not kept in font lock mode because the
-fontification may rely on annotations which are erased before
-displaying.  This means internal functions of PG must be used
-to display to the goals buffer to ensure fontification is done!
-This is currently used only by proof-easy-config mechanism,
-to set font-lock-keywords before calling proof-config-done.
-See also proof-{script,shell,resp}-font-lock-keywords."
+The response mode should set this before calling `proof-response-config-done'.
+Used also by `proof-easy-config' mechanism.
+See also `proof-{script,goals}-font-lock-keywords'."
   :type 'sexp
   :group 'proof-goals)
 
@@ -2409,13 +2380,13 @@ See also proof-{script,shell,resp}-font-lock-keywords."
   "This hook is called before fontifying a region in an output buffer.
 A function on this hook can alter the region of the buffer within
 the current restriction, and must return the final value of (point-max).
-[This hook is presently only used by phox-sym-lock]."
+\[This hook is presently only used by phox-sym-lock]."
   :type '(repeat function)
   :group 'proof-goals)
 
 (defcustom pg-after-fontify-output-hook nil
   "This hook is called before fonfitying a region in an output buffer.
-[This hook is presently only used by Isabelle]."
+\[This hook is presently only used by Isabelle]."
   :type '(repeat function)
   :group 'proof-goals)
 

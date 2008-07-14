@@ -633,14 +633,6 @@ This is a subroutine of `proof-shell-handle-error'."
 
       (setq string (buffer-substring-no-properties start end))
 
-      ;; NB: if the shell buffer were in x-symbol minor mode,
-      ;; this string would contain X-Symbol characters, which
-      ;; is not suitable for processing with proof-fontify-region.
-      ;; Better not to use X-Symbol in the shell.
-      (unless (or proof-shell-unicode
-		  pg-use-specials-for-fontify)
-	(setq string
-	      (pg-assoc-strip-subterm-markup string)))
       ;; Erase if need be, and erase next time round too.
       (pg-response-maybe-erase t nil)
       (pg-response-display-with-face string append-face))))
@@ -1540,11 +1532,6 @@ however, are always processed; hence their name)."
 			    (buffer-substring-no-properties
 			     (match-beginning 0) (match-end 0)))
 		      (backward-char (- (match-end 0) (match-beginning 0)))
-		      ;; NB: decoding x-symbols here is probably too
-		      ;;  expensive; moreover it leads to problems
-		      ;;  processing special characters as annotations
-		      ;;  later on.  So do not fontify or decode.
-		      ;;  (proof-fontify-region startpos (point))
 		      (setq string (buffer-substring-no-properties
 				    startpos (point)))
 		      (goto-char (point-max))	
@@ -1907,7 +1894,7 @@ processing."
       (proof-warn-if-unset "proof-shell-config-done" sym))
 
     ;; We do not use font-lock here, it's a waste of cycles.
-    ;; (proof-font-lock-configure-defaults nil)
+    (font-lock-mode 0)
 
     (let ((proc (get-buffer-process proof-shell-buffer)))
       ;; Add the kill buffer function and process sentinel

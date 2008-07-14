@@ -1,4 +1,4 @@
-(* Some checks for X-Symbol behaviour.  
+(* Some checks for Unicode Tokens behaviour.  
 
    This file should be displayed sensibly, and also the
    display back from Isabelle ought to match.
@@ -26,14 +26,18 @@ by auto
    Problem reported by Norbert Schirmer <norbert.schirmer@web.de>
    Currently, superscript output highlighting seems broken anyway? *)
 
-consts silly:: "'a => 'a => 'a" ("_\<^sup>_" [1000,1000] 1000)
+consts "\<alpha1>":: "'a => 'a" ("\<alpha1>\<^sup>_")
+consts "\<alpha2>":: "'a => 'a => 'a" ("\<alpha2>\<^sup>_")
+consts "\<alpha3>":: "'a => 'a => 'a => 'a" ("_\<^sup>_\<^sup>_")
 
 consts k:: 'a
 
+term "\<alpha>"
 term "a\<^sup>b" (* b should be a blue variable *)
 term "\<forall>x. a\<^sup>x" (* x should be a green bound variable *)
 term "a\<^sup>k" (* k should be a black constant *)
 term "\<alpha>\<^isub>2" (* alpha should be blue variable with subscripted blue 2 *)
+term "\<alpha>\<^isup>x"  (* identifier *)
 
 consts sausage:: "'a => 'a => 'a" ("_\<^bsup>_\<^esup>" [1000,1000] 1000)
 
@@ -57,6 +61,8 @@ constdefs
  "P\<^sub>1 == True"
  P2 :: bool   ("P\<^sup>2")    (* superscript *)
  "P\<^sup>2 == True"
+
+ "P\<^loc>x" (* location escape *)
 
 (* Buglet here: if we enable x-sym during scripting,
    goals/response flks are not updated, so xsyms
@@ -89,6 +95,7 @@ consts
  "\<^bold>P"  :: bool   (* bold character *)
  "\<^italic>i"  :: int 
 
+\<^bitalic>italic?\<^eitalic>
 
 (* test: using a symbol as a subscript *)
 (* 9.3.03: this causes nasty prob with pre-command hook,

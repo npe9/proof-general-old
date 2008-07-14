@@ -331,139 +331,6 @@ The argument KBL is a list of tuples (k . f) where `k' is a keybinding
          (define-key map k f)))
    kbl))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Managing font-lock
-;;
-
-;; Notes:
-;;
-;; * Various mechanisms for setting defaults, different between
-;;   Emacsen.  Old method(?) was to set "blah-mode-font-lock-keywords"
-;;   and copy it into "font-lock-keywords" to engage font-lock.
-;;   Present method for XEmacs is to put a 'font-lock-defaults
-;;   property on the major-mode symbol, or use font-lock-defaults
-;;   buffer local variable.  We use the latter.
-;;
-;; * Buffers which are output-only are *not* kept in special minor
-;;   modes font-lock-mode (or x-symbol-mode).  In case the user
-;;   doesn't want fontification we have a user option,
-;;   proof-output-fontify-enable.
-
-(deflocal proof-font-lock-keywords nil
-  "Value of font-lock-keywords in this buffer.
-We set `font-lock-defaults' to '(proof-font-lock-keywords) for
-compatibility with X-Symbol, which may hack `font-lock-keywords'
-with extra patterns (in non-mule mode).")
-
-(defun proof-font-lock-configure-defaults (autofontify)
-  "Set defaults for font-lock based on current font-lock-keywords.
-This is a delicate operation, because we only want to use font-lock-mode
-in some buffers, so we have to tread carefully around the font-lock
-code to avoid it turning itself on in the buffers where that actually
-*breaks* fontification.
-
-AUTOFONTIFY must be nil for buffers where we may want to really use
-font-lock-mode; in those buffers, we enable syntactic fontification also."
-  ;;
-  ;; At the moment, the specific assistant code hacks
-  ;; font-lock-keywords.  Here we use that value to hack
-  ;; font-lock-defaults, which is used by font-lock to set
-  ;; font-lock-keywords from again!!  Yuk.
-  ;;
-  ;; Previously, 'font-lock-keywords was used directly as a setting
-  ;; for the defaults.  This has a bad interaction with x-symbol which
-  ;; edits font-lock-keywords and loses the setting.  So we make a
-  ;; copy of it in a new local variable, proof-font-lock-keywords.
-  ;;
-  (setq proof-font-lock-keywords font-lock-keywords)
-
-    ;; Setting font-lock-defaults explicitly is required by FSF Emacs
-  ;; 20.4's version of font-lock in any case.
-
-  (if autofontify
-      (progn
-	(make-local-variable 'font-lock-defaults) ; needed??
-	(setq font-lock-defaults '(proof-font-lock-keywords))
-	;; 12.1.99: For XEmacs, we must also set the mode property.
-	;; This is needed for buffers which are put into font-lock-mode
-	;; (rather than fontified by hand).
-	(put major-mode 'font-lock-defaults font-lock-defaults))
-    ;; 11.12.01: Emacs 21 is very eager about turning on font
-    ;; lock and has hooks all over the place to do it.  To make
-    ;; sure it doesn't happen we have to eradicate all sense of
-    ;; having any fontification ability.
-    (proof-font-lock-clear-font-lock-vars)
-    ;; In fact, this still leaves font-lock switched on! But
-    ;; hopefully in a useless way.  XEmacs has better control
-    ;; over which modes not to enable it for (although annoying
-    ;; that it's a custom setting)
-    (if (featurep 'xemacs)
-	(setq font-lock-mode-disable-list
-	      (cons major-mode font-lock-mode-disable-list)))))
-
-(defun proof-font-lock-clear-font-lock-vars ()
-  (kill-local-variable 'font-lock-defaults)
-  (kill-local-variable 'font-lock-keywords)
-  (setq font-lock-keywords nil)
-  (put major-mode 'font-lock-defaults nil))
-
-(defun proof-font-lock-set-font-lock-vars ()
-  (setq font-lock-defaults '(proof-font-lock-keywords))
-  (setq font-lock-keywords proof-font-lock-keywords))
-
-(defun proof-fontify-region (start end &optional keepspecials)
-  "Fontify and decode X-Symbols in region START...END.
-Fontifies (keywords only) according to the buffer's font lock defaults.
-
-If `pg-use-specials-for-fontify' is set, remove characters
-with top bit set after fontifying so they don't spoil cut and paste,
-unless KEEPSPECIALS is set to override this.
-
-Returns new END value."
-  ;; NB: perhaps we can narrow within the whole function, but there
-  ;; was an earlier problem with doing that.
-  (when proof-output-fontify-enable
-    (let ((normal-font-lock-verbose font-lock-verbose))
-      ;; Temporarily set font-lock defaults
-      (proof-font-lock-set-font-lock-vars)
-      (setq font-lock-verbose nil)	; prevent display glitches in XEmacs
-
-      ;; Yukky hacks to immorally interface with font-lock
-      (unless (featurep 'xemacs)
-	(font-lock-set-defaults))
-      (let ((font-lock-keywords proof-font-lock-keywords))
-	(if (and (featurep 'xemacs)
-		 (>= emacs-major-version 21)
-		 (>= emacs-minor-version 4)
-		 (not font-lock-cache-position))
-	    (progn
-	      (setq font-lock-cache-position (make-marker))
-	      (set-marker font-lock-cache-position 0)))
-	
-	(save-restriction
-	  (narrow-to-region start end)
-	  (run-hooks 'pg-before-fontify-output-hook)
-	  (setq end (point-max)))
-	;; da: protect against "Nesting too deep for parser" in bad XEmacs
-	(condition-case err
-	    (font-lock-default-fontify-region start end nil)
-	  (t (proof-debug 
-	      "Caught condition %s in `font-lock-default-fontify-region'"
-	      (car err)))))
-
-      (save-restriction
-	(narrow-to-region start end)
-	(run-hooks 'pg-after-fontify-output-hook)
-	(setq end (point-max)))
-
-      (prog1 ;; prog1 because we return new END value.
-	  (cond
-	   ((proof-ass unicode-tokens-enable)
-	    ;(unicode-tokens-tokens-to-unicode start end)
-	    ))
-	(proof-font-lock-clear-font-lock-vars)
-	(setq font-lock-verbose normal-font-lock-verbose)))))
 
 (defun pg-remove-specials (&optional start end)
   "Remove special characters in region.  Default to whole buffer.
@@ -479,15 +346,6 @@ Leave point at END."
   (proof-replace-regexp-in-string pg-special-char-regexp "" string))
 
   
-
-;; FIXME todo: add toggle for fontify region which turns it on/off
-
-(defun proof-fontify-buffer ()
-  "Call proof-fontify-region on whole buffer."
-  (proof-fontify-region (point-min) (point-max)))
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -649,7 +507,7 @@ No action if BUF is nil or killed."
 	     ;; that gives much nicer behaviour than XEmacs here.
 	     (display-buffer buf 'not-this-window)
 	   (let ((pop-up-windows t))
-	     (pg-pop-to-buffer buf 'not-this-window 'norecord))))))
+	     (pop-to-buffer buf 'not-this-window 'norecord))))))
   
 
 ;; Originally based on `shrink-window-if-larger-than-buffer', which
@@ -775,8 +633,7 @@ or if the window is the only window of its frame."
     (reporter-submit-bug-report
      "da+pg-bugs@inf.ed.ac.uk"
      "Proof General"
-     (list 'proof-general-version 'proof-assistant
-	   'x-symbol-version)
+     (list 'proof-general-version 'proof-assistant)
      nil nil
      "*** Proof General now uses Trac for project management and bug reporting, please go to:
 ***

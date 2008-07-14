@@ -138,7 +138,6 @@
 (defun thy-add-menus ()
   "Add Lambda-CLAM menu to current menu bar."  
   (require 'proof-script)    
-  (require 'proof-x-symbol)
   (easy-menu-define thy-mode-pg-menu
                     thy-mode-map
                     "PG Menu for Lambda-CLAM Proof General"

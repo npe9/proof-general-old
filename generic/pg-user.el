@@ -90,17 +90,8 @@ you can use the usual `yank' and similar commands to retrieve the
 deleted text."
   (interactive)
   (proof-undo-last-successful-command-1 'delete)
-  ;; FIXME want to do this here for 3.3, for nicer behaviour
-  ;; when deleting.
-  ;; Unfortunately nasty problem with read only flag when
-  ;; inserting at (proof-locked-end) sometimes behaves as if
-  ;; point is inside locked region  (prob because span is
-  ;;  [ ) and not [ ] -- why??).
-  ;; (proof-script-new-command-advance)
-  )
+  (proof-script-new-command-advance))
 
-;; No direct key-binding for this one: C-c C-u was too dangerous,
-;; when used quickly it's too easy to accidently delete!
 (defun proof-undo-last-successful-command-1 (&optional delete)
   "Undo last successful command at end of locked region.
 If optional DELETE is non-nil, the text is also deleted from
@@ -200,16 +191,12 @@ handling of interrupt signals."
   (interactive)
   (let ((cmd (span-at (point) 'type)))
     (if cmd (goto-char (span-end cmd))
-;      (and (re-search-forward "\\S-" nil t)
-;	   (proof-assert-until-point nil 'ignore-proof-process))
       (proof-assert-next-command nil
 				 'ignore-proof-process
 				 'dontmoveforward))
     (skip-chars-backward " \t\n")
     (unless (eq (point) (point-min))
-      ;; should land on terminal char
       (backward-char))))
-
 
 
 ;;
@@ -295,7 +282,7 @@ only an approximate test, or if `proof-strict-state-preserving'
 is off (nil)."
   (interactive
    (list (read-string "Command: "
-		      (if (and current-prefix-arg (region-exists-p))
+		      (if (and current-prefix-arg (region-active-p))
 			  (replace-in-string
 			   (buffer-substring (region-beginning) (region-end))
 			   "[ \t\n]+" " "))
@@ -531,7 +518,7 @@ This is intended as a value for proof-activate-scripting-hook"
 (defun proof-electric-terminator-enable ()
   "Make sure the modeline is updated to display new value for electric terminator."
   ;; TODO: probably even this isn't necessary
-  (redraw-modeline))
+  (force-mode-line-update))
 
 (proof-deftoggle proof-electric-terminator-enable proof-electric-terminator-toggle)
 
@@ -662,19 +649,7 @@ last use time, to discourage saving these into the users database."
 	  (funcall pg-insert-output-as-comment-fn proof-shell-last-output)
 	;; Otherwise the default behaviour is to use comment-region
 	(let  ((beg (point)) end)
-	  ;; pg-assoc-strip-subterm-markup: should be done
-	  ;; for us in proof-fontify-region
 	  (insert proof-shell-last-output)
-	  ;; 3.4: add fontification. Questionable since comments will
-	  ;; probably be re-highlighted, so colouration, especially
-	  ;; based on removed specials, will be lost.
-	  ;; X-Symbol conversion is useful, but a surprising nuisance
-	  ;; to achieve, mainly because x-symbol doesn't give us back
-	  ;; a useful pointer to end of region after converting, and
-	  ;; character positions change.
-	  ;; (FIXME: contact x-sym author about this).
-	  ;; proof-fontify-region does this for us, now
-	  (setq end (proof-fontify-region beg (point)))
 	  (comment-region beg end)))))
 
 
@@ -1070,7 +1045,7 @@ The function `substitute-command-keys' is called on the argument."
 	      (if (featurep 'xemacs)
 		  (when (event-window event)
 		    (select-window (event-window event))
-		    (setq oldend (if (region-exists-p)
+		    (setq oldend (if (region-active-p)
 				     (region-end)))))
 	      (mouse-set-point event)
 	      (setq identifier
@@ -1078,7 +1053,7 @@ The function `substitute-command-keys' is called on the argument."
 		    ;; instead of the identifier under point.  Since
 		    ;; region-end moves immediately to new point with
 		    ;; zmacs-regions we use oldend instead of current.
-		    (if (region-exists-p)
+		    (if (region-active-p)
 			(buffer-substring (region-beginning)
 					  (or oldend (region-end)))
 		     (setq identifier (current-word))))

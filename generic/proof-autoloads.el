@@ -53,7 +53,7 @@ This mode is only useful with a font which can display the maths repertoire.
 ;;;***
 
 ;;;### (autoloads (proof-associated-windows proof-associated-buffers)
-;;;;;;  "pg-assoc" "pg-assoc.el" (18346 18015))
+;;;;;;  "pg-assoc" "pg-assoc.el" (18553 49641))
 ;;; Generated autoloads from pg-assoc.el
 
 (autoload (quote proof-associated-buffers) "pg-assoc" "\
@@ -71,7 +71,7 @@ Dead or nil buffers are not represented in the list.
 ;;;***
 
 ;;;### (autoloads (proof-goals-config-done) "pg-goals" "pg-goals.el"
-;;;;;;  (18552 49542))
+;;;;;;  (18553 49793))
 ;;; Generated autoloads from pg-goals.el
 
 (autoload (quote proof-goals-config-done) "pg-goals" "\
@@ -105,8 +105,8 @@ Send an <askprefs> message to the prover.
 
 ;;;### (autoloads (pg-response-has-error-location proof-next-error
 ;;;;;;  pg-response-display-with-face pg-response-maybe-erase proof-response-config-done
-;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18552
-;;;;;;  49594))
+;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18553
+;;;;;;  50995))
 ;;; Generated autoloads from pg-response.el
 
 (autoload (quote proof-response-mode) "pg-response" "\
@@ -185,7 +185,7 @@ All of these settings are optional.
 ;;;;;;  pg-response-buffers-hint pg-slow-fontify-tracing-hint proof-electric-term-incomment-fn
 ;;;;;;  proof-electric-terminator-enable proof-define-assistant-command-witharg
 ;;;;;;  proof-define-assistant-command proof-interrupt-process) "pg-user"
-;;;;;;  "pg-user.el" (18544 41603))
+;;;;;;  "pg-user.el" (18553 50346))
 ;;; Generated autoloads from pg-user.el
 
 (autoload (quote proof-interrupt-process) "pg-user" "\
@@ -372,7 +372,7 @@ in future if we have just activated it for this buffer.
 
 ;;;### (autoloads (defpacustom proof-defpacustom-fn proof-aux-menu
 ;;;;;;  proof-menu-define-specific proof-menu-define-main proof-menu-define-keys)
-;;;;;;  "proof-menu" "proof-menu.el" (18552 50370))
+;;;;;;  "proof-menu" "proof-menu.el" (18552 52016))
 ;;; Generated autoloads from proof-menu.el
 
 (autoload (quote proof-menu-define-keys) "proof-menu" "\
@@ -437,7 +437,7 @@ in future if we have just activated it for this buffer.
 ;;;### (autoloads (proof-config-done proof-mode proof-insert-sendback-command
 ;;;;;;  proof-insert-pbp-command pg-set-span-helphighlights proof-locked-region-empty-p
 ;;;;;;  proof-locked-region-full-p proof-locked-end proof-unprocessed-begin)
-;;;;;;  "proof-script" "proof-script.el" (18552 50216))
+;;;;;;  "proof-script" "proof-script.el" (18552 52016))
 ;;; Generated autoloads from proof-script.el
 
 (autoload (quote proof-unprocessed-begin) "proof-script" "\
@@ -497,7 +497,7 @@ finish setup which depends on specific proof assistant configuration.
 ;;;;;;  proof-shell-invisible-cmd-get-result proof-shell-invisible-command
 ;;;;;;  proof-shell-wait proof-extend-queue proof-start-queue proof-shell-insert
 ;;;;;;  proof-shell-available-p proof-shell-live-buffer proof-shell-ready-prover)
-;;;;;;  "proof-shell" "proof-shell.el" (18552 49738))
+;;;;;;  "proof-shell" "proof-shell.el" (18553 50538))
 ;;; Generated autoloads from proof-shell.el
 
 (autoload (quote proof-shell-ready-prover) "proof-shell" "\
@@ -665,7 +665,7 @@ Menu made from the Proof General toolbar commands.
 ;;;***
 
 ;;;### (autoloads (proof-unicode-tokens-set-global proof-unicode-tokens-enable)
-;;;;;;  "proof-unicode-tokens" "proof-unicode-tokens.el" (18552 50409))
+;;;;;;  "proof-unicode-tokens" "proof-unicode-tokens.el" (18553 58927))
 ;;; Generated autoloads from proof-unicode-tokens.el
 
 (autoload (quote proof-unicode-tokens-enable) "proof-unicode-tokens" "\
@@ -691,7 +691,7 @@ Turn on/off menu in all script buffers and ensure new buffers follow suit.
 ;;;;;;  "../lib/unicode-chars.el" "../lib/unicode-tokens.el" "../lib/xml-fixed.el"
 ;;;;;;  "comptest.el" "pg-autotest.el" "pg-custom.el" "pg-pbrpm.el"
 ;;;;;;  "pg-vars.el" "proof-auxmodes.el" "proof-config.el" "proof-site.el"
-;;;;;;  "proof-utils.el" "proof.el") (18552 50475 330635))
+;;;;;;  "proof-utils.el" "proof.el") (18553 61885 344133))
 
 ;;;***
 

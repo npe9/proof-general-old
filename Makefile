@@ -71,17 +71,11 @@ FORCE:
 
 ## 
 ## compile : byte compile all lisp files
-##           If EMACS variable has changed since last call, clearout 
-##	     old .elc's and re-compile.
+##
+## Compiling can show up errors in the code, but be wary of fixing obsoletion
+## or argument call warnings unless they're valid for all supported Emacsen.
 ##
 compile: $(EL) 
-	lastemacs=`cat .byte-compile 2>/dev/null || echo `; if [ "$$lastemacs" != "" ] && [ "$$lastemacs" != "$(EMACS)" ]; then rm -f .byte-compile $(ELC) fi
-	make .byte-compile
-
-## Compiling can show up errors in the code, but be wary of fixing obsoletion
-## or argument call warnings unless they're valid for both Emacsen.
-
-.byte-compile: $(EL)
 	@echo "****************************************************************"
 	@echo " Byte compiling... "
 	@echo "****************************************************************"

@@ -671,7 +671,7 @@ happen since one of them is necessarily set to t in coq-syntax.el."
 (defun coq-guess-or-ask-for-string (s &optional dontguess)
   (let ((guess
          (and (not dontguess)
-         (if (region-exists-p) 
+         (if (region-active-p) 
              (buffer-substring-no-properties (region-beginning) (region-end))
            (thing-at-point 'symbol)))))
     (read-string 

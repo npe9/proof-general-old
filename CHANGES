@@ -1,5 +1,18 @@
 -*- outline -*-  
 
+* Summary of Changes for Proof General 4.0 from 3.7.X
+
+** Generic changes
+
+*** XEmacs is no longer supported; PG only works with GNU Emacs 22+
+*** Font-lock based Unicode Tokens mode replaces X-Symbol
+*** X-Symbol is no longer used and bundled
+*** Removed configuration options:
+
+
+
+
+
 * Summary of Changes for Proof General 3.7.1 from 3.7
 
 ** Generic changes
