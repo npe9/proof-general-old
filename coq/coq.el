@@ -894,7 +894,7 @@ This is specific to `coq-mode'."
   (set (make-local-variable 'comment-quote-nested) nil) ;; we can cope with nested comments
 
   ;; font-lock
-  (setq font-lock-keywords coq-font-lock-keywords-1)
+  (setq proof-script-font-lock-keywords coq-font-lock-keywords-1)
   ;;holes
   (holes-mode 1)
 
@@ -998,7 +998,8 @@ To be used in `proof-shell-process-output-system-specific'."
    )
   
   (coq-init-syntax-table)
-  (setq font-lock-keywords coq-font-lock-keywords-1)
+  ; da: suggest no fontification in shell
+  ;(setq font-lock-defaults 'coq-font-lock-keywords-1)
   (holes-mode 1)
   (proof-shell-config-done)
   )
@@ -1007,12 +1008,12 @@ To be used in `proof-shell-process-output-system-specific'."
   (setq pg-goals-change-goal "Show %s . ")
   (setq pg-goals-error-regexp coq-error-regexp)
   (coq-init-syntax-table)
-  (setq font-lock-keywords coq-font-lock-keywords-1)
+  (setq proof-goals-font-lock-keywords coq-font-lock-keywords-1)
   (proof-goals-config-done))
 
 (defun coq-response-config ()
   (coq-init-syntax-table)
-  (setq font-lock-keywords coq-font-lock-keywords-1)
+  (setq proof-response-font-lock-keywords coq-font-lock-keywords-1)
   (proof-response-config-done))
 
 
@@ -1530,36 +1531,6 @@ buffer."
         (set-buffer proof-script-buffer)
         (goto-char (+ (proof-locked-end) 1))
         (coq-find-real-start)
-        ;; Here start som ugly code to adapt pos and lgth to x-symbol
-        (when (and (boundp 'x-symbol-mode) x-symbol-mode)
-          (let*
-              ((comstart (point))
-               (comend (coq-find-command-end-forward))
-               (reg1 100) (reg2 101) errpoint
-                ;(x-symbol-encode-string (coq-command-at-point) (proof-script-buffer)))
-;               (s2 (substring s 0 pos))
-;               (s3 (x-symbol-decode))
-               )
-            ; remove x-symbols
-            (x-symbol-encode comstart comend)
-            ;; update comend
-            (setq comend (progn (goto-char comstart) (coq-find-command-end-forward)) )
-            ;; go to error start and put register at start and end of error
-            (goto-char comstart) (forward-char pos)
-            (point-to-register reg1)
-            (forward-char lgth)
-            (point-to-register reg2)
-            ;; put symbols back, registers are moved accordingly
-            (x-symbol-decode-recode comstart comend)
-            (register-to-point reg1)
-            (setq errpoint (point))
-            ;; adapt pos
-            (setq pos (- (point) comstart))
-            (register-to-point reg2)
-            ;; adapt lgth
-            (setq lgth (- (point) errpoint))
-            ;; go back at command start
-            (goto-char comstart))) ;(setq legth ??))
 
         ; coq error positions are in byte, not in chars, so translate
         ; for utf-8 error message
