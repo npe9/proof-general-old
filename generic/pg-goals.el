@@ -95,7 +95,7 @@ May enable proof-by-pointing or similar features.
 ;; Goals buffer processing
 ;;
 (defun pg-goals-display (string)
-  "Display STRING in the proof-goals-buffer, properly marked up.
+  "Display STRING in the `proof-goals-buffer', properly marked up.
 Converts term substructure markup into mouse-highlighted extents."
   (save-excursion
     ;; Response buffer may be out of date. It may contain (error)

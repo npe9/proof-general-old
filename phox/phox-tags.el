@@ -38,12 +38,7 @@
 (defun phox-tags-reset-table()
   "Set tags-table-list to nil."
   (interactive)
-;  (make-local-variable 'tags-table-list)
-  (if (featurep 'xemacs)
-      (progn
-	(setq tag-table-alist (remassoc buffer-file-name tag-table-alist)))
-    (setq tags-table-list nil))
-  )
+  (setq tags-table-list nil))
 
 (defun phox-tags-add-doc-table()
   "Add tags in text documentation."

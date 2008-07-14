@@ -1,4 +1,4 @@
-;; pg-user.el --- User level commands for Proof General
+;;; pg-user.el --- User level commands for Proof General
 ;;
 ;; Copyright (C) 2000-2008 LFCS Edinburgh.
 ;; Author:     David Aspinall and others
@@ -29,7 +29,9 @@
 ;;
 
 (defmacro proof-maybe-save-point (&rest body)
-  "Save point according to proof-follow-mode, execute BODY."
+  "Save point according to `proof-follow-mode', execute BODY."
+  ;; FIXME: This duplicates the code of the body, which isn't wrong but
+  ;; is undesirable.
   `(if (eq proof-follow-mode 'locked)
        (progn
 	 ,@body)
@@ -347,8 +349,8 @@ a proof command."
 ;;; Non-scripting proof assistant commands.
 ;;;
 
-;;; These are based on defcustom'd settings so that users may
-;;; re-configure the system to their liking.
+;; These are based on defcustom'd settings so that users may 
+;; re-configure the system to their liking.
 
 
 ;; FIXME: da: add more general function for inserting into the
@@ -1333,4 +1335,4 @@ removed if it matches the last item in the ring."
 
 
 (provide 'pg-user)
-;;; pg-user.el ends here
+;;; pg-user.el ends here.

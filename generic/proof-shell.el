@@ -1461,7 +1461,7 @@ however, are always processed; hence their name)."
 	(if proof-shell-wakeup-char
 	    ;; NB: this match doesn't work in emacs-mule, darn.
 	    ;; (string-match (char-to-string proof-shell-wakeup-char) str))
-	    ;; NB: this match doesn't work in FSF emacs 20.5, darn.
+	    ;; NB: this match doesn't work in GNU Emacs 20.5, darn.
 	    ;; (find proof-shell-wakeup-char str)
 	    ;; So let's use both tests!
 	    (or

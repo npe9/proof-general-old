@@ -437,9 +437,18 @@ Ensure that point is visible in window."
 		(skip-chars-backward "\n\t "))
 	      ;; Ensure point visible.  Again, window may have died
 	      ;; inside shrink to fit, for some reason
-	      (if (window-live-p window)
-		  (unless (pos-visible-in-window-p (point) window)
-		    (recenter -1)))))))))
+	      (when (window-live-p window)
+                (unless (pos-visible-in-window-p (point) window)
+                  (recenter -1))
+                (with-current-buffer buffer
+                  (if (window-bottom-p window)
+                      (unless (local-variable-p 'mode-line-format)
+                        ;; Don't show any mode line.
+                        (set (make-local-variable 'mode-line-format) nil))
+                    (unless mode-line-format
+                      ;; If the buffer gets displayed elsewhere, re-add
+                      ;; the modeline.
+                      (kill-local-variable 'mode-line-format)))))))))))
 
 (defun proof-clean-buffer (buffer)
   "Erase buffer and hide from display if proof-delete-empty-windows set.
@@ -561,20 +570,29 @@ or if the window is the only window of its frame."
 	  ;;; ((cur-height (window-height window))
 	   ;; Most window is allowed to grow to
 	  ((max-height
-	    (/ (frame-height (window-frame window))
-	       (if proof-three-window-enable
-		   ;; we're in three-window-mode with
-		   ;; all horizontal splits, so share the height.
-		   3
-		 ;; Otherwise assume a half-and-half split
-		 2)))
-	   ;; If buffer ends with a newline, ignore it when counting
-	   ;; height unless point is after it.
-	   (extraline
-	    (if (and (not (eobp))
-		     (eq ?\n (char-after (1- (point-max)))))
-		1 0))
-	   (test-pos (- (point-max) extraline))
+             (/ (frame-height (window-frame window))
+                (if proof-three-window-enable
+                    ;; we're in three-window-mode with
+                    ;; all horizontal splits, so share the height.
+                    3
+                  ;; Otherwise assume a half-and-half split.
+                  2)))
+           ;; I find that I'm willing to use a bit more than the max in
+           ;; those cases where it allows me to see the whole
+           ;; response/goal.  --Stef
+           (absolute-max-height
+	    (truncate
+             (/ (frame-height (window-frame window))
+                (if proof-three-window-enable
+                    ;; we're in three-window-mode with
+                    ;; all horizontal splits, so share the height.
+                    2
+                  ;; Otherwise assume a half-and-half split.
+                  1.5))))
+	   ;; If buffer ends with a newline and point is right after it, then
+           ;; add a final empty line (to display the cursor).
+	   (extraline (if (and (eobp) (bolp)) 1 0))
+	   ;; (test-pos (- (point-max) extraline))
 	   ;; Direction of resizing based on whether max position is
 	   ;; currently visible.  [ FIXME: not completely sensible:
 	   ;; may be displaying end fraction of buffer! ]
@@ -585,10 +603,14 @@ or if the window is the only window of its frame."
 	    ;; buffers?  Probably not an issue for us, but one
 	    ;; wonders at the shrink to fit strategy.
 	    ;; NB: way to calculate pixel fraction?
-	    (+ extraline 1 (count-lines (point-min) (point-max)))))
+	    (+ extraline (count-lines (point-min) (point-max)))))
 	;; Let's shrink or expand.  Uses new GNU Emacs function.
 	(let ((window-size-fixed nil))
-	  (set-window-text-height window desired-height))
+	  (set-window-text-height window
+                                  ;; As explained earlier: use abs-max-height
+                                  ;; but only if that makes it display all.
+                                  (if (> desired-height absolute-max-height)
+                                      max-height desired-height)))
 ;; 	(cond
 ;; 	 ((and shrink
 ;; 	       (> cur-height window-min-height)
@@ -610,7 +632,7 @@ or if the window is the only window of its frame."
 	;; check for robustness.
 	(if (window-live-p window)
 	    (progn
-	      (if (>= (window-height window) desired-height)
+	      (if (>= (window-text-height window) desired-height)
 		  (set-window-start window (point-min)))
 	      ;; window-size-fixed is a GNU Emacs buffer local variable
 	      ;; which determines window size of buffer.

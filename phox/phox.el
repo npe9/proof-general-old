@@ -7,7 +7,7 @@
 
 (eval-after-load "pg-custom"
   '(setq phox-toolbar-entries
-    (remassoc 'context phox-toolbar-entries)))
+    (assq-delete-all 'context phox-toolbar-entries)))
 
 
 ;; ======== User settings for PhoX ========

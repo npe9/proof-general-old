@@ -9,6 +9,8 @@
 
 ;; XEmacs-Emacs compatibility: define "spans" in terms of overlays.
 
+(eval-when-compile (require 'cl))       ;For lexical-let.
+
 (defalias 'span-start 'overlay-start)
 (defalias 'span-end 'overlay-end)
 (defalias 'span-set-property 'overlay-put)
@@ -21,6 +23,7 @@
 (defun span-read-only-hook (overlay after start end &optional len)
   (unless inhibit-read-only
     (error "Region is read-only")))
+(add-to-list 'debug-ignored-errors "Region is read-only")
 
 (defun span-read-only (span)
   "Set SPAN to be read only."
@@ -47,10 +50,14 @@
   "Give a warning message."
   (message "You should not edit here!"))
 
-(defun span-write-warning (span)
+(defun span-write-warning (span &optional fun)
   "Give a warning message when SPAN is changed."
-  (span-set-property span 'modification-hooks '(span-give-warning))
-  (span-set-property span 'insert-in-front-hooks '(span-give-warning)))
+  (unless fun (setq fun 'span-give-warning))
+  (lexical-let ((fun fun))
+    (let ((funs (list (lambda (span afterp beg end &rest args)
+                        (if (not afterp) (funcall fun beg end))))))
+      (span-set-property span 'modification-hooks funs)
+      (span-set-property span 'insert-in-front-hooks funs))))
 
 ;; We use end first because proof-locked-queue is often changed, and
 ;; its starting point is always 1

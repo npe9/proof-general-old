@@ -33,11 +33,7 @@
   "Set SPAN to be writeable."
   (span-set-property span 'read-only nil))
 
-(defun span-give-warning (&rest args)
-  "Give a warning message."
-  (message "You should not edit here!"))
-
-(defun span-write-warning (span)
+(defun span-write-warning (span &optional fun)
   "Give a warning message when SPAN is changed."
   ;; FIXME: implement this in XEmacs, perhaps with after-change-functions
   (span-set-property span 'read-only nil))

@@ -636,7 +636,7 @@ the standard Proof General buttons.
 Here's an example of how to remove a button, from @file{af2.el}:
 @lisp
 (setq af2-toolbar-entries
-      (remassoc 'state af2-toolbar-entries))
+      (assq-delete-all 'state af2-toolbar-entries))
 @end lisp
 
 

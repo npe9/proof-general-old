@@ -58,7 +58,7 @@ See -k option for Isabelle interface script."
 
 (eval-after-load "pg-custom"
   '(setq isar-toolbar-entries
-	 (remassoc 'qed (remassoc 'goal isar-toolbar-entries))))
+	 (assq-delete-all 'qed (assq-delete-all 'goal isar-toolbar-entries))))
 
 
 (defun isar-strip-terminators ()
@@ -545,10 +545,10 @@ Checks the width in the `proof-goals-buffer'"
   (isar-mode-config-set-variables)
   (isar-init-syntax-table)
   (setq proof-script-font-lock-keywords isar-font-lock-keywords-1)
-  (setq comment-quote-nested nil) ;; can cope with nested comments
+  (set (make-local-variable 'comment-quote-nested) nil) ;; can cope with nested comments
   (set (make-local-variable 'outline-regexp) isar-outline-regexp)
   (set (make-local-variable 'outline-heading-end-regexp) isar-outline-heading-end-regexp)
-  (setq blink-matching-paren-dont-ignore-comments t)
+  (set (make-local-variable 'blink-matching-paren-dont-ignore-comments) t)
   (add-hook 'proof-shell-insert-hook 'isar-preprocessing)
   (proof-config-done))
 

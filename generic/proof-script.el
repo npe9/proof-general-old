@@ -180,12 +180,18 @@ scripting buffer may have an active queue span.")
 
 ;; ** Getters and setters
 
+(defun proof-span-give-warning (&rest args)
+  "Give a warning message."
+  (message "You should not edit here!"))
+
 (defun proof-span-read-only (span &optional always)
   "Make SPAN be read-only according to `proof-strict-read-only' or ALWAYS."
-  (if (or always proof-strict-read-only)
+  (if (or always (not (memq proof-strict-read-only '(nil retract))))
       (span-read-only span)
-    (span-read-write span)
-    (span-write-warning span)))
+    (span-write-warning span
+                        (if (eq proof-strict-read-only 'retract)
+                            'proof-retract-before-change
+                          'proof-span-give-warning))))
 
 (defun proof-strict-read-only ()
   "Set locked spans in script buffers according to `proof-strict-read-only'."
@@ -201,8 +207,22 @@ scripting buffer may have an active queue span.")
  ((fboundp 'undo-make-selective-list)
   (defsubst proof-set-queue-endpoints (start end)
   "Set the queue span to be START, END. Discard undo for edits before END."
-  (unless (or (eq buffer-undo-list t) 
-	      proof-allow-undo-in-read-only)
+  (unless (or (eq buffer-undo-list t)
+	      ;; FIXME: Stefan Monnier writes:
+              ;; This feature simply doesn't work well:
+              ;; - it discards undo info before knowing whether the command
+              ;;   succeeds, so if it fails, the undo info corresponding to
+              ;;   a still-writable region is lost.  Worse yet: this region
+              ;;   is the region on which the user is actively working, so
+              ;;   it's where undo is most important.
+              ;; - even when it does what it's supposed to do, it's not what
+              ;;   we want because the undo info is not recovered when we
+              ;;   retract.
+              ;; I.e. it's the wrong place to do it.  Better would be to rebind
+              ;; C-x u and C-/ and C-_ to a command that only applies to the
+              ;; writable part of the buffer.
+              t ;; proof-allow-undo-in-read-only
+              )
     (setq buffer-undo-list 
 	  (undo-make-selective-list end (point-max))))
   (span-set-endpoints proof-queue-span start end)))
@@ -1634,11 +1654,12 @@ to the function which parses the script segment by segment."
 		;; coalescing a separate configuration option, but
 		;; it works well used in tandem with the fly-past
 		;; behaviour.
-		(if (and proof-script-fly-past-comments
-			 (eq type 'comment)
-			 (eq prevtype 'comment))
-		    (setq segs (cons seg (cdr segs)))
-		  (setq segs (cons seg segs)))
+		(setq segs (cons seg
+				 (if (and proof-script-fly-past-comments
+					  (eq type 'comment)
+					  (eq prevtype 'comment))
+				     (cdr segs)
+				   segs)))
 		;; Update state
 		(setq cur (point))
 		(setq prevtype type)))))
@@ -2140,13 +2161,13 @@ a space or newline will be inserted automatically."
   (or ignore-proof-process-p
       (if (proof-locked-region-full-p)
 	  (error "Locked region is full, no more commands to do!")))
-  (let ((semis))
-    (save-excursion
-      ;; CHANGE from old proof-assert-until-point: don't bother check
-      ;; for non-whitespace between locked region and point.
-      ;; CHANGE: ask proof-segment-up-to to scan until command end
-      ;; (which it used to do anyway, except in the case of a comment)
-      (setq semis (proof-segment-up-to (point) t)))
+  (let ((semis
+	 (save-excursion
+	   ;; CHANGE from old proof-assert-until-point: don't bother check
+	   ;; for non-whitespace between locked region and point.
+	   ;; CHANGE: ask proof-segment-up-to to scan until command end
+	   ;; (which it used to do anyway, except in the case of a comment)
+	   (proof-segment-up-to (point) t))))
     ;; old code:
     ;;(if (not (re-search-backward "\\S-" (proof-unprocessed-begin) t))
     ;;	  (progn (goto-char pt)
@@ -2170,6 +2191,13 @@ a space or newline will be inserted automatically."
 	  (if for-new-command
 	      (proof-script-new-command-advance)
 	    (proof-script-next-command-advance))))))
+
+(defun proof-retract-before-change (beg end)
+  "For use in `before-change-functions'."
+  (and (> (proof-queue-or-locked-end) beg)
+       (save-excursion
+         (goto-char beg)
+         (proof-retract-until-point))))
 
 (defun proof-goto-point ()
   "Assert or retract to the command at current position.
@@ -2588,14 +2616,16 @@ assistant."
   (unless proof-script-comment-start-regexp
     (setq proof-script-comment-start-regexp (regexp-quote proof-script-comment-start)))
   (unless proof-script-comment-end-regexp
-    (setq proof-script-comment-end-regexp 
+    (setq proof-script-comment-end-regexp
 	  (if (string-equal "" proof-script-comment-end)
 	      (regexp-quote "\n") ;; end-of-line terminated comments
 	    (regexp-quote proof-script-comment-end))))
 
   (make-local-variable 'comment-start-skip)
   (setq comment-start-skip
-    (concat proof-script-comment-start-regexp "+\\s_?")))
+	(if (string-equal "" proof-script-comment-end)
+	    (regexp-quote "\n") ;; end-of-line terminated comments
+	  (regexp-quote proof-script-comment-end))))
   
 
 

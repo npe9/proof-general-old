@@ -116,15 +116,15 @@
 ;; Remove redundant toolbar buttons
 
 (setq lclam-toolbar-entries
-      (remassoc 'state lclam-toolbar-entries))
+      (assq-delete-all 'state lclam-toolbar-entries))
 (setq lclam-toolbar-entries
-      (remassoc 'context lclam-toolbar-entries))
+      (assq-delete-all 'context lclam-toolbar-entries))
 (setq lclam-toolbar-entries
-      (remassoc 'undo lclam-toolbar-entries))
+      (assq-delete-all 'undo lclam-toolbar-entries))
 (setq lclam-toolbar-entries
-      (remassoc 'retract lclam-toolbar-entries))
+      (assq-delete-all 'retract lclam-toolbar-entries))
 (setq lclam-toolbar-entries
-      (remassoc 'qed lclam-toolbar-entries))
+      (assq-delete-all 'qed lclam-toolbar-entries))
 
 ;;
 ;; ============ Theory file mode ==============

@@ -573,6 +573,8 @@ Sets `holes-active-hole' to the next hole if it exists."
   (holes-replace-update-active-hole "")
   )
 
+
+;;;###autoload
 (defun holes-set-make-active-hole (&optional start end)
   "Make a new hole between START and END or at point, and make it active."
 
@@ -842,6 +844,7 @@ created.  Return the number of holes created."
 
 
 
+;;;###autoload
 (defun holes-abbrev-complete ()
   "Complete abbrev by putting holes and indenting.
 Moves point at beginning of expanded text.  Put this function as
@@ -850,7 +853,7 @@ become holes."
   (holes-replace-string-by-holes-backward-jump last-abbrev-location))
 
 
-
+;;;###autoload
 (defun holes-insert-and-expand (s)
   "Insert S, expand it and replace #s and @{]s by holes."
   ;; insert the expansion of abbrev s, and replace #s by holes.  It was

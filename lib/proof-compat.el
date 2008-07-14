@@ -217,6 +217,11 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
       (>= (nth 2 (window-edges window))
 	  (frame-width (window-frame window)))))
 
+(or (fboundp 'window-bottom-p)
+    (defun window-bottom-p (window)
+      (>= (nth 3 (window-edges window))
+	  (frame-height (window-frame window)))))
+
 ;; with-selected-window from XEmacs 21.4.12
 (or (fboundp 'with-selected-window)
 (defmacro with-selected-window (window &rest body)

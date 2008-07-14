@@ -182,11 +182,11 @@ without adjusting window layout."
 		    (vector
 		     (concat proof-assistant " information")
 		     'proof-help
-		     menuvisiblep proof-info-command)
+		     :visible proof-info-command)
 		    (vector
 		     (concat proof-assistant " web page")
 		     '(browse-url proof-assistant-home-page)
-		     menuvisiblep proof-assistant-home-page))
+		     :visible proof-assistant-home-page))
 		   (proof-ass help-menu-entries))))))))
 
 (defun proof-assistant-menu-update ()
@@ -297,7 +297,7 @@ without adjusting window layout."
      :selected proof-electric-terminator-enable
      :help "Automatically send commands as typed"]
      ["Fly Past Comments" proof-script-fly-past-comments-toggle
-      ,menuvisiblep (not proof-script-use-old-parser)
+      :visible (not proof-script-use-old-parser)
       :style toggle
       :selected proof-script-fly-past-comments
       :help "Coalesce and skip over successive comments"]
@@ -825,7 +825,7 @@ KEY is the optional key binding."
 	   (proof-assistant-settings-cmd (quote ,name)))))))
     (setq proof-assistant-settings
 	  (cons (list name setting (eval type)) 
-		(remassoc name proof-assistant-settings)))))
+		(assq-delete-all name proof-assistant-settings)))))
 
 ;;;###autoload
 (defmacro defpacustom (name val &rest args)

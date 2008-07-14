@@ -180,7 +180,7 @@ done if this `proof-strict-state-preserving' is turned off (nil)."
 If non-nil, an error is given when an attempt is made to edit the
 read-only region.  If nil, Proof General is more relaxed (but may give
 you a reprimand!)."
-  :type  'boolean
+  :type  '(choice (const strict) (const retract) (const nil))
   :set   'proof-set-value
   :group 'proof-user-options)
 
@@ -346,7 +346,7 @@ If 'followdown, point if necessary to stay in writeable region
 If 'ignore, point is never moved after movement commands or on errors.
 
 If you choose 'ignore, you can find the end of the locked using
-`M-x proof-goto-end-of-locked'."
+\\[proof-goto-end-of-locked]"
   :type '(choice
 	  (const :tag "Follow locked region" locked)
 	  (const :tag "Follow locked region down" followdown)
