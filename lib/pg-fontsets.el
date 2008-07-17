@@ -61,5 +61,5 @@ gnu-unifont:-*-%F-medium-r-normal--%S-*-*-*-*-*-iso10646-1"
 (pg-fontsets-make-fontsets)
 
 
-
+(provide 'pg-fontsets)
 ;;; pg-fontsets.el ends here
