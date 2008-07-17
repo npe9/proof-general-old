@@ -104,8 +104,7 @@ See -k option for Isabelle interface script."
    proof-string-start-regexp    isar-string-start-regexp
    proof-string-end-regexp      isar-string-end-regexp
 
-   ;; Next few used for func-menu and recognizing goal..save regions in
-   ;; script buffer.
+   ;; For func-menu and finding goal..save regions
    proof-save-command-regexp    isar-save-command-regexp
    proof-goal-command-regexp    isar-goal-command-regexp
    proof-goal-with-hole-regexp  isar-named-entity-regexp
@@ -340,14 +339,15 @@ proof-shell-retract-files-regexp."
 
 (defpgdefault menu-entries
   (append
-   (list isabelle-logics-menu)
+   (list isabelle-logics-menu-entries)
    (list
     (cons "Commands"
           (list
            ["refute"             isar-cmd-refute         t]
            ["quickcheck"         isar-cmd-quickcheck     t]
            ["sledgehammer"       isar-cmd-sledgehammer   t]
-	   ["display draft"	 isar-cmd-display-draft  t])))
+	   ["display draft"	 isar-cmd-display-draft  t]
+	   ["set isatool"        (isa-set-isatool-command 't) t])))
    (list
     (cons "Show me ..."
           (list
@@ -366,6 +366,8 @@ proof-shell-retract-files-regexp."
            ["commands"           isar-help-commands       t]
            ["inner syntax"       isar-help-syntax         t]
            ["methods"            isar-help-methods        t])))))
+
+(defpgdefault help-menu-entries isabelle-docs-menu)
 
 ;; undo proof commands
 (defun isar-count-undos (span)
