@@ -33,6 +33,7 @@
      control-char-format-regexp
      control-regions
      control-characters))
+  (unicode-tokens-initialise)
   (setq proof-unicode-tokens-initialised t))
   
 ;;;###autoload
@@ -55,16 +56,26 @@ in future if we have just activated it for this buffer."
 Turn on/off menu in all script buffers and ensure new buffers follow suit."
   (unless proof-unicode-tokens-initialised 
       (proof-unicode-tokens-init))
+  ;; TODO: add hook also for associated buffer modes (sheesh)
   (let ((hook (proof-ass-sym mode-hook)))
     (if flag
 	(add-hook hook 'unicode-tokens-mode)
       (remove-hook hook 'unicode-tokens-mode))
     (proof-map-buffers 
-      (proof-buffers-in-mode proof-mode-for-script)
+      (append
+       (proof-buffers-in-mode proof-mode-for-script)
+       (proof-associated-buffers)
+       (proof-buffers-in-mode proof-tokens-extra-modes))
       (unicode-tokens-mode (if flag 1 0)))
-    ;(proof-unicode-tokens-shell-config)
-    ))
-
+    ;; send command to prover to change output mode
+    (if (proof-shell-live-buffer)
+	(cond 
+	 ((and proof-tokens-activate-command flag)
+	  (proof-shell-invisible-command-invisible-result
+	   proof-tokens-activate-command))
+	 ((and proof-tokens-deactivate-command flag)
+	  (proof-shell-invisible-command-invisible-result
+	   proof-tokens-deactivate-command))))))
   
 ;;;
 ;;; Interface to custom to dynamically change tables (via proof-set-value)
@@ -98,18 +109,18 @@ Updates the input mapping for reading shortcuts."
 
 
 (defun proof-unicode-tokens-activate-prover ()
-  (when (and proof-xsym-activate-command 
+  (when (and proof-tokens-activate-command 
 	     (proof-shell-live-buffer)
 	     (proof-shell-available-p))
     (proof-shell-invisible-command-invisible-result
-     proof-xsym-activate-command)))
+     proof-tokens-activate-command)))
 
 (defun proof-unicode-tokens-deactivate-prover ()
-  (when (and proof-xsym-deactivate-command 
+  (when (and proof-tokens-deactivate-command 
 	     (proof-shell-live-buffer)
 	     (proof-shell-available-p))
     (proof-shell-invisible-command-invisible-result
-     proof-xsym-deactivate-command)))
+     proof-tokens-deactivate-command)))
 
 ;;; NB: we shouldn't bother load this if it's not enabled.
 ;; ;;;###autoload
