@@ -26,9 +26,7 @@
 ;;
 (eval-and-compile 
   (defun pg-emacs-version-cookie ()
-    (format (if (string-match "XEmacs" emacs-version) 
-		;; (featurep 'xemacs) gets optimised!!
-		"XEmacs %d.%d" "GNU Emacs %d.%d")
+    (format "GNU Emacs %d.%d"
 	    emacs-major-version emacs-minor-version))
   
   (defconst pg-compiled-for 
@@ -36,7 +34,8 @@
     "Version of Emacs we're compiled for (or running on, if interpreted)."))
 
 (if (or (not (boundp 'emacs-major-version))
-	(< emacs-major-version 21))
+	(< emacs-major-version 22)
+	(string-match "XEmacs" emacs-version))
     (error "Proof General is not compatible with Emacs %s" emacs-version))
 
 (unless (equal pg-compiled-for (pg-emacs-version-cookie))
@@ -489,41 +488,24 @@ The warning is coloured with proof-warning-face."
 If proof-general-debug is nil, do nothing."
   (if proof-general-debug
       (let ((formatted (apply 'format msg args)))
-	(if (fboundp 'display-warning) ;; use builtin warning system in XEmacs
-	    (display-warning 'proof-general formatted 'info)
-	  ;; otherwise use response buffer with dedicated font, & display it
-	  (progn
-	    (pg-response-display-with-face formatted 'proof-debug-message-face)
-	    (proof-display-and-keep-buffer proof-response-buffer))))))
+	(display-warning 'proof-general formatted 'info))))
 
 
-;;; A handy utility function used in the "Buffers" menu, and throughout
-;; the code.
+;; Utility used in the "Buffers" menu, and throughout
 (defun proof-switch-to-buffer (buf &optional noselect)
   "Switch to or display buffer BUF in other window unless already displayed.
 If optional arg NOSELECT is true, don't switch, only display it.
 No action if BUF is nil or killed."
-  ;; Maybe this needs to be more sophisticated, using
-  ;; proof-display-and-keep-buffer ?
-  (and (buffer-live-p buf)
+  (and (buffer-live-p buf) ; maybe use proof-display-and-keep-buffer ?
        (unless (eq buf (window-buffer (selected-window)))
 	 (if noselect
-	     ;; FIXME: would like 'norecord arg here to override
-	     ;; previous window entering top of MRU list here.
-	     ;; In fact, this could be hacked in XEmacs code.
-	     ;; GNU Emacs seems *not* to put previously displayed
-	     ;; window onto the top of the list with record-buffer:
-	     ;; that gives much nicer behaviour than XEmacs here.
 	     (display-buffer buf 'not-this-window)
 	   (let ((pop-up-windows t))
 	     (pop-to-buffer buf 'not-this-window 'norecord))))))
   
 
 ;; Originally based on `shrink-window-if-larger-than-buffer', which
-;; has a pretty wierd implementation.
-;; TODO: desirable improvements would be to add some crafty history based
-;; on user resize-events.  E.g. user resizes window, that becomes the
-;; new maximum size.
+;; has a pretty weird implementation.
 ;; FIXME: GNU Emacs has useful "window-size-fixed" which we use
 ;; HOWEVER, it's still not quite the right thing, it seems to me.
 ;; We'd like to specifiy a *minimum size* for a given buffer,
@@ -611,25 +593,6 @@ or if the window is the only window of its frame."
                                   ;; but only if that makes it display all.
                                   (if (> desired-height absolute-max-height)
                                       max-height desired-height)))
-;; 	(cond
-;; 	 ((and shrink
-;; 	       (> cur-height window-min-height)
-;; 	       ;; don't shrink if already too big; leave where it is
-;; 	       (< cur-height max-height))
-;; 	  (with-selected-window
-;; 	   window
-;; 	   (shrink-window (- cur-height (max window-min-height desired-height)))))
-;; 	 (;; expand
-;; 	  (< cur-height max-height)
-;; 	  (with-selected-window window
-;; 	   (enlarge-window
-;; 	    (- (min max-height desired-height) cur-height)))))
-	;; If we're at least the desirable height, it must be that the
-	;; whole buffer can be seen --- so make sure display starts at
-	;; beginning.
-	;; NB: shrinking windows can sometimes delete them
-	;; (although we don't want it to here!), but make this next
-	;; check for robustness.
 	(if (window-live-p window)
 	    (progn
 	      (if (>= (window-text-height window) desired-height)
