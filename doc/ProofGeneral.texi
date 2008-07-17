@@ -1744,8 +1744,8 @@ cursor between buffers.
 The mouse bindings are these:
 
 @table @kbd
-@item button2
-@code{pg-goals-button-action}
+@c @item button2
+@c FIXME: @code{pg-goals-button-action}
 @item C-button2
 @code{proof-undo-and-delete-last-successful-command}
 @item button3
@@ -1768,7 +1768,7 @@ single step in the proof script.  However, if the proof is later
 replayed (without using PBP), the proof-by-pointing constructions will
 be considered as separate proof commands, as usual.
 
-@c TEXI DOCSTRING MAGIC: pg-goals-button-action
+@c TEXI FIXME DOCSTRING MAGIC: pg-goals-button-action
 @deffn Command pg-goals-button-action event
 Construct a proof-by-pointing command based on the mouse-click @var{event}.@*
 This function should be bound to a mouse button in the Proof General
@@ -1794,7 +1794,7 @@ The right-hand mouse button provides this convenient way to copy
 subterms from the goals buffer, using the function
 @code{pg-goals-yank-subterm}.
 
-@c TEXI DOCSTRING MAGIC: pg-goals-yank-subterm
+@c TEXI FIXME DOCSTRING MAGIC: pg-goals-yank-subterm
 @deffn Command pg-goals-yank-subterm event
 Copy the subterm indicated by the mouse-click @var{event}.@*
 This function should be bound to a mouse button in the Proof General
@@ -2302,7 +2302,7 @@ used to display the menus (which depends on the Emacs version, toolkit
 and platform!).
 
 The second mechanism has been written specially for Proof General, to
-provide some backward compatibility with X-Symbol.  This is
+provide backward compatibility with X-Symbol.  This is
 the @b{Unicode Tokens} minor mode.
 @example
   Proof-General -> Options -> Unicode Tokens
@@ -2314,8 +2314,7 @@ ASCII encoding, but be displayed and edited with real symbols.
 
 The mechanism is based on Font Lock, using the @code{composition} text
 property to display token sequences as something else.  This means that
-the underlying buffer text is not altered.  This is similar to the way
-that X-Symbol worked. 
+the underlying buffer text is not altered.  
 
 @c @kindex C-,
 @c @kindex C-.
@@ -2926,9 +2925,9 @@ The default value is @code{nil}.
 
 @c TEXI DOCSTRING MAGIC: proof-prog-name-guess
 @defopt proof-prog-name-guess 
-If non-nil, use @samp{@code{proof-guess-command-line}} to guess @code{proof-prog-name}.@*
-This option is compatible with @code{proof-prog-name-ask}.
-No effect if @code{proof-guess-command-line} is nil.
+If non-nil, use @samp{@code{proof-guess-command-line}} to guess @samp{@code{proof-prog-name}}.@*
+This option is compatible with @samp{@code{proof-prog-name-ask}}.
+No effect if @samp{@code{proof-guess-command-line}} is nil.
 
 The default value is @code{nil}.
 @end defopt
@@ -2989,7 +2988,7 @@ If @code{'followdown}, point if necessary to stay in writeable region
 If @code{'ignore}, point is never moved after movement commands or on errors.
 
 If you choose @code{'ignore}, you can find the end of the locked using
-@samp{M-x @code{proof-goto-end-of-locked}}.
+M-x @code{proof-goto-end-of-locked}
 
 The default value is @code{locked}.
 @end defopt
@@ -3233,25 +3232,26 @@ declarations such as those above.  By default, @kbd{C-n} is
 @code{next-line} and @kbd{C-b} is @code{backward-char-command}; neither
 are really needed if you have working cursor keys.
 
-If you're using XEmacs and your keyboard has a @i{super} modifier (on my
-PC keyboard it has a Windows symbol and is next to the control key), you
-can freely bind keys on that modifier globally (since none are used
-by default).  Use lisp like this:
-@lisp
-(global-set-key [(super l)] 'x-symbol-INSERT-lambda)
-(global-set-key [(super n)] 'x-symbol-INSERT-notsign)
-(global-set-key [(super a)] 'x-symbol-INSERT-logicaland)
-(global-set-key [(super o)] 'x-symbol-INSERT-logicalor)
-(global-set-key [(super f)] 'x-symbol-INSERT-universal1)
-(global-set-key [(super t)] 'x-symbol-INSERT-existential1)
-(global-set-key [(super A)] 'x-symbol-INSERT-biglogicaland)
-(global-set-key [(super e)] 'x-symbol-INSERT-equivalence)
-(global-set-key [(super u)] 'x-symbol-INSERT-notequal)
-(global-set-key [(super m)] 'x-symbol-INSERT-arrowdblright)
-(global-set-key [(super i)] 'x-symbol-INSERT-longarrowright)
-@end lisp
-This defines a bunch of short-cuts for insert X-Symbol logical symbols
-which are often used in Isabelle.
+@c FIXME
+@c If you're using XEmacs and your keyboard has a @i{super} modifier (on my
+@c PC keyboard it has a Windows symbol and is next to the control key), you
+@c can freely bind keys on that modifier globally (since none are used
+@c by default).  Use lisp like this:
+@c @lisp
+@c (global-set-key [(super l)] 'x-symbol-INSERT-lambda)
+@c (global-set-key [(super n)] 'x-symbol-INSERT-notsign)
+@c (global-set-key [(super a)] 'x-symbol-INSERT-logicaland)
+@c (global-set-key [(super o)] 'x-symbol-INSERT-logicalor)
+@c (global-set-key [(super f)] 'x-symbol-INSERT-universal1)
+@c (global-set-key [(super t)] 'x-symbol-INSERT-existential1)
+@c (global-set-key [(super A)] 'x-symbol-INSERT-biglogicaland)
+@c (global-set-key [(super e)] 'x-symbol-INSERT-equivalence)
+@c (global-set-key [(super u)] 'x-symbol-INSERT-notequal)
+@c (global-set-key [(super m)] 'x-symbol-INSERT-arrowdblright)
+@c (global-set-key [(super i)] 'x-symbol-INSERT-longarrowright)
+@c @end lisp
+@c This defines a bunch of short-cuts for insert X-Symbol logical symbols
+@c which are often used in Isabelle.
 
 
 @node Using file variables
@@ -3842,7 +3842,7 @@ Find theorems: either of the above.
 
 The following shortcuts insert control sequences into the text,
 modifying the appearance of individual symbols (single letters,
-mathematical entities etc.); the X-Symbol package will provide immediate
+mathematical entities etc.); the Tokens package will provide immediate
 visual feedback.
 
 @table @kbd
