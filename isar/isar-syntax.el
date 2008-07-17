@@ -18,43 +18,26 @@
 ;; ----- character syntax
 
 (defconst isar-script-syntax-table-entries
-  (append
-       '(?\$ "."
-         ?\/ "."
-         ?\\ "\\"
-         ?+  "."
-         ?-  "."
-         ?=  "."
-         ?%  "."
-         ?<  "w"
-         ?>  "w"
-         ?\& "."
-         ?.  "w"
-         ?_  "w"
-         ?\' "w"
-         ??  "w"
-         ?`  "\""
-         ?\( "()1"
-         ?\) ")(4")
-   (cond
-    ((featurep 'xemacs)
-     ;; We classify {* sequences *} as comments, although
-     ;; they need to be passed as command args as text.
-     ;; NB: adding a comment sequence b seems to break
-     ;; buffer-syntactic-context, best to use emulated
-     ;; version.
-    '(?\{ "(}5"
-      ?\} "){8"
-      ?\* ". 2367"))
-    ;; previous version confuses the two comment sequences,
-    ;; but works with buffer-syntactic-context.
-    ;;(?\{ "(}1")
-    ;;(?\} "){4")
-    ;;(?\* ". 23"))
-    ((not (featurep 'xemacs))
-     '(?\{ "(}1b"
-       ?\} "){4b"
-       ?\* ". 23n"))))
+  '(?\$ "."
+    ?\/ "."
+    ?\\ "\\"
+    ?+  "."
+    ?-  "."
+    ?=  "."
+    ?%  "."
+    ?<  "w"
+    ?>  "w"
+    ?\& "."
+    ?.  "w"
+    ?_  "w"
+    ?\' "w"
+    ??  "w"
+    ?`  "\""
+    ?\( "()1"
+    ?\) ")(4"
+    ?\{ "(}1b"
+    ?\} "){4b"
+    ?\* ". 23n")
    "Syntax table entries for Isar scripts.
 This list is in the right format for proof-easy-config.")
 

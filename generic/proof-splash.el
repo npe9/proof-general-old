@@ -71,16 +71,9 @@ If it is nil, a new line is inserted."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; Compatibility between Emacs/XEmacs.
-(eval-and-compile
-  (if (featurep 'xemacs)
-      ;; Constant nil function
-      (defsubst proof-emacs-imagep (img)
-	"See if IMG is an Emacs image descriptor (returns nil here on XEmacs)."
-	nil)
-    (defsubst proof-emacs-imagep (img)
-      "See if IMG is an Emacs image descriptor."
-      (and (listp img) (eq (car img) 'image)))))
+(defsubst proof-emacs-imagep (img)
+  "See if IMG is an Emacs image descriptor."
+  (and (listp img) (eq (car img) 'image)))
 
 
 (defun proof-get-image (name &optional nojpeg default)
@@ -93,29 +86,15 @@ DEFAULT gives return value in case image not valid."
 		     (concat proof-images-directory name ".jpg")))
 	(gif (vector 'gif :file
 		     (concat proof-images-directory ".gif")))
-	(validfn (lambda (inst)
-		   (and (featurep 'xemacs)
-			(valid-instantiator-p inst 'image)
-			(file-readable-p (aref inst 2)))))
 	img)
   (cond
-   ((and (featurep 'xemacs) window-system
-	 (featurep 'jpeg) (not nojpeg)
-	 (funcall validfn jpg))
-    jpg)
-   ((and (featurep 'xemacs) window-system
-	 (featurep 'gif) (funcall validfn gif))
-    gif)
-   ((and
-     (not (featurep 'xemacs)) window-system
-     (setq img 
-	   (find-image
-	    (list
-	     (list :type 'jpeg
-		   :file (concat proof-images-directory name ".jpg"))
-	     (list :type 'gif
-		   :file (concat proof-images-directory name ".gif"))))))
-    img)
+   (window-system
+    (find-image
+     (list
+      (list :type 'jpeg
+	    :file (concat proof-images-directory name ".jpg"))
+      (list :type 'gif
+	    :file (concat proof-images-directory name ".gif")))))
    (t
     (or default (concat "[ image " name " ]"))))))
 
@@ -132,9 +111,6 @@ Borrowed from startup-center-spaces."
 	 (fill-area-width  (* avg-pixwidth (- fill-column left-margin)))
 	 (glyph-pixwidth   (cond ((stringp glyph) 
 				  (* avg-pixwidth (length glyph)))
-				 ((and (featurep 'xemacs)
-				       (glyphp glyph))
-				  (glyph-width glyph))
 				 ((proof-emacs-imagep glyph)
 				  (car (image-size glyph 'inpixels)))
 				 (t
@@ -163,11 +139,8 @@ Borrowed from startup-center-spaces."
 	(progn
 	  (if (get-buffer-window splashbuf)
 	      ;; Restore the window config if splash is being displayed
-	      (progn
-		(if (cdr proof-splash-timeout-conf)
-		    (set-window-configuration (cdr proof-splash-timeout-conf)))
-		(if (featurep 'xemacs)
-		    (redraw-frame nil t))))
+	      (if (cdr proof-splash-timeout-conf)
+		  (set-window-configuration (cdr proof-splash-timeout-conf))))
 	  ;; Indicate removed splash screen; disable timeout
 	  (disable-timeout (car proof-splash-timeout-conf))
 	  (setq proof-splash-timeout-conf nil)
@@ -222,12 +195,6 @@ Otherwise, timeout inside this function after 10 seconds or so."
       (while splash-contents
 	(setq s (car splash-contents))
 	(cond
-	 ((and (featurep 'xemacs)
-	       (vectorp s)
-	       (valid-instantiator-p s 'image))
-	  (let ((gly (make-glyph s)))
-	    (indent-to (proof-splash-centre-spaces gly))
-	    (set-extent-begin-glyph (make-extent (point) (point)) gly)))
 	 ((proof-emacs-imagep s)
 	  (indent-to (proof-splash-centre-spaces s))
 	  (insert-image s))
@@ -285,10 +252,7 @@ Otherwise, timeout inside this function after 10 seconds or so."
   "Wait for proof-splash-timeout or input, then remove self from hook."
   (while (and proof-splash-timeout-conf ;; timeout still active
 	      (not (input-pending-p)))
-    (if (featurep 'xemacs)
-	(sit-for 0 t)			; XEmacs: wait without redisplay
-      ; (sit-for 1 0 t)))		; FSF: NODISP arg seems broken
-      (sit-for 0)))
+    (sit-for 0))
   (if proof-splash-timeout-conf         ;; not removed yet
       (proof-splash-remove-screen))
   (if (fboundp 'next-command-event) ; 3.3: Emacs removed this

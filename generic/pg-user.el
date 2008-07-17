@@ -217,42 +217,6 @@ handling of interrupt signals."
    (proof-goto-point)))
   
 
-;; FIXME da: this is an oddity.  It copies the span, but does not
-;; send it, contrary to it's old name ("proof-send-span").
-;; Now made more general to behave like mouse-track-insert
-;; when not over a span.
-;; FIXME da: improvement would be to allow selection of part
-;; of command by dragging, as in ordinary mouse-track-insert.
-;; Maybe by setting some of the mouse track hooks.
-;; TODO: mouse-track-insert is XEmacs specific anyway.
-(defun proof-mouse-track-insert (event)
-  "Copy highlighted command under mouse EVENT to point.  Ignore comments.
-If there is no command under the mouse, behaves like mouse-track-insert."
-  (interactive "e")
-  (let ((str
-	 (save-window-excursion
-	   (save-excursion
-	     (let* ((span (span-at (mouse-set-point event) 'type)))
-	       (and
-		span
-		;; Next test might be omitted to allow for non-script
-		;; buffer copying (e.g. from spans in the goals buffer)
-		(eq (current-buffer) proof-script-buffer)
-		;; Test for type=vanilla means that closed goal-save regions
-		;; are not copied.
-		;; PG 3.3: remove this test, why not copy full proofs?
-		;; (wanted to remove tests for 'vanilla)
-		;; (eq (span-property span 'type) 'vanilla)
-		;; Finally, extracting the 'cmd part prevents copying
-		;; comments, and supresses leading spaces, at least.
-		;; Odd.
-		(span-property span 'cmd)))))))
-    ;; Insert copied command in original window,
-    ;; buffer, point position.
-    (if str
-	(insert str proof-script-command-separator)
-      (if (featurep 'xemacs)
-	  (mouse-track-insert event)))))
 
 
 
@@ -306,11 +270,7 @@ is off (nil)."
 ;; pear-shaped.
 
 ;; In fact, it's so risky, we'll disable it by default
-(if (if (featurep 'xemacs)
-	(get 'proof-frob-locked-end 'disabled t)
-      ;; FSF code more approximate
-      (not (member 'disabled (symbol-plist 'proof-frob-locked-end))))
-    (put 'proof-frob-locked-end 'disabled t))
+(put 'proof-frob-locked-end 'disabled t)
 
 (defun proof-frob-locked-end ()
   "Move the end of the locked region backwards to regain synchronization.
@@ -856,15 +816,9 @@ If NUM is negative, move upwards.  Return new span."
 
 (defun pg-pos-for-event (event)
   "Return position corresponding to position of a mouse click EVENT."
-  (cond
-   ((featurep 'xemacs)
-    (when (event-window event)
-      (select-window (event-window event))
-      (event-point event)))
-   (t
-    (with-current-buffer
-	(window-buffer (posn-window (event-start event)))
-      (posn-point (event-start event))))))
+  (with-current-buffer
+      (window-buffer (posn-window (event-start event)))
+    (posn-point (event-start event))))
 
 (defun pg-span-for-event (event)
   "Return span corresponding to position of a mouse click EVENT."
@@ -1031,11 +985,7 @@ The function `substitute-command-keys' is called on the argument."
 
 ;; Note: making the binding globally is perhaps a bit obnoxious, but
 ;; this modifier combination is currently unused.
-(cond
- ((not (featurep 'xemacs))
-  (global-set-key [C-M-mouse-2] 'pg-identifier-under-mouse-query))
- ((featurep 'xemacs)
-  (global-set-key '(control meta button2) 'pg-identifier-under-mouse-query)))
+(global-set-key [C-M-mouse-2] 'pg-identifier-under-mouse-query)
 
 (defun pg-identifier-under-mouse-query (event)
   (interactive "e")
@@ -1044,11 +994,6 @@ The function `substitute-command-keys' is called on the argument."
 	(save-selected-window
 	  (save-selected-frame
 	    (save-excursion
-	      (if (featurep 'xemacs)
-		  (when (event-window event)
-		    (select-window (event-window event))
-		    (setq oldend (if (region-active-p)
-				     (region-end)))))
 	      (mouse-set-point event)
 	      (setq identifier
 		    ;; If there's an active region in this buffer, use that
@@ -1087,17 +1032,15 @@ The function `substitute-command-keys' is called on the argument."
   "Add or remove index menu."
   (if proof-imenu-enable
       (imenu-add-to-menubar "Index")
-    (if (featurep 'xemacs)
-	(easy-menu-remove (list "Index" :filter 'imenu-menu-filter))
-      (progn
-	(let ((oldkeymap (keymap-parent (current-local-map))))
-	  (if ;; sanity checks in case someone else set local keymap
-	      (and oldkeymap
-		   (lookup-key (current-local-map) [menu-bar index])
-		   (not
-		    (lookup-key oldkeymap [menu-bar index])))
-	      (use-local-map oldkeymap)))
-	(remove-hook 'menu-bar-update-hook 'imenu-update-menubar)))))
+    (progn
+      (let ((oldkeymap (keymap-parent (current-local-map))))
+	(if ;; sanity checks in case someone else set local keymap
+	    (and oldkeymap
+		 (lookup-key (current-local-map) [menu-bar index])
+		 (not
+		  (lookup-key oldkeymap [menu-bar index])))
+	    (use-local-map oldkeymap)))
+      (remove-hook 'menu-bar-update-hook 'imenu-update-menubar))))
 
 
 

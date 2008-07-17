@@ -687,13 +687,9 @@ NAME does not need to be unique."
 		           "Prover-processed"))))
 
 (defvar pg-span-context-menu-keymap
-    (let ((map (make-sparse-keymap
-		"Keymap for context-sensitive menus on spans")))
-      (cond
-       ((featurep 'xemacs)
-	(define-key map [button3] 'pg-span-context-menu))
-       ((not (featurep 'xemacs))
-	(define-key map [down-mouse-3] 'pg-span-context-menu)))
+  (let ((map (make-sparse-keymap
+	      "Keymap for context-sensitive menus on spans")))
+      (define-key map [down-mouse-3] 'pg-span-context-menu)
       map)
     "Keymap for the span context menu.")
 
@@ -712,10 +708,8 @@ NAME does not need to be unique."
 	   " ("
 	   (if (span-property span 'idiom)
 	       "with point in region, \\[pg-toggle-visibility] to show/hide; ")
-	   (if (featurep 'xemacs)
-	       "\\[popup-mode-menu]"
-	     "\\<pg-span-context-menu-keymap>\\[pg-span-context-menu]")
-	     " for menu)"))))
+	   "\\<pg-span-context-menu-keymap>\\[pg-span-context-menu]"
+	   " for menu)"))))
     (span-set-property span 'keymap pg-span-context-menu-keymap)
     (unless nohighlight
       (span-set-property span 'mouse-face 'proof-mouse-highlight-face))))
@@ -2545,18 +2539,6 @@ Otherwise just do proof-restart-buffers to delete some spans from memory."
    (bury-buffer (current-buffer))))
 
 
-;; Notes about how to deal with killing/reverting/renaming buffers:
-;; (As of XEmacs 21.1.9, see files.el)
-;;
-;; Killing: easy, set kill-buffer-hook
-;; Reverting: ditto, set before-revert-hook to do same as kill.
-;; Renaming (write-file): much tricker.  Code for write-file does
-;;  several odd things.  It kills off local hook functions, calls
-;;  `after-set-visited-file-name-hooks' right at the end to give the
-;;  chance to restore them, but then tends to automatically (re-)set
-;;  the mode anyway.
-  
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -2756,14 +2738,8 @@ finish setup which depends on specific proof assistant configuration."
   ;; Common configuration for shared script/other related buffers.
   (proof-config-done-related)
 
-  ;; Preamble: make this mode class "pg-sticky" so that renaming file
-  ;; to something different doesn't change the mode, no matter what
-  ;; the filename.  This is a hack so that write-file will work:
-  ;; otherwise Emacs insists (XEmacs 21.1.9 onwards) on re-setting the
-  ;; mode, which leads to problems with synchronization and losing
-  ;; extents.  (Attempt to catch this in proof-mode by looking for
-  ;; active scripting buffer fails; perhaps because of kill buffer
-  ;; function) [NB: could do this at top level at load time]
+  ;; Preamble: make this mode class "pg-sticky" so renaming
+  ;; doesn't change the mode.  A hack so that write-file will work.
 
   (put major-mode 'mode-class 'pg-sticky)
 
@@ -2813,13 +2789,6 @@ finish setup which depends on specific proof assistant configuration."
   ;; in case Emacs is exited accidently.
   (or (buffer-file-name)
       (setq buffer-offer-save t))
-
-  ;; Localise the invisibility glyph (XEmacs only):
-  (if (featurep 'xemacs)
-      (let ((img (proof-get-image "hiddenproof" t "<proof>")))
-	(if img
-	    (set-glyph-image invisible-text-glyph 
-			     img (current-buffer)))))
 
   ;; Finally, make sure the user has been welcomed!
   ;; [NB: this doesn't work well, can get zapped by loading messages]

@@ -1,9 +1,11 @@
 -*- outline -*- 
 
+* Active scripting modeline indicator; can we get colour as in XEmacs?
+
 * Restore tracing slow mode: fontification disablement in tracing buffer
 (unless already provide)
 
-* Restore pg-goals-yank-subterm, pg-goals-button-action
+* Restore pg-goals-yank-subterm, pg-goals-button-action, pbp-focus-on-first
 
 * Simplifications to goal/save configuration commands
 

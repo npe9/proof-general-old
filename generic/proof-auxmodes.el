@@ -47,7 +47,6 @@
 (defun proof-maths-menu-support-available ()
   "A test to see whether maths-menu support is available."
   (and
-   (not (featurep 'xemacs)) ;; not XEmacs compatible
    (or (featurep 'maths-menu)
        ;; *should* always succeed unless bundled version broken
        (proof-try-require 'maths-menu))

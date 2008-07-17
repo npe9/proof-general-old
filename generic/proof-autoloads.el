@@ -5,7 +5,7 @@
 
 
 ;;;### (autoloads (bufhist-exit bufhist-init) "bufhist" "../lib/bufhist.el"
-;;;;;;  (18346 18016))
+;;;;;;  (18559 52757))
 ;;; Generated autoloads from ../lib/bufhist.el
 
 (autoload (quote bufhist-init) "bufhist" "\
@@ -26,8 +26,28 @@ Minor mode retaining an in-memory history of the buffer contents.")
 
 ;;;***
 
-;;;### (autoloads (holes-mode) "holes" "../lib/holes.el" (18346 18016))
+;;;### (autoloads (holes-mode holes-insert-and-expand holes-abbrev-complete
+;;;;;;  holes-set-make-active-hole) "holes" "../lib/holes.el" (18559
+;;;;;;  52885))
 ;;; Generated autoloads from ../lib/holes.el
+
+(autoload (quote holes-set-make-active-hole) "holes" "\
+Make a new hole between START and END or at point, and make it active.
+
+\(fn &optional START END)" t nil)
+
+(autoload (quote holes-abbrev-complete) "holes" "\
+Complete abbrev by putting holes and indenting.
+Moves point at beginning of expanded text.  Put this function as
+call-back for your abbrevs, and just expanded \"#\" and \"@{..}\" will
+become holes.
+
+\(fn)" nil nil)
+
+(autoload (quote holes-insert-and-expand) "holes" "\
+Insert S, expand it and replace #s and @{]s by holes.
+
+\(fn S)" nil nil)
 
 (autoload (quote holes-mode) "holes" "\
 If ARG is nil, then toggle holes mode on/off.
@@ -53,7 +73,7 @@ This mode is only useful with a font which can display the maths repertoire.
 ;;;***
 
 ;;;### (autoloads (proof-associated-windows proof-associated-buffers)
-;;;;;;  "pg-assoc" "pg-assoc.el" (18553 49641))
+;;;;;;  "pg-assoc" "pg-assoc.el" (18559 3954))
 ;;; Generated autoloads from pg-assoc.el
 
 (autoload (quote proof-associated-buffers) "pg-assoc" "\
@@ -71,7 +91,7 @@ Dead or nil buffers are not represented in the list.
 ;;;***
 
 ;;;### (autoloads (proof-goals-config-done) "pg-goals" "pg-goals.el"
-;;;;;;  (18553 49793))
+;;;;;;  (18559 50292))
 ;;; Generated autoloads from pg-goals.el
 
 (autoload (quote proof-goals-config-done) "pg-goals" "\
@@ -105,8 +125,8 @@ Send an <askprefs> message to the prover.
 
 ;;;### (autoloads (pg-response-has-error-location proof-next-error
 ;;;;;;  pg-response-display-with-face pg-response-maybe-erase proof-response-config-done
-;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18553
-;;;;;;  50995))
+;;;;;;  proof-response-mode) "pg-response" "pg-response.el" (18559
+;;;;;;  50267))
 ;;; Generated autoloads from pg-response.el
 
 (autoload (quote proof-response-mode) "pg-response" "\
@@ -158,7 +178,7 @@ See `pg-next-error-regexp'.
 ;;;***
 
 ;;;### (autoloads (pg-defthymode) "pg-thymodes" "pg-thymodes.el"
-;;;;;;  (18346 18015))
+;;;;;;  (18555 54157))
 ;;; Generated autoloads from pg-thymodes.el
 
 (autoload (quote pg-defthymode) "pg-thymodes" "\
@@ -185,7 +205,7 @@ All of these settings are optional.
 ;;;;;;  pg-response-buffers-hint pg-slow-fontify-tracing-hint proof-electric-term-incomment-fn
 ;;;;;;  proof-electric-terminator-enable proof-define-assistant-command-witharg
 ;;;;;;  proof-define-assistant-command proof-interrupt-process) "pg-user"
-;;;;;;  "pg-user.el" (18553 50346))
+;;;;;;  "pg-user.el" (18559 50575))
 ;;; Generated autoloads from pg-user.el
 
 (autoload (quote proof-interrupt-process) "pg-user" "\
@@ -296,8 +316,8 @@ Not documented
 
 ;;;***
 
-;;;### (autoloads (pg-xml-parse-string) "pg-xml" "pg-xml.el" (18346
-;;;;;;  18015))
+;;;### (autoloads (pg-xml-parse-string) "pg-xml" "pg-xml.el" (18559
+;;;;;;  53892))
 ;;; Generated autoloads from pg-xml.el
 
 (autoload (quote pg-xml-parse-string) "pg-xml" "\
@@ -326,7 +346,7 @@ Make a portion of a context-sensitive menu showing proof dependencies.
 ;;;***
 
 ;;;### (autoloads (proof-easy-config) "proof-easy-config" "proof-easy-config.el"
-;;;;;;  (18346 18015))
+;;;;;;  (18555 54157))
 ;;; Generated autoloads from proof-easy-config.el
 
 (autoload (quote proof-easy-config) "proof-easy-config" "\
@@ -350,7 +370,7 @@ Indent current line of proof script, if indentation enabled.
 ;;;***
 
 ;;;### (autoloads (proof-maths-menu-enable proof-maths-menu-set-global)
-;;;;;;  "proof-maths-menu" "proof-maths-menu.el" (18346 18015))
+;;;;;;  "proof-maths-menu" "proof-maths-menu.el" (18559 52001))
 ;;; Generated autoloads from proof-maths-menu.el
 
 (autoload (quote proof-maths-menu-set-global) "proof-maths-menu" "\
@@ -372,7 +392,7 @@ in future if we have just activated it for this buffer.
 
 ;;;### (autoloads (defpacustom proof-defpacustom-fn proof-aux-menu
 ;;;;;;  proof-menu-define-specific proof-menu-define-main proof-menu-define-keys)
-;;;;;;  "proof-menu" "proof-menu.el" (18552 52016))
+;;;;;;  "proof-menu" "proof-menu.el" (18559 50392))
 ;;; Generated autoloads from proof-menu.el
 
 (autoload (quote proof-menu-define-keys) "proof-menu" "\
@@ -437,7 +457,7 @@ in future if we have just activated it for this buffer.
 ;;;### (autoloads (proof-config-done proof-mode proof-insert-sendback-command
 ;;;;;;  proof-insert-pbp-command pg-set-span-helphighlights proof-locked-region-empty-p
 ;;;;;;  proof-locked-region-full-p proof-locked-end proof-unprocessed-begin)
-;;;;;;  "proof-script" "proof-script.el" (18552 52016))
+;;;;;;  "proof-script" "proof-script.el" (18559 50880))
 ;;; Generated autoloads from proof-script.el
 
 (autoload (quote proof-unprocessed-begin) "proof-script" "\
@@ -497,7 +517,7 @@ finish setup which depends on specific proof assistant configuration.
 ;;;;;;  proof-shell-invisible-cmd-get-result proof-shell-invisible-command
 ;;;;;;  proof-shell-wait proof-extend-queue proof-start-queue proof-shell-insert
 ;;;;;;  proof-shell-available-p proof-shell-live-buffer proof-shell-ready-prover)
-;;;;;;  "proof-shell" "proof-shell.el" (18553 50538))
+;;;;;;  "proof-shell" "proof-shell.el" (18559 52516))
 ;;; Generated autoloads from proof-shell.el
 
 (autoload (quote proof-shell-ready-prover) "proof-shell" "\
@@ -609,7 +629,7 @@ processing.
 ;;;***
 
 ;;;### (autoloads (proof-splash-message proof-splash-display-screen)
-;;;;;;  "proof-splash" "proof-splash.el" (18346 18015))
+;;;;;;  "proof-splash" "proof-splash.el" (18559 51532))
 ;;; Generated autoloads from proof-splash.el
 
 (autoload (quote proof-splash-display-screen) "proof-splash" "\
@@ -628,7 +648,7 @@ Make sure the user gets welcomed one way or another.
 ;;;***
 
 ;;;### (autoloads (proof-splice-separator proof-format) "proof-syntax"
-;;;;;;  "proof-syntax.el" (18346 18015))
+;;;;;;  "proof-syntax.el" (18555 57369))
 ;;; Generated autoloads from proof-syntax.el
 
 (autoload (quote proof-format) "proof-syntax" "\
@@ -646,7 +666,7 @@ Splice SEP into list of STRINGS.
 ;;;***
 
 ;;;### (autoloads (proof-toolbar-scripting-menu proof-toolbar-setup)
-;;;;;;  "proof-toolbar" "proof-toolbar.el" (18550 34521))
+;;;;;;  "proof-toolbar" "proof-toolbar.el" (18559 53760))
 ;;; Generated autoloads from proof-toolbar.el
 
 (autoload (quote proof-toolbar-setup) "proof-toolbar" "\
@@ -665,7 +685,7 @@ Menu made from the Proof General toolbar commands.
 ;;;***
 
 ;;;### (autoloads (proof-unicode-tokens-set-global proof-unicode-tokens-enable)
-;;;;;;  "proof-unicode-tokens" "proof-unicode-tokens.el" (18553 58927))
+;;;;;;  "proof-unicode-tokens" "proof-unicode-tokens.el" (18559 3896))
 ;;; Generated autoloads from proof-unicode-tokens.el
 
 (autoload (quote proof-unicode-tokens-enable) "proof-unicode-tokens" "\
@@ -685,13 +705,12 @@ Turn on/off menu in all script buffers and ensure new buffers follow suit.
 
 ;;;***
 
-;;;### (autoloads nil nil ("../lib/holes-load.el" "../lib/local-vars-list.el"
-;;;;;;  "../lib/pg-dev.el" "../lib/pg-fontsets.el" "../lib/proof-compat.el"
-;;;;;;  "../lib/span-extent.el" "../lib/span-overlay.el" "../lib/span.el"
-;;;;;;  "../lib/unicode-chars.el" "../lib/unicode-tokens.el" "../lib/xml-fixed.el"
+;;;### (autoloads nil nil ("../lib/local-vars-list.el" "../lib/pg-dev.el"
+;;;;;;  "../lib/pg-fontsets.el" "../lib/proof-compat.el" "../lib/span-overlay.el"
+;;;;;;  "../lib/span.el" "../lib/unicode-chars.el" "../lib/unicode-tokens.el"
 ;;;;;;  "comptest.el" "pg-autotest.el" "pg-custom.el" "pg-pbrpm.el"
 ;;;;;;  "pg-vars.el" "proof-auxmodes.el" "proof-config.el" "proof-site.el"
-;;;;;;  "proof-utils.el" "proof.el") (18553 61885 344133))
+;;;;;;  "proof-utils.el" "proof.el") (18559 53899 703415))
 
 ;;;***
 

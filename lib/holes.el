@@ -128,19 +128,6 @@ is), which is annoying.
  
 ;;; Code:
 
-(cond
- ((featurep 'xemacs)
-  (defalias 'holes-region-active-p 'region-active-p)
-  (defalias 'holes-get-selection 'get-selection))
- (t
-  ;;Pierre: should do almost what region-active-p does in XEmacs
-  (defun holes-region-active-p nil
-    "Return t if the mark is active, nil otherwise."
-    mark-active)
-  (defun holes-get-selection nil "See `current-kill'."
-    (current-kill 0))))
-
-
 ;;; initialization
 (defvar holes-default-hole (make-detached-span)
   "An empty detached hole used as the default hole.
@@ -204,17 +191,17 @@ which should be removed when making the text into a hole.")
 
 (defun holes-region-beginning-or-nil ()
   "Internal."
-  (and (holes-region-active-p) (region-beginning))
+  (and mark-active (region-beginning))
   )
 
 (defun holes-region-end-or-nil ()
   "Internal."
-  (and (holes-region-active-p) (region-end))
+  (and mark-active (region-end))
   )
 
 (defun holes-copy-active-region ()
   "Internal."
-  (assert (holes-region-active-p) nil "the region is not active now.")
+  (assert mark-active nil "the region is not active now.")
   (copy-region-as-kill (region-beginning) (region-end))
   (car kill-ring)
   )
@@ -540,7 +527,7 @@ goal(FIXME?).  Use `replace-active-hole' instead."
   "Replace the active hole by STR, if no str is given, then put the selection instead."
   (if (not (holes-active-hole-exist-p)) ()
     (holes-replace
-     (or str (holes-get-selection) (error "Nothing to put in hole"))
+     (or str (current-kill 0) (error "Nothing to put in hole"))
      holes-active-hole)
     ))
 
@@ -557,8 +544,8 @@ following hole if it exists."
     (let ((nxthole (holes-next-after-active-hole)))
       (holes-replace-active-hole
        (or str
-	   (and (holes-region-active-p) (holes-copy-active-region))
-	   (holes-get-selection) (error "Nothing to put in hole")))
+	   (and mark-active (holes-copy-active-region))
+	   (current-kill 0) (error "Nothing to put in hole")))
       (if nxthole (holes-set-active-hole nxthole)
 	(setq holes-active-hole holes-default-hole))
       )
@@ -630,11 +617,11 @@ Sets `holes-active-hole' to the next hole if it exists."
   (save-excursion
     ;;HACK: nothing if one click (but a second is perhaps coming)
     (if (and (eq (holes-track-mouse-clicks) 1)
-	     (not (holes-region-active-p)))
+	     (not mark-active))
 	()
-      (if (not (holes-region-active-p))
+      (if (not mark-active)
 	  (error "Nothing to put in hole")
-	(holes-replace-update-active-hole (holes-get-selection))
+	(holes-replace-update-active-hole (current-kill 0))
 	(message "hole replaced")
 	)
       )
@@ -698,10 +685,10 @@ Sets `holes-active-hole' to the next hole if it exists."
   (holes-track-mouse-selection event)
 
   (if (and (eq (holes-track-mouse-clicks) 1)
-	   (not (holes-region-active-p)))
+	   (not mark-active))
       (holes-set-make-active-hole (point) (point))
 
-    (if (holes-region-active-p)
+    (if mark-active
 	(holes-set-make-active-hole)
       (let ((ext (holes-hole-at-event event)))
 	(if (and ext (holes-is-hole-p ext))
@@ -742,15 +729,9 @@ Destroy it and makes the next hole active if any."
 
 (defvar hole-map
   (let ((map (make-sparse-keymap)))
-    (cond
-     ((featurep 'xemacs)
-      (define-key map [(button1)] 'holes-mouse-set-active-hole)
-      (define-key map [(button3)] 'holes-mouse-destroy-hole)
-      (define-key map [(button2)] 'holes-mouse-forget-hole))
-     (t
-      (define-key map [(mouse-1)] 'holes-mouse-set-active-hole)
-      (define-key map [(mouse-3)] 'holes-mouse-destroy-hole)
-      (define-key map [(mouse-2)] 'holes-mouse-forget-hole)))
+    (define-key map [(mouse-1)] 'holes-mouse-set-active-hole)
+    (define-key map [(mouse-3)] 'holes-mouse-destroy-hole)
+    (define-key map [(mouse-2)] 'holes-mouse-forget-hole)
     map)
   "Keymap to use on the holes's overlays.
 This keymap is used only when

@@ -314,12 +314,11 @@ for you, you should disable this behaviour."
       (progn
 	(setq isabelle-logics-available (isa-tool-list-logics))
 	(isabelle-logics-menu-calculate)
-	(if (not (featurep 'xemacs))
-	    ;; update the menu manually
-	    (easy-menu-add-item proof-assistant-menu nil
-				isabelle-logics-menu-entries))
+	;; update the menu manually
+	(easy-menu-add-item proof-assistant-menu nil
+			    isabelle-logics-menu-entries)
 	(setq isabelle-time-to-refresh-logics nil) ;; just done it, don't repeat!
-	(run-with-timer 2 nil ;; short delay to avoid doing this too often
+	(run-with-timer 4 nil ;; short delay to avoid doing this too often
 			(lambda () (setq isabelle-time-to-refresh-logics t))))))
 
 (defun isabelle-menu-bar-update-logics ()

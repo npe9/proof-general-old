@@ -20,9 +20,9 @@ proof
  qed
 qed
 
-text {* \<^bbold>Unstructured\<^ebold> proof script. *}
+text {* \<^bbold>Unstructured\<^ebold> proof \<^bold>scr\<^bold>ipt. *}
 
-theorem "\<phi>\<^isub>\<alpha> \<and> \<phi>\<^isub>\<beta> \<longrightarrow> \<phi>\<^isub>\<beta> ∧ \<phi>\<^isub>\<alpha>"
+theorem "\<phi>\<^isub>\<alpha> \<and> \<phi>\<^isub>\<beta> \<longrightarrow> (\<phi>\<^isub>\<beta>  ∧  \<phi>\<^isub>\<alpha>)"
   apply (rule impI)
   apply (erule conjE)
   apply (rule conjI)

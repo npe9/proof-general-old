@@ -81,9 +81,7 @@ to examine proof-shell-last-output.")
 ;; 
 
 (defcustom proof-shell-active-scripting-indicator
-  (if (featurep 'xemacs)
-      (cons (make-extent nil nil) " Scripting ")
-    " Scripting")
+  " Scripting"
   "Modeline indicator for active scripting buffer.
 If first component is extent it will automatically follow the colour
 of the queue region."
@@ -168,12 +166,7 @@ If QUEUEMODE is supplied, set the lock to that value."
   (setq proof-shell-error-or-interrupt-seen nil)
   (setq proof-shell-busy (or queuemode t))
   ;; Make modeline indicator follow state (on XEmacs at least)
-  (cond
-   ((featurep 'xemacs)
-    (if (extentp (car proof-shell-active-scripting-indicator))
-	(set-extent-properties
-	 (car proof-shell-active-scripting-indicator)
-	 '(face proof-queue-face)))))
+  ;; PG4.0: TODO: alter modeline indicator
   (run-hooks 'proof-state-change-hook))
 
 (defun proof-release-lock (&optional err-or-int)
@@ -182,13 +175,8 @@ Clear `proof-shell-busy', and set `proof-shell-error-or-interrupt-seen'
 to err-or-int."
   (setq proof-shell-error-or-interrupt-seen err-or-int)
   (setq proof-shell-busy nil)
-  (cond
-   ((featurep 'xemacs)
-    (if (extentp (car proof-shell-active-scripting-indicator))
-	(set-extent-properties
-	 (car proof-shell-active-scripting-indicator)
-	 '(face proof-locked-face))))))
-
+  ;; PG4.0: TODO: alter modeline indicator
+  )
 
 
 
@@ -403,16 +391,7 @@ Does nothing if proof assistant is already running."
 	    ;; new frames (NB: sets specifiers to remove modeline)
 	    (save-selected-window
 	      (save-selected-frame
-	       (proof-multiple-frames-enable)))
-	  ;; Otherwise just try to remove modeline from PG buffers
-	  ;; in XEmacs (FIXME: hope to remove this and just have
-	  ;; previous case)
-	  (if (featurep 'xemacs)
-	      (proof-map-buffers
-		(list proof-goals-buffer proof-response-buffer
-		      proof-trace-buffer proof-thms-buffer)
-		(set-specifier has-modeline-p nil (current-buffer))))))
-
+	       (proof-multiple-frames-enable)))))
 
       (message "Starting %s process... done." proc))))
 
@@ -737,13 +716,13 @@ Then we call `proof-shell-handle-error-or-interrupt-hook'."
 (defun proof-pbp-focus-on-first-goal ()
   "If the `proof-goals-buffer' contains goals, bring the first one into view.
 This is a hook function for proof-shell-handle-delayed-output-hook."
-  (and (featurep 'xemacs) 		;; FIXME: map-extents exists on Emacs21
-       (fboundp 'map-extents)		;; but with different typing
-       (let
-	   ((pos (map-extents 'proof-goals-pos proof-goals-buffer
-			      nil nil nil nil 'proof-top-element)))
-	 (and pos (set-window-point
-		   (get-buffer-window proof-goals-buffer t) pos)))))
+  )
+;; PG 4.0 FIXME
+;       (let
+;	   ((pos (map-extents 'proof-goals-pos proof-goals-buffer
+;			      nil nil nil nil 'proof-top-element)))
+;	 (and pos (set-window-point
+;		   (get-buffer-window proof-goals-buffer t) pos)))))
 
            
 (defsubst proof-shell-string-match-safe (regexp string)
@@ -862,17 +841,6 @@ which see."
 ;;   Low-level commands for shell communication
 ;;
 
-(defconst proof-shell-insert-space-fudge 
-  (cond
-   ((and (featurep 'xemacs)
-	 (string-match "21.*XEmacs" emacs-version))
-    " ")
-   ((featurep 'xemacs) "")
-   (t " "))
-  "String to insert after setting proof marker to prevent it moving.
-Allows for a difference between different versions of comint across
-different Emacs versions.")
-
 ;;;###autoload
 (defun proof-shell-insert (string action)
   "Insert STRING at the end of the proof shell, call `comint-send-input'.
@@ -890,8 +858,7 @@ used in `proof-append-alist' when we start processing a queue, and in
   (with-current-buffer proof-shell-buffer
     (goto-char (point-max))
     
-    ;; This hook allows munging of `string' and other hacks.
-    ;; NB: string should not be null
+    ;; Hook for munging `string' and other hacks.  
     (unless (null string)
       (run-hooks 'proof-shell-insert-hook))
 
@@ -902,19 +869,16 @@ used in `proof-append-alist' when we start processing a queue, and in
     (insert (or string ""))  ;; robust against call with nil
 
     ;; Advance the proof-marker, if synchronization has been gained.
-    ;; A null marker position indicates that synchronization is not
-    ;; yet gained.  (NB: Output before sync gained is ignored!)
+    ;; Null marker => no yet synced; output is ignored.
     (unless (null (marker-position proof-marker))
       (set-marker proof-marker (point)))
-
-    ;; TODO: consider as possible improvement.
-    ;; (set-marker proof-shell-urgent-message-marker (point))
-    ;; (set-marker proof-shell-urgent-message-scanner (point))
 
     ;; FIXME da: this space fudge is actually a visible hack:
     ;; the response string begins with a space and a newline.
     ;; It was needed to work around differences in Emacs versions.
-    (insert proof-shell-insert-space-fudge)
+    ;; PG 4.0: consider alternative of maintaining marker at 
+    ;; position -1
+    (insert " ")
     
     ;; Note: comint-send-input perversely calls the output filter
     ;; functions on the input, sigh.  This can mess up PGIP processing
@@ -923,22 +887,6 @@ used in `proof-append-alist' when we start processing a queue, and in
     ;; output filter functions when calling the input function.
     (let ((comint-output-filter-functions nil))
       (comint-send-input))))
-
-;; OLD BUGGY CODE here 
-;; Left in as a warning of a race condition.  
-;; It seems that comint-send-input can lead to the 
-;; output filter running before it returns, so that
-;; the set-marker call below is executed too late.
-;; The result is that the filter deals with
-;; the previous portion of output instead of the 
-;; most recent one!
-;;
-;; xemacs and FSF emacs have different semantics for what happens when
-;; shell input is sent next to a marker
-;; the following code accommodates both definitions
-;    (let ((inserted (point)))
-;      (comint-send-input)
-;      (set-marker proof-marker inserted))))
 
 
 ;; ============================================================
@@ -1187,12 +1135,7 @@ MESSAGE should be a string annotated with
 	 (pg-assoc-strip-subterm-markup message)))
       (unless (and proof-trace-output-slow-catchup
 		   (pg-tracing-tight-loop))
-	(proof-display-and-keep-buffer proof-trace-buffer)
-	;; Force redisplay to give feedback in case in a loop which
-	;; keeps Emacs busy processing output. Potentially costly.
-	(and (fboundp 'redisplay-frame)
-	     ;; XEmacs fn 
-	     (redisplay-frame)))
+	(proof-display-and-keep-buffer proof-trace-buffer))
       ;; If user quits during tracing output, send an interrupt
       ;; to the prover.  Helps when Emacs is "choking".
       (if (and quit-flag proof-action-list)
@@ -1669,35 +1612,6 @@ Only works when system timer has microsecond count available."
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Utility functions
-;;
-(defun proof-shell-dont-show-annotations (&optional buffer)
-  "Set display values of annotations in BUFFER to be invisible.
-
-Annotations are characters 128-255."
-  (interactive)
-  (with-current-buffer (or buffer (current-buffer))
-    (let ((disp (make-display-table))
-	  (i 128))
-      (while (< i 256)
-	(aset disp i [])
-	(incf i))
-      (cond ((featurep 'xemacs)
-	     (add-spec-to-specifier current-display-table disp (current-buffer)))
-	    ((boundp 'buffer-display-table)
-	     (setq buffer-display-table disp))))))
-
-(defun proof-shell-show-annotations ()
-  "Remove display table specifier from current buffer.
-This function is for testing purposes only, to reveal 8-bit characters
-in the shell buffer.  Use proof-shell-dont-show-annotations to turn
-them off again.
-XEmacs only."
-  (interactive)
-  (if (featurep 'xemacs)
-      (remove-specifier current-display-table (current-buffer))))
 
 
 
@@ -1835,12 +1749,6 @@ usual, unless NOERROR is non-nil."
   ;; For a bit of memory saving in case of large inputs, don't keep history ring
   (setq comint-input-ring-size 1)
   (setq comint-input-ring (make-ring comint-input-ring-size))
-
-  ;; FIXME: this is a work-around for a nasty GNU Emacs 21.2
-  ;; bug which HANGS Emacs sometimes if special characters
-  ;; are hidden.  (e.g. try M-x column-number-mode)
-  (unless (not (featurep 'xemacs))
-    (proof-shell-dont-show-annotations))
 
   ;; Proof marker is initialised in filter to first prompt found
   (setq proof-marker (make-marker))

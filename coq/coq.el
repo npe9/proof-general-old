@@ -85,13 +85,8 @@ To disable coqc being called (and use only make), set this to nil."
 (require 'coq-syntax)
 (require 'coq-indent)
 
-;; utf-8 is not yet well accepted (especially by xemacs)
-;; Set to t in your .emacs to enable it. Needs to load 
-;; library `un-define' to work on xemacs."
-;; (or (boundp 'proof-shell-unicode) (setq proof-shell-unicode nil))
-;; da: I think the default t setting now works fine, at least for me.
-;; pc: 8.0 backward compliance:
-(if coq-version-is-V8-0 (setq proof-shell-unicode nil))
+(if coq-version-is-V8-0 
+    (setq proof-shell-unicode nil))
 
 (defcustom coq-prog-env nil
   "*List of environment settings d to pass to Coq process.
@@ -853,10 +848,6 @@ This is specific to `coq-mode'."
         proof-find-and-forget-fn 'coq-find-and-forget
         pg-topterm-goalhyplit-fn 'coq-goal-hyp
         proof-state-preserving-p 'coq-state-preserving-p)
-
-  ;; This one to deal with nested comments in xemacs
-  (if (featurep 'xemacs)
-      (setq proof-script-parse-function 'coq-parse-function))
 
   (setq proof-shell-indentifier-under-mouse-cmd "Check %s.")
 

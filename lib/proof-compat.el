@@ -112,10 +112,6 @@ The value returned is the value of the last form in BODY."
 ;; dynamic-completion-mode after loading it.
 (or (fboundp 'complete)
     (autoload 'complete "completion"))
-(unless (featurep 'xemacs)
-  (eval-after-load "completion"
-    '(dynamic-completion-mode)))
-
 
 ;; Replace in string: XEmacs original now in GNU Emacs as replace-regexp-in-string
 (or (fboundp 'replace-in-string)

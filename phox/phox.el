@@ -143,10 +143,7 @@
    )
   (phox-init-syntax-table)
   (setq pbp-goal-command "intro %s;")
-  (setq pbp-hyp-command "elim %s;")
-;; the following is only useful for xemacs
-  (define-key phox-mode-map [(meta ?.)] 'phox-complete-tag)
-)
+  (setq pbp-hyp-command "elim %s;"))
 
 (defun phox-shell-config ()
   "Configure Proof General shell for PhoX."
