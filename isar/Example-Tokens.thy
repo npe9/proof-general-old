@@ -21,8 +21,8 @@ proof
 qed
 
 text {* \<^bbold>Unstructured\<^ebold> proof script. *}
-hellothere
-theorem \<phi>\<^sub> \<alpha> \<and> \<psi> \<longrightarrow> \<psi>\<and> \<phi>"
+
+theorem "\<phi>\<^isub>\<alpha> \<and> \<phi>\<^isub>\<beta> \<longrightarrow> \<phi>\<^isub>\<beta> ∧ \<phi>\<^isub>\<alpha>"
   apply (rule impI)
   apply (erule conjE)
   apply (rule conjI)
