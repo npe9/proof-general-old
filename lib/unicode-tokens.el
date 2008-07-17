@@ -439,7 +439,11 @@ Also sets `unicode-tokens-token-alist'."
  		       :help (concat "Format region as " 
  				     (downcase (car fmt)))
  		       :active 'mark-active))
- 	     unicode-tokens-control-regions)))))
+ 	     unicode-tokens-control-regions))
+       ["Make fontsets" 
+	(lambda () (interactive) (require 'pg-fontsets))
+	:active (not (featurep 'pg-fontsets))
+	:help "Define fontsets (for Options->Set fontsets)"])))
 
 (defun unicode-tokens-annotate-region-with (name start end &rest props)
   ;; TODO: interactive
