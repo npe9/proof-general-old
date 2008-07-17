@@ -24,23 +24,23 @@
   "\\(\\\\<\\^%s>\\)\\([^\\]\\|\\\\<[A-Za-z]+>\\)")
 
 (defconst isar-control-characters
-  '(("sub" sub) 
-    ("isub" sub)
-    ("sup" sup) 
-    ("isup" sup)
-    ("loc" loc)
-    ("bold" bold) 
-    ("italic" italic))) ; unofficial
+  '(("Subscript" "sub" sub) 
+    ("Id subscript" "isub" sub)
+    ("Superscript" "sup" sup) 
+    ("Id superscript" "isup" sup)
+    ("Loc" "loc" loc)
+    ("Bold" "bold" bold) 
+    ("Italic" "italic" italic))) ; unofficial
 
 (defconst isar-control-regions
-  '(("bsub" "esub" sub)
-    ("bsup" "esup" sup) 
+  '(("Subscript" "bsub" "esub" sub)
+    ("Superscript" "bsup" "esup" sup) 
     ; unofficial:
-    ("bbold" "ebold" bold)
-    ("bitalic" "eitalic" italic)
-    ("bscript" "escript" script)
-    ("bfrakt" "efrakt" frakt)
-    ("bserif" "eserif" serif)))
+    ("Bold" "bbold" "ebold" bold)
+    ("Italic" "bitalic" "eitalic" italic)
+    ("Script" "bscript" "escript" script)
+    ("Frakt" "bfrakt" "efrakt" frakt)
+    ("Roman" "bserif" "eserif" serif)))
     
 (defconst isar-fontsymb-properties 
   '((sub      (display (raise -0.4)))
@@ -56,16 +56,15 @@
 ;; Symbols
 ;;
 
-;(defconst isar-token-format "\\<%s>") ; not used if below set
-;(defconst isar-token-variant-format-regexp 
-;  "\\\\<\\(%s\\)\\([:][a-zA-Z0-9]+\\)?>") ; syntax change
-(defconst isar-token-variant-format-regexp 
-  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial, syntax change
+(defconst isar-token-format "\\<%s>")
 
-(defcustom isar-token-symbol-map
-  `(; token name, unicode character composition, optional fontsymbs
-    ;; Bold numerals
-    ("one" "1" bold)
+;(defconst isar-token-variant-format-regexp 
+;  "\\\\<\\(%s\\)\\([:][a-zA-Z0-9]+\\)?>") ; syntax change required
+(defconst isar-token-variant-format-regexp 
+  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial interpretation of usual syntax
+
+(defconst isar-bold-nums-tokens 
+  '(("one" "1" bold)
     ("two" "2" bold)
     ("three" "3" bold)
     ("four" "4" bold)
@@ -73,115 +72,31 @@
     ("six" "6" bold)
     ("seven" "7" bold)
     ("eight" "8" bold)
-    ("nine" "9" bold)
-    ;; Mathcal 
-    ("A" "A" script)
-    ("B" "B" script)
-    ("C" "C" script)
-    ("D" "D" script)
-    ("E" "E" script)
-    ("F" "F" script)
-    ("G" "G" script)
-    ("H" "H" script)
-    ("I" "I" script)
-    ("J" "J" script)
-    ("K" "K" script)
-    ("L" "L" script)
-    ("M" "M" script)
-    ("N" "N" script)
-    ("O" "O" script)
-    ("P" "P" script)
-    ("Q" "Q" script)
-    ("R" "R" script)
-    ("S" "S" script)
-    ("T" "T" script)
-    ("U" "U" script)
-    ("V" "V" script)
-    ("W" "W" script)
-    ("X" "X" script)
-    ("Y" "Y" script)
-    ("Z" "Z" script)
-    ;; Math roman
-    ("a" "a" serif)
-    ("b" "b" serif)
-    ("c" "c" serif)
-    ("d" "d" serif)
-    ("e" "e" serif)
-    ("f" "f" serif)
-    ("g" "g" serif)
-    ("h" "h" serif)
-    ("i" "i" serif)
-    ("j" "j" serif)
-    ("k" "k" serif)
-    ("l" "l" serif)
-    ("m" "m" serif)
-    ("n" "n" serif)
-    ("o" "o" serif)
-    ("p" "p" serif)
-    ("q" "q" serif)
-    ("r" "r" serif)
-    ("s" "s" serif)
-    ("t" "t" serif)
-    ("u" "u" serif)
-    ("v" "v" serif)
-    ("w" "w" serif)
-    ("x" "x" serif)
-    ("y" "y" serif)
-    ("z" "z" serif)
-    ;; Fraktur
-    ("AA" "A" frakt)
-    ("BB" "B" frakt)
-    ("CC" "C" frakt)
-    ("DD" "D" frakt)
-    ("EE" "E" frakt)
-    ("FF" "F" frakt)
-    ("GG" "G" frakt)
-    ("HH" "H" frakt)
-    ("II" "I" frakt)
-    ("JJ" "J" frakt)
-    ("KK" "K" frakt)
-    ("LL" "L" frakt)
-    ("MM" "M" frakt)
-    ("NN" "N" frakt)
-    ("OO" "O" frakt)
-    ("PP" "P" frakt)
-    ("QQ" "Q" frakt)
-    ("RR" "R" frakt)
-    ("SS" "S" frakt)
-    ("TT" "T" frakt)
-    ("UU" "U" frakt)
-    ("VV" "V" frakt)
-    ("WW" "W" frakt)
-    ("XX" "X" frakt)
-    ("YY" "Y" frakt)
-    ("ZZ" "Z" frakt)
-    ("aa" "a" frakt)
-    ("bb" "b" frakt)
-    ("cc" "c" frakt)
-    ("dd" "d" frakt)
-    ("ee" "e" frakt)
-    ("ff" "f" frakt)
-    ("gg" "g" frakt)
-    ("hh" "h" frakt)
-    ("ii" "i" frakt)
-    ("jj" "j" frakt)
-    ("kk" "k" frakt)
-    ("ll" "l" frakt)
-    ("mm" "m" frakt)
-    ("nn" "n" frakt)
-    ("oo" "o" frakt)
-    ("pp" "p" frakt)
-    ("qq" "q" frakt)
-    ("rr" "r" frakt)
-    ("ss" "s" frakt)
-    ("tt" "t" frakt)
-    ("uu" "u" frakt)
-    ("vv" "v" frakt)
-    ("ww" "w" frakt)
-    ("xx" "x" frakt)
-    ("yy" "y" frakt)
-    ("zz" "z" frakt)
-    ("alpha" "α")
+    ("nine" "9" bold)))
+
+(defun isar-map-letters (f1 f2 &rest symbs)
+  (loop for x below 26
+	for c = (+ 65 x)
+	collect 
+	(cons (funcall f1 c) (cons (funcall f2 c) symbs))))
+
+(defconst isar-script-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c" x))
+		    (lambda (x) (format "%c" x))
+		    'script))
+
+(defconst isar-roman-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c" x))
+		    (lambda (x) (format "%c" x))
+		    'serif))
+
+(defconst isar-fraktur-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c%c" x x))
+		    (lambda (x) (format "%c" x))
+		    'frakt))
+  
+(defconst isar-greek-letters-tokens
+  '(("alpha" "α")
     ("beta" "β")
     ("gamma" "γ")
     ("delta" "δ")
@@ -214,15 +129,18 @@
     ("Upsilon" "Υ")
     ("Phi" "Φ")
     ("Psi" "Ψ")
-    ("Omega" "Ω")
-;;  ("bool" "")
+    ("Omega" "Ω")))
+
+(defconst isar-misc-letters-tokens
+  '(("bool" "IB")
     ("complex" "ℂ")
     ("nat" "ℕ")
     ("rat" "ℚ")
     ("real" "ℝ")
-    ("int" "ℤ")
-    ;; Arrows
-    ("leftarrow" "←")
+    ("int" "ℤ")))
+
+(defconst isar-symbols-tokens
+  '(("leftarrow" "←")
     ("rightarrow" "→")
     ("Leftarrow" "⇐")
     ("Rightarrow" "⇒")
@@ -238,13 +156,14 @@
     ("Longleftrightarrow" "⟺")
     ("longmapsto" "⟼")
     ;; Faked long symbols, for use otherwise:
-;;;     ("longleftarrow" "←–")
-;;;     ("Longleftarrow" "⇐–")
-;;;     ("longrightarrow" "–→")
-;;;     ("Longrightarrow" "–⇒")
-;;;     ("longleftrightarrow" "←→")
-;;;     ("Longleftrightarrow" "⇐⇒")
-;;;     ("longmapsto" "❘→")
+    ("longleftarrow" "←–")
+    ("Longleftarrow" "⇐–")
+    ("longrightarrow" "–→")
+    ("Longrightarrow" "–⇒")
+    ("longleftrightarrow" "←→")
+    ("Longleftrightarrow" "⇐⇒")
+    ("longmapsto" "❘→")
+    ;; End fakes
     ("midarrow" "–") ; #x002013 en dash
     ("Midarrow" "‗") ; #x002017 double low line (not mid)
     ("hookleftarrow" "↩")
@@ -257,9 +176,9 @@
     ("leadsto" "↝")
     ("downharpoonleft" "⇃")
     ("downharpoonright" "⇂")
-    ("upharpoonleft" "↿")
-    ;; ("upharpoonright" "↾") overlaps restriction
-    ("restriction" "↾") ;; 
+    ("upharpoonleft" "↿")  ;; 
+    ("upharpoonright" "↾") ;; overlaps restriction
+    ("restriction" "↾")    ;; same as above
     ("Colon" "∷")
     ("up" "↑")
     ("Up" "⇑")
@@ -267,8 +186,8 @@
     ("Down" "⇓")
     ("updown" "↕")
     ("Updown" "⇕")
-    ("langle" "⟪")
-    ("rangle" "⟫")
+    ("langle" "⟨")
+    ("rangle" "⟩")
     ("lceil" "⌈")
     ("rceil" "⌉")
     ("lfloor" "⌊")
@@ -277,8 +196,14 @@
     ("rparr" "⦈")
     ("lbrakk" "⟦")
     ("rbrakk" "⟧")
-;;     ("lbrace" "") TODO
-;;    ("rbrace" "")
+    ("lparr" "(|")  ;; alt
+    ("rparr" "|)")  ;; alt
+    ("lbrakk" "[|") ;; alt
+    ("rbrakk" "|]") ;; alt
+    ("lbrace" "⦃")
+    ("rbrace" "⦄")
+    ("lbrace" "{|") ;; alt
+    ("rbrace" "|}") ;; alt
     ("guillemotleft" "«")
     ("guillemotright" "»")
     ("bottom" "⊥")
@@ -497,7 +422,16 @@
     ("sixsuperior" "⁶")
     ("sevensuperior" "⁷")
     ("eightsuperior" "⁸")
-    ("ninesuperior" "⁹"))
+    ("ninesuperior" "⁹")))
+
+(defcustom isar-token-symbol-map
+  ;; (TOKEN-NAME CHARCOMP FONTSYMBS)
+  (append
+   isar-bold-nums-tokens
+   isar-script-letters-tokens
+   isar-roman-letters-tokens
+   isar-greek-letters-tokens
+   isar-symbols-tokens)
   "Table mapping Isabelle symbol token names to Unicode strings.
 
 You can adjust this table to add more entries, or to change entries for
@@ -514,87 +448,76 @@ results will be undefined when files are saved."
   :tag "Isabelle Unicode Token Mapping")
 
 
-(defcustom isar-shortcut-alist
-  '(; short cut, unicode string
-;    ("<>" . "⋄")
-;    ("|>" . "⊳")
-    ("\\/" . "∨")
-    ("/\\" . "∧")
-    ("+O" . "⊕")
-    ("-O" . "⊖")
-    ("xO" . "⊗")
-    ("/O" . "⊘")
-    (".O" . "⊙")
-    ("|+" . "†")
-    ("|++" . "‡")
-    ("<=" . "≤")
-    ("|-" . "⊢")
-    (">=" . "≥")
-    ("-|" . "⊣")
-    ("||" . "∥")
-    ("==" . "≡")
-    ("~=" . "≠")
-    ("~:" . "∉")
+(defconst isar-symbol-shortcuts
+;    ("<>" . "\<diamond>")
+;    ("|>" . "\<triangleright>")
+  '(("\\/" . "\\<or>")
+    ("/\\" . "\\<and>")
+    ("+O" . "\\<oplus>")
+    ("-O" . "\\<ominus>")
+    ("xO" . "\\<otimes>")
+    ("/O" . "\\<oslash>")
+    (".O" . "\\<odot>")
+    ("|+" . "\\<dagger>")
+    ("|++" . "\\<ddagger>")
+    ("<=" . "\\<le>")
+    ("|-" . "\\<turnstile>")
+    (">=" . "\\<ge>")
+    ("-|" . "\\<stileturn>")
+    ("||" . "\\<parallel>")
+    ("==" . "\\<equiv>")
+    ("~=" . "\\<noteq>")
+    ("~:" . "\\<notin>")
 ;    ("~=" . "≃")
-    ("~~~" . "≍")
-    ("~~" . "≈")
-    ("~==" . "≅")
-    ("|<>|" . "⋈")
-    ("|=" . "⊨")
-    ("=." . "≐")
-    ("_|_" . "⊥")
-    ("</" . "≮")
-    (">=/" . "≱")
-    ("=/" . "≠")
+    ("~~~" . "\\<notapprox>")
+    ("~~" . "\\<approx>")
+    ("~==" . "\\<cong>")
+    ("|<>|" . "\\<bowtie>")
+    ("|=" . "\\<Turnstile>")
+    ("=." . "\\<doteq>")
+    ("_|_" . "\\<bottom>")
+    ("</" . "\\<notle>")
+    ("~>=" . "\\<notge>")
     ("==/" . "≢")
-    ("~/" . "≁")
-    ("~=/" . "≄")
-    ("~~/" . "≉")
-    ("~==/" . "≇")
-    ("<-" . "←")
-;    ("<=" . "⇐")
-    ("->" . "→")
-    ("=>" . "⇒")
-    ("<->" . "↔")
-    ("<=>" . "⇔")
-    ("|->" . "↦") 
-    ("<--" . "⟵")
-    ("<==" . "⟸")
-    ("-->" . "⟶")
-    ("==>" . "⟹")
-    ("<==>" . "⟷")
-    ("|-->" . "⟼")
-    ("<-->" . "⟷")
-    ("<<" . "«")
-    ("[|" . "⟦")
-    (">>" . "»")
-    ("|]" . "⟧")
-;    ("``" . "”")
-;    ("''" . "“")
-;    ("--" . "–")
-    ("---" . "—")
-;    ("''" . "″")
-;    ("'''" . "‴")
-;    ("''''" . "⁗")
-;    (":=" . "≔")
-    ;; some word shortcuts, started with backslash otherwise
-    ;; too annoying.
-    ("\\nat" . "ℕ")
-    ("\\int" . "ℤ")
-    ("\\rat" . "ℚ")
-    ("\\real" . "ℝ")
-    ("\\complex" . "ℂ")
-    ("\\euro" . "€")
-    ("\\yen" . "¥")
-    ("\\cent" . "¢"))
-  "Shortcut key sequence table for Unicode strings.
+    ("~/" . "\\<notsim>")
+    ("~=/" . "\\<notsimeq>")
+    ("~~/" . "\\<notsimeq>")
+    ("<-" . "\\<leftarrow>")
+;    ("<=" . "\\<Leftarrow>")
+    ("->" . "\\<rightarrow>")
+    ("=>" . "\\<Rightarrow>")
+    ("<->" . "\\<leftrightarrow>")
+    ("<=>" . "\\<Leftrightarrow>")
+    ("|->" . "\\<mapsto>") 
+    ("<--" . "\\<longleftarrow>")
+    ("<==" . "\\<Longleftarrow>")
+    ("-->" . "\\<longrightarrow>")
+    ("==>" . "\\<Longrightarrow>")
+    ("<==>" . "\\<Longleftrightarrow>")
+    ("|-->" . "\\<longmapsto>")
+    ("<-->" . "\\<longleftrightarrow>")
+    ("<<" . "\\<guillemotleft>")
+    ("[|" . "\\<lbrakk>")
+    (">>" . "\\<guillemotright>")
+    ("|]" . "\\<rbrakk>")
+    ("---" . "\\<emdash>")))
+
+(defcustom isar-shortcut-alist
+  (append
+   isar-symbol-shortcuts
+   ;; LaTeX-like syntax for symbol names, easier to type
+   (mapcar 
+    (lambda (tokentry)
+      (cons (concat "\\" (car tokentry))
+	    (format isar-token-format (car tokentry))))
+    (append isar-greek-letters-tokens isar-symbols-tokens)))
+  "Shortcut key sequence table for token input.
 
 You can adjust this table to add more entries, or to change entries for
 glyphs that not are available in your Emacs or chosen font.
 
 These shortcuts are only used for input; no reverse conversion is
-performed.  But if tokens exist for the target of shortcuts, they
-will be used on saving the buffer."
+performed.  "
   :type '(repeat (cons (string :tag "Shortcut sequence")
 		       (string :tag "Unicode string")))
   :set 'proof-set-value
@@ -610,9 +533,9 @@ will be used on saving the buffer."
 
 (eval-after-load "isar" 
   '(setq 
-    proof-xsym-activate-command
+    proof-tokens-activate-command
     (isar-markup-ml "change print_mode (insert (op =) \"xsymbols\")")
-    proof-xsym-deactivate-command
+    proof-tokens-deactivate-command
     (isar-markup-ml "change print_mode (remove (op =) \"xsymbols\")")))
 
 

@@ -27,18 +27,18 @@
 ;;
 ;; Functions to display tokens that represent Unicode characters and
 ;; control code sequences for changing the layout.  Tokens are useful
-;; for programs that do not understand a Unicode encoding.
+;; for programs that do not understand a Unicode encoding.  
 ;; 
 
 ;; TODO:
 ;; -- Turning off does not work
+;; -- Allow chars
 ;; -- allow further composition properties 
 ;; -- menu for control tokens (generated after init, major-mode specific?)
 ;; -- rotate tokens (cf old rotate glyphs)
 ;; -- insert tokens via numeric code (extra format string)
 ;; -- modify maths menu to filter menu and insert tokens
 ;; -- reverse lookup that optimistically converts unicode to tokens
-;; -- allow searching for tokens? isearch-open-invisible prop
 
 (require 'cl)
 
@@ -62,7 +62,9 @@ looked up in `unicode-tokens-fontsymb-properties'.")
 
 (defvar unicode-tokens-token-format "%s"
   "Format string for formatting token a name into a token.
-Will be regexp quoted.")
+Will be regexp quoted for matching.  Not used for matching if
+`unicode-tokens-token-variant-format-regexp' is set.
+Also used to format shortcuts.")
 
 (defvar unicode-tokens-token-variant-format-regexp nil 
   "A regular expression which matches a token variant.
@@ -79,7 +81,7 @@ If set, this variable is used instead of `unicode-tokens-token-format'.")
 
 (defvar unicode-tokens-fontsymb-properties nil
  "Association list mapping a symbol to a list of text properties.
-Used in `unicode-tokens-token-alist', `unicode-tokens-control-regions',
+Used in `unicode-tokens-token-symbol-map', `unicode-tokens-control-regions',
 and `unicode-tokens-control-characters'.")
 
 (defvar unicode-tokens-shortcut-alist nil
@@ -103,6 +105,8 @@ Behaviour is much like abbrev.")
 ;;
 
 (defvar unicode-tokens-alist nil)
+
+(defvar unicode-tokens-composition-token-alist nil)
 
 ;;
 ;; Constants
@@ -233,12 +237,12 @@ Token symbol is searched for in `unicode-tokens-alist'."
   (when (not unicode-tokens-show-controls)
     (add-to-invisibility-spec 'unicode-tokens-show-controls)))
 
-(defun unicode-tokens-control-char (s &rest props)
+(defun unicode-tokens-control-char (name s &rest props)
   `(,(format unicode-tokens-control-char-format-regexp s)
     (1 '(face nil invisible unicode-tokens-show-controls) prepend)
     (2 ',(unicode-tokens-symbs-to-props props t) prepend)))
 
-(defun unicode-tokens-control-region (start end &rest props)
+(defun unicode-tokens-control-region (name start end &rest props)
   `(,(format unicode-tokens-control-region-format-regexp start end)
     (1 '(face nil invisible unicode-tokens-show-controls) prepend)
     (2 ',(unicode-tokens-symbs-to-props props t) prepend)
@@ -251,10 +255,102 @@ Token symbol is searched for in `unicode-tokens-alist'."
    (mapcar (lambda (args) (apply 'unicode-tokens-control-region args))
  	   unicode-tokens-control-regions)))
 
+;;
+;; Shortcuts for typing, using quail
+;;
     
+(defvar unicode-tokens-use-shortcuts t
+  "Non-nil means use `unicode-tokens-shortcut-alist' if set.")
+
+(defun unicode-tokens-use-shortcuts (&optional arg)
+  "Toggle `unicode-tokens-use-shortcuts'.  With ARG, turn on iff positive."
+  (interactive "P")
+  (setq unicode-tokens-use-shortcuts
+	(if (null arg) (not unicode-tokens-use-shortcuts)
+	  (> (prefix-numeric-value arg) 0)))
+  (if unicode-tokens-use-shortcuts
+    (set-input-method "Unicode tokens")
+    (set-input-method nil)))
+
+(require 'quail)
+
+(quail-define-package
+ "Unicode tokens" "UTF-8" "u" t
+ "Unicode characters input method using application specific token names"
+ nil t nil nil nil nil nil ; max shortest, could try t
+ nil nil nil t)
+
+(defun unicode-tokens-map-ordering (s1 s2)
+  "Ordering on (car S1, car S2): order longer strings first."
+  (>= (length (car s1)) (length (car s2))))
+
+(defun unicode-tokens-quail-define-rules ()
+  "Define the token and shortcut input rules.
+Calculated from `unicode-tokens-token-name-alist' and 
+`unicode-tokens-shortcut-alist'.
+Also sets `unicode-tokens-token-alist'."
+  (let ((unicode-tokens-quail-define-rules 
+	 (list 'quail-define-rules)))
+;;;     (let ((ulist unicode-tokens-shortcut-alist)
+;;; 	  ustring tokname token)
+;;;       ;; input rules for shortcuts
+;;;       (setq ulist (sort ulist 'unicode-tokens-map-ordering))
+;;;       (while ulist
+;;; 	(setq shortcut (caar ulist))
+;;; 	(setq ustring (cdar ulist))
+;;; 	;(setq token (format unicode-tokens-token-format tokname))
+;;; 	(setq token ustring)
+;;; 	(cond 
+;;; 	 ;; Some error checking (but not enough)
+;;; 	 ((eq (length tokname) 0)
+;;; 	  (warn "Empty token name (mapped to \"%s\") in unicode tokens list"
+;;; 		ustring))
+;;; 	 ((eq (length ustring) 0)
+;;; 	  (warn "Empty token mapping, ignoring token \"%s\" in unicode tokens list"
+;;; 		token))
+;;; 	 ((assoc token unicode-tokens-token-alist)
+;;; 	  (warn "Duplicated token entry, ignoring subsequent mapping of %s" token))
+;;; 	 ((rassoc ustring unicode-tokens-token-alist)
+;;; 	  (warn "Duplicated target \"%s\", ignoring token %s" ustring token))
+;;; 	 (t
+;;; 	  (nconc unicode-tokens-quail-define-rules
+;;; 		 (list (list token 
+;;; 			     (vector ustring))))
+;;; 	  (setq unicode-tokens-token-alist
+;;; 		(nconc unicode-tokens-token-alist
+;;; 		       (list (cons token ustring))))))
+;;; 	(setq ulist (cdr ulist))))
+    ;; make reverse map: convert longer ustring sequences first
+    ;; NB: length no longer relevant for compositions?
+    (setq unicode-tokens-composition-token-alist
+	  (sort
+	   (mapcar (lambda (c) (cons (cadr c) (car c))) 
+		   unicode-tokens-token-symbol-map)
+	   'unicode-tokens-map-ordering))
+    ;; Reverse map used where?
+    (let ((ulist (copy-list unicode-tokens-shortcut-alist))
+	  ustring shortcut)
+      (setq ulist (sort ulist 'unicode-tokens-map-ordering))
+      (while ulist
+	(setq shortcut (caar ulist))
+	(setq ustring (cdar ulist))
+	(nconc unicode-tokens-quail-define-rules
+	       (list (list shortcut
+			   (vector ustring))))
+	(setq ulist (cdr ulist))))
+    (eval unicode-tokens-quail-define-rules)))
+
+
+
 ;; 
 ;; Minor mode
 ;;
+
+(defun unicode-tokens-initialise ()
+  (let ((flks (unicode-tokens-font-lock-keywords)))
+    (put 'unicode-tokens-font-lock-keywords major-mode flks)
+    (unicode-tokens-quail-define-rules)
+    flks))
 
 (defvar unicode-tokens-mode-map (make-sparse-keymap)
   "Key map used for Unicode Tokens mode.")
@@ -265,9 +361,7 @@ Token symbol is searched for in `unicode-tokens-alist'."
   (let ((flks (get 'unicode-tokens-font-lock-keywords major-mode)))
     (when unicode-tokens-mode
       (unless flks
-	(setq flks (unicode-tokens-font-lock-keywords))
-	(put 'unicode-tokens-font-lock-keywords major-mode flks))
-      
+	(setq flks (unicode-tokens-initialise)))
       (make-variable-buffer-local 'font-lock-extra-managed-props)
       (make-variable-buffer-local 'unicode-tokens-alist)
       ;; make sure buffer can display 16 bit chars
@@ -285,7 +379,10 @@ Token symbol is searched for in `unicode-tokens-alist'."
        unicode-tokens-font-lock-extra-managed-props)
 
       (if font-lock-fontified ; redo it
-	  (font-lock-fontify-buffer)))
+	  (font-lock-fontify-buffer))
+	
+      (if unicode-tokens-use-shortcuts
+	  (set-input-method "Unicode tokens")))
 
     (when (not unicode-tokens-mode)
       ;; FIXME: removal doesn't work?.  But does in edebug.
@@ -293,6 +390,7 @@ Token symbol is searched for in `unicode-tokens-alist'."
 	(font-lock-remove-keywords nil flks)
 	(font-lock-fontify-buffer) 
 	(setq font-lock-extra-managed-props nil) 
+	(set-input-method nil)
 	))))
 
   ;; Key bindings TODO
@@ -307,27 +405,50 @@ Token symbol is searched for in `unicode-tokens-alist'."
 
 (easy-menu-define unicode-tokens-menu unicode-tokens-mode-map
    "Tokens menu"
-   (cons "Tokens"
-	 ;; NB: would be better in menu only if engaged
-	 '(["Show control tokens" unicode-tokens-show-controls
-	    :style toggle
-	    :selected unicode-tokens-show-controls
-	    :active (or
-		     unicode-tokens-control-region-format-regexp
-		     unicode-tokens-control-char-format-regexp)
-	    :help "Prevent hiding of control tokens"])))
+    (cons "Tokens"
+     ;; NB: would be better in menu only if engaged
+     (list 
+      ["Show control tokens" unicode-tokens-show-controls
+       :style toggle
+       :selected unicode-tokens-show-controls
+       :active (or
+		unicode-tokens-control-region-format-regexp
+		unicode-tokens-control-char-format-regexp)
+       :help "Prevent hiding of control tokens"]
+      ["Enable shortcuts" unicode-tokens-use-shortcuts
+       :style toggle
+       :selected unicode-tokens-use-shortcuts
+       :active unicode-tokens-shortcut-alist
+       :help "Use short cuts for typing tokens"]
+       (cons "Format escape"
+ 	    (mapcar 
+ 	     (lambda (fmt)
+ 	       (vector (car fmt)
+ 		       `(lambda () (interactive) (insert 
+ 				   (format unicode-tokens-token-format
+ 					   ,(cadr fmt))))
+ 		       :help (concat "Format next item as " 
+ 				     (downcase (car fmt)))))
+ 	     unicode-tokens-control-characters))
+       (cons "Format region"
+ 	    (mapcar 
+ 	     (lambda (fmt)
+ 	       (vector (car fmt)
+ 		       `(lambda () (interactive)
+ 			 (apply 'unicode-tokens-annotate-region-with ,fmt))
+ 		       :help (concat "Format region as " 
+ 				     (downcase (car fmt)))
+ 		       :active 'mark-active))
+ 	     unicode-tokens-control-regions)))))
 
-;; TODO:
-;; 	(cons "Format"
-;; 	 (mapcar 
-;; 	 (lambda (fmt)
-;; 	   (vector fmt
-;; 		   (unicode-tokens-annotate-region-with (downcase fmt))
-;; 		   :help (concat "Format region as " (downcase fmt))
-;; 		   :active 'mark-active)) ; XE? region-active-p
-;; 	   '("Subscript" "Superscript" 
-;; 	     "Bold" "Italic" "Script" "Fraktur" "Serif")))))
-  
+(defun unicode-tokens-annotate-region-with (name start end &rest props)
+  ;; TODO: interactive
+  (goto-char (region-end))
+  (insert (format unicode-tokens-token-format end))
+  (goto-char (region-beginning)
+  (insert (format unicode-tokens-token-format start))))
+
+	     
 (provide 'unicode-tokens)
 
 ;;; unicode-tokens.el ends here
