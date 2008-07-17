@@ -10,10 +10,7 @@
 ;;
 
 (eval-and-compile
-  (if (featurep 'xemacs)
-      (require 'span-extent))
-  (if (not (featurep 'xemacs))
-      (require 'span-overlay)))
+  (require 'span-overlay))
 
 ;;
 ;; Generic functions built on low-level concrete ones.
