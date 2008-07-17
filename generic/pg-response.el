@@ -281,8 +281,7 @@ Returns non-nil if response buffer was cleared."
 	;(font-lock-fontify-buffer)
 	(if face
 	    (font-lock-append-text-property 
-	     start (point-max) 'face 
-	     (face-all-attributes face)))
+	     start (point-max) 'face face))
 
 	(set-buffer-modified-p nil))))))
 
