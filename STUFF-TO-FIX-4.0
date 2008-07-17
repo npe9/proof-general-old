@@ -1,0 +1,19 @@
+-*- outline -*- 
+
+* Restore tracing slow mode: fontification disablement in tracing buffer
+(unless already provide)
+
+* Restore pg-goals-yank-subterm, pg-goals-button-action
+
+* Simplifications to goal/save configuration commands
+
+* Character sets for different symbols (cf monnier.patch)
+
+(make-char 'japanese-jisx0213.2004-1 #x22 #x4F) ; forall 
+(make-char 'japanese-jisx0213.2004-1 #x22 #x5A) ; [| approx
+(make-char 'japanese-jisx0213.2004-1 #x22 #x5B) ; |] approx
+
+
+** Fontification of tokens using fontsymbs
+
+
