@@ -13,7 +13,7 @@
 
 (require 'cl)				; various
 (require 'span)				; abstraction of overlays/extents
-(require 'proof)			; loader (& proof-utils macros)
+(require 'proof-utils)			; proof-utils macros
 (require 'proof-syntax)		        ; utils for manipulating syntax
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

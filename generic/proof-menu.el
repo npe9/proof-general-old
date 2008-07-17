@@ -7,7 +7,7 @@
 ;; $Id$
 ;;
 
-(require 'proof)           ; proof-deftoggle, proof-eval-when-ready-for-assistant
+(require 'proof-utils)    ; proof-deftoggle, proof-eval-when-ready-for-assistant
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

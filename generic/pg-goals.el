@@ -16,7 +16,6 @@
 
 ;;; Commentary:
 
-(require 'proof)
 (require 'pg-assoc)
 (require 'bufhist)
 
