@@ -2057,6 +2057,16 @@ Unicode Tokens support is deactivated."
   :type 'string
   :group 'proof-x-symbol)
 
+(defcustom proof-tokens-extra-modes nil
+  "List of additional mode names to use with Proof General tokens.
+These modes will have Tokens enabled for the proof assistant token language,
+in addition to the four modes for Proof General (script, shell, response, pbp).
+
+Set this variable if you want additional modes to also display
+tokens (for example, editing documentation or source code files)."
+  :type '(repeat symbol)
+  :group 'proof-x-symbol)
+
 
 ;;
 ;; 5d. hooks and other miscellaneous customizations
