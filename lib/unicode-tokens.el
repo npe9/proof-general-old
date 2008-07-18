@@ -52,13 +52,12 @@ Each element is a list
 
   (TOKNAME COMPOSITION FONTSYMB ...)
 
-A composition is either a single Unicode character string, or
-where FONTSYMB is optional.
+A composition is typically a single Unicode character string, but
+can be more complex: see documentation of `compose-region'.
 
-A composition is either a single Unicode character string, or
-a cons cell (FONTSYMB . COMP) where COMP is a composition
-and FONTSYMB is a symbol indicating a set of text properties, 
-looked up in `unicode-tokens-fontsymb-properties'.")
+The list of FONTSYMB are optional.  Each FONTSYMB is a symbol
+indicating a set of text properties, looked up in
+`unicode-tokens-fontsymb-properties'.")
 
 (defvar unicode-tokens-token-format "%s"
   "Format string for formatting token a name into a token.
