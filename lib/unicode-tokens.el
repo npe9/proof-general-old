@@ -200,7 +200,9 @@ Token symbol is searched for in `unicode-tokens-hash-table'."
     (if compps
 	(compose-region start end (car compps)))
     (if props
-	(unicode-tokens-symbs-to-props props))))
+	(add-text-properties ;; font-lock should do this but fails?
+	 start end (unicode-tokens-symbs-to-props props)))
+    nil))
 
 (defun unicode-tokens-symbs-to-props (symbs &optional facenil)
   (let (props p)
