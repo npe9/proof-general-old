@@ -60,8 +60,8 @@
 
 ;(defconst isar-token-variant-format-regexp 
 ;  "\\\\<\\(%s\\)\\([:][a-zA-Z0-9]+\\)?>") ; syntax change required
-(defconst isar-token-variant-format-regexp 
-  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial interpretation of usual syntax
+;(defconst isar-token-variant-format-regexp 
+;  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial interpretation of usual syntax
 
 (defconst isar-bold-nums-tokens 
   '(("one" "1" bold)
