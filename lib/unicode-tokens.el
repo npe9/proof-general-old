@@ -104,7 +104,7 @@ Behaviour is much like abbrev.")
 ;; Variables set in the mode
 ;;
 
-(defvar unicode-tokens-alist nil)
+(defvar unicode-tokens-hash-table nil)
 
 (defvar unicode-tokens-composition-token-alist nil)
 
@@ -153,34 +153,32 @@ Behaviour is much like abbrev.")
 ;; Credit to Stefan Monnier for original version of this.
 (defun unicode-tokens-font-lock-keywords ()
   "Calculate and return value for font-lock-keywords."
-  (let ((alist nil))
+  (let ((hash (make-hash-table :test 'equal))
+	toks)
      (dolist (x   unicode-tokens-token-symbol-map)
        (let ((sym  (car x))
 	     (comp (cadr x)))
-       (when (and (if (fboundp 'char-displayable-p)
- 		     (reduce (lambda (x y) (and x (char-displayable-p y)))
- 			     comp
- 			     :initial-value t)
- 		   t)
- 		 (not (assoc sym alist))) ; Not yet in alist.
- 	(push (cons
- 	       (if unicode-tokens-token-variant-format-regexp 
-		   sym
-		 (format unicode-tokens-token-format sym))
- 	       (cdr x))
- 	      alist))))
-     (when alist
-       (setq unicode-tokens-alist alist)
+	 (when (and (reduce (lambda (x y) (and x (char-displayable-p y)))
+			    comp
+			    :initial-value t))
+	   (let ((tok (if unicode-tokens-token-variant-format-regexp 
+			  sym
+			(format unicode-tokens-token-format sym))))
+	     (unless (gethash tok hash) ; already have composition
+	       (puthash tok (cdr x) hash)
+	       (push tok toks))))))
+     (when toks
+       (setq unicode-tokens-hash-table hash)
        (if unicode-tokens-token-variant-format-regexp
 	   ;; using variant regexps
 	   `((,(format unicode-tokens-token-variant-format-regexp
-		       (regexp-opt (mapcar 'car alist) t))
+		       (regexp-opt toks t))
 	      (0 (unicode-tokens-help-echo) 'prepend)
 	      (0 (unicode-tokens-font-lock-compose-symbol 1)
 		 'prepend))
 	     ,@(unicode-tokens-control-font-lock-keywords))
 	 ;; otherwise
-	 `((,(regexp-opt (mapcar 'car alist) t)
+	 `((,(regexp-opt toks t)
 		  (0 (unicode-tokens-help-echo) 'prepend)
 		  (0 (unicode-tokens-font-lock-compose-symbol 0)
 		     'prepend))
@@ -194,16 +192,16 @@ Behaviour is much like abbrev.")
   "Compose a sequence of chars into a symbol, maybe returning a face property.
 Regexp match data number MATCH selects the token name, while 0 matches the
 whole expression. 
-Token symbol is searched for in `unicode-tokens-alist'."
+Token symbol is searched for in `unicode-tokens-hash-table'."
   (let* ((start   (match-beginning 0))
          (end     (match-end 0))
-	 (compps  (cdr-safe (assoc (match-string match) 
-				   unicode-tokens-alist)))
+	 (compps  (gethash (match-string match) 
+			   unicode-tokens-hash-table))
 	 (props   (cdr-safe compps)))
     (if compps
 	(compose-region start end (car compps)))
-    (if (cdr-safe compps)
-	(unicode-tokens-symbs-to-props (cdr-safe compps)))))
+    (if props
+	(unicode-tokens-symbs-to-props props))))
 
 (defun unicode-tokens-symbs-to-props (symbs &optional facenil)
   (let (props p)
