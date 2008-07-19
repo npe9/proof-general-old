@@ -30,7 +30,10 @@
      fontsymb-properties
      shortcut-alist
      control-region-format-regexp
+     control-region-format-beg
+     control-region-format-end
      control-char-format-regexp
+     control-char-format
      control-regions
      control-characters))
   (unicode-tokens-initialise)

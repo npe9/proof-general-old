@@ -4,7 +4,7 @@
 ;; Copyright(C) 2008 David Aspinall / LFCS Edinburgh
 ;; Author:    David Aspinall <David.Aspinall@ed.ac.uk>
 ;;
-;; This file is loaded by `proof-unicode-tokens.el'.
+;; This file is loaded by proof-auxmodes.el for proof-unicode-tokens.el.
 ;;
 ;; It sets the variables defined at the top of unicode-tokens.el,
 ;; unicode-tokens-<foo> is set from isar-<foo>.  See the corresponding
@@ -22,6 +22,11 @@
 
 (defconst isar-control-char-format-regexp 
   "\\(\\\\<\\^%s>\\)\\([^\\]\\|\\\\<[A-Za-z]+>\\)")
+
+(defconst isar-control-region-format-beg "\\<^%s>")
+(defconst isar-control-region-format-end "\\<^%s>")
+(defconst isar-control-char-format "\\<^%s>")
+
 
 (defconst isar-control-characters
   '(("Subscript" "sub" sub) 
@@ -60,41 +65,9 @@
 
 ;(defconst isar-token-variant-format-regexp 
 ;  "\\\\<\\(%s\\)\\([:][a-zA-Z0-9]+\\)?>") ; syntax change required
-;(defconst isar-token-variant-format-regexp 
-;  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial interpretation of usual syntax
+(defconst isar-token-variant-format-regexp 
+  "\\\\<\\(%s\\)\\([0-9]+\\)?>") ; unofficial interpretation of usual syntax
 
-(defconst isar-bold-nums-tokens 
-  '(("one" "1" bold)
-    ("two" "2" bold)
-    ("three" "3" bold)
-    ("four" "4" bold)
-    ("five" "5" bold)
-    ("six" "6" bold)
-    ("seven" "7" bold)
-    ("eight" "8" bold)
-    ("nine" "9" bold)))
-
-(defun isar-map-letters (f1 f2 &rest symbs)
-  (loop for x below 26
-	for c = (+ 65 x)
-	collect 
-	(cons (funcall f1 c) (cons (funcall f2 c) symbs))))
-
-(defconst isar-script-letters-tokens
-  (isar-map-letters (lambda (x) (format "%c" x))
-		    (lambda (x) (format "%c" x))
-		    'script))
-
-(defconst isar-roman-letters-tokens
-  (isar-map-letters (lambda (x) (format "%c" x))
-		    (lambda (x) (format "%c" x))
-		    'serif))
-
-(defconst isar-fraktur-letters-tokens
-  (isar-map-letters (lambda (x) (format "%c%c" x x))
-		    (lambda (x) (format "%c" x))
-		    'frakt))
-  
 (defconst isar-greek-letters-tokens
   '(("alpha" "α")
     ("beta" "β")
@@ -196,12 +169,13 @@
     ("rparr" "⦈")
     ("lbrakk" "⟦")
     ("rbrakk" "⟧")
+    ("lbrace" "⦃")
+    ("rbrace" "⦄")
+    ;; bracket composition alternatives
     ("lparr" "(|")  ;; alt
     ("rparr" "|)")  ;; alt
     ("lbrakk" "[|") ;; alt
     ("rbrakk" "|]") ;; alt
-    ("lbrace" "⦃")
-    ("rbrace" "⦄")
     ("lbrace" "{|") ;; alt
     ("rbrace" "|}") ;; alt
     ("guillemotleft" "«")
@@ -424,14 +398,46 @@
     ("eightsuperior" "⁸")
     ("ninesuperior" "⁹")))
 
+(defconst isar-bold-nums-tokens 
+  '(("zero" "0" bold)
+    ("one" "1" bold)
+    ("two" "2" bold)
+    ("three" "3" bold)
+    ("four" "4" bold)
+    ("five" "5" bold)
+    ("six" "6" bold)
+    ("seven" "7" bold)
+    ("eight" "8" bold)
+    ("nine" "9" bold)))
+
+(defun isar-map-letters (f1 f2 &rest symbs)
+  (loop for x below 26
+	for c = (+ 65 x)
+	collect 
+	(cons (funcall f1 c) (cons (funcall f2 c) symbs))))
+
+(defconst isar-script-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c" x))
+		    (lambda (x) (format "%c" x))
+		    'script))
+
+(defconst isar-roman-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c" x))
+		    (lambda (x) (format "%c" x))
+		    'serif))
+
+(defconst isar-fraktur-letters-tokens
+  (isar-map-letters (lambda (x) (format "%c%c" x x))
+		    (lambda (x) (format "%c" x))
+		    'frakt))
+  
 (defcustom isar-token-symbol-map
-  ;; (TOKEN-NAME CHARCOMP FONTSYMBS)
   (append
+   isar-symbols-tokens
+   isar-greek-letters-tokens
    isar-bold-nums-tokens
    isar-script-letters-tokens
-   isar-roman-letters-tokens
-   isar-greek-letters-tokens
-   isar-symbols-tokens)
+   isar-roman-letters-tokens)
   "Table mapping Isabelle symbol token names to Unicode strings.
 
 You can adjust this table to add more entries, or to change entries for
@@ -441,7 +447,7 @@ The token TNAME is made into the token \\< TNAME >.
 The string mapping can be anything, but should be such that
 tokens can be uniquely recovered from a decoded text; otherwise
 results will be undefined when files are saved."
-  :type '(repeat (cons (string :tag "Token name")
+  :type '(repeat (list (string :tag "Token name")
 		       (string :tag "Unicode string")))
   :set 'proof-set-value
   :group 'isabelle
@@ -497,9 +503,11 @@ results will be undefined when files are saved."
     ("|-->" . "\\<longmapsto>")
     ("<-->" . "\\<longleftrightarrow>")
     ("<<" . "\\<guillemotleft>")
-    ("[|" . "\\<lbrakk>")
     (">>" . "\\<guillemotright>")
+    ("[|" . "\\<lbrakk>")
     ("|]" . "\\<rbrakk>")
+    ("{|" . "\\<lbrace>")
+    ("|}" . "\\<rbrace>")
     ("---" . "\\<emdash>")))
 
 (defcustom isar-shortcut-alist
