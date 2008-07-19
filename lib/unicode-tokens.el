@@ -32,11 +32,7 @@
 
 ;; TODO:
 ;; -- Turning off does not work
-;; -- Allow chars
-;; -- allow further composition properties 
-;; -- menu for control tokens (generated after init, major-mode specific?)
 ;; -- insert tokens via numeric code (extra format string)
-;; -- modify maths menu to filter menu and insert tokens
 ;; -- reverse lookup that optimistically converts unicode to tokens
 
 (require 'cl)
@@ -75,7 +71,7 @@ variant name.
 
 If set, this variable is used instead of `unicode-tokens-token-format'.")
 ;; (setq ut-tvfr  "\\(%s\\)\\(:?\\w+\\)")
-;; (string-match (format ut-tvfr ".*") "alpha:x") 
+;; (string-match (format ut-tvfr ".*?") "alpha:x") 
 
 (defvar unicode-tokens-fontsymb-properties nil
  "Association list mapping a symbol to a list of text properties.
