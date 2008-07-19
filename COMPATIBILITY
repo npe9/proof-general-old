@@ -60,10 +60,8 @@ x-symbol/etc/fonts-ttf/isaxsym.ttf, which
 you should install in Font Book.
 
 Note: Emacs.app looks set to become the future supported Mac port of
-GNU Emacs, but being based on GNU Emacs 23, it has recently become
-incompatible with X-Symbol because of API changes.  (A fix would be
-welcome; may be simple).  If you do not care about X-Symbol, or
-can use the Unicode Symbols mode, Emacs.app works just as well.
+GNU Emacs, and is based on GNU Emacs 23.  It should work well with
+this version of Proof General.
 
 Note that Mac compatibility isn't thoroughly tested by the
 maintainers.  If you discover problems, please send a report and/or
