@@ -157,6 +157,7 @@ at the top of your theory file, like this:
 	 (list '(string :tag "Choose another")
 	       '(const :tag "Unset (use default)" nil)))
   :group 'isabelle)
+(put 'isabelle-chosen-logic 'safe-local-variable 'stringp)
 
 (defvar isabelle-chosen-logic-prev nil
   "Value of `isabelle-chosen-logic' on last call of `isabelle-set-prog-name'.")
