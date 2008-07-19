@@ -725,7 +725,8 @@ KEY is added onto proof-assistant map."
 	 (define-key (proof-ass keymap) (quote ,key) (quote ,fn)))
      (defun ,fn ()
        ,(concat "Shortcut command to insert "
-		(replace-in-string  string "\\\\" "\\\\=") ;; for substitute-command-keys
+		(replace-in-string  
+		 string "\\\\" "\\\\=\\\\") ;; for substitute-command-keys
 		" into the current buffer.\nThis simply calls `proof-insert', which see.")
        (interactive)
        (proof-insert ,string))))
