@@ -18,7 +18,7 @@
 ;;
 
 (defconst isar-control-region-format-regexp
-  "\\(\\\\<\\^%s>\\)\\(.*\\)\\(\\\\<\\^%s>\\)")
+  "\\(\\\\<\\^%s>\\)\\(.*?\\)\\(\\\\<\\^%s>\\)")
 
 (defconst isar-control-char-format-regexp 
   "\\(\\\\<\\^%s>\\)\\([^\\]\\|\\\\<[A-Za-z]+>\\)")
