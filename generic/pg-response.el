@@ -255,6 +255,17 @@ Returns non-nil if response buffer was cleared."
   ;; see the proof state and there is none
   ;; (Isabelle/Isar displays nothing: might be better if it did).
   (proof-display-and-keep-buffer proof-response-buffer))
+
+
+;;
+;; Images for the response buffer
+;;
+;(defimage pg-response-error-image 
+;  ((:type xpm :file "/home/da/PG/images/epg-interrupt.xpm")))
+
+;(defimage pg-response-warning-image 
+;  ((:type xpm :file "/home/da/PG/images/epg-abort.xpm")))
+
   
 ;; TODO: this function should be combined with
 ;; pg-response-maybe-erase-buffer.
@@ -278,34 +289,12 @@ Returns non-nil if response buffer was cleared."
 	(setq start (point))
 	(insert str)
 	(unless (bolp) (newline))
-	;(font-lock-fontify-buffer)
-	(if face
-	    (font-lock-append-text-property 
-	     start (point-max) 'face face))
+ 	(when face
+ 	  (overlay-put
+ 	   (make-overlay start (point-max))
+ 	   'face face))
 
 	(set-buffer-modified-p nil))))))
-
-(defun pg-append-face-property (start end value &optional object)
-  "Append to face property of the text from START to END, using font-lock-face.
-Arguments PROP and VALUE specify the property and value to append to the value
-already in place.  The resulting property values are always lists.
-Optional argument OBJECT is the string or buffer containing the text."
-  (let ((val (if (listp value) value (list value))) next prev)
-    (while (/= start end)
-      (setq next (next-single-property-change start prop object end)
-	    prev (get-text-property start prop object))
-      ;; Canonicalize old forms of face property.
-      (and (memq prop '(face font-lock-face))
-	   (listp prev)
-	   (or (keywordp (car prev))
-	       (memq (car prev) '(foreground-color background-color)))
-	   (setq prev (list prev)))
-      (put-text-property start next prop
-			 (append (if (listp prev) prev (list prev)) val)
-			 object)
-      (setq start next))))
-
-
 
 (defun pg-response-clear-displays ()
   "Clear Proof General response and tracing buffers.
