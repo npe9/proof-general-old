@@ -519,8 +519,8 @@ Exactly what uses this face depends on the proof assistant."
 
 (defface proof-error-face
   (proof-face-specs
-   (:background "indianred1" :bold t)
-   (:background "brown" :bold t)
+   (:background "indianred1")
+   (:background "brown")
    (:bold t))
   "*Face for error messages from proof assistant."
   :group 'proof-faces)
@@ -655,7 +655,7 @@ Warning messages can come from proof assistant or from Proof General itself."
 ;; proof-mode-for-goals:    <PA>-goals-mode
 ;; proof-mode-for-script:   <PA>-mode
 ;;
-;; These are defined as constants in pg-custom.el
+;; These are defined in pg-vars.el and set in proof-site mode stub.
 ;;
 ;; Prover modes should define aliases for these if not defun'd.
 
@@ -1442,6 +1442,12 @@ the proof assistant in some way, or print a welcome message
 See also `proof-shell-pre-sync-init-cmd'."
    :type '(choice string (const nil))
    :group 'proof-shell)
+
+;; TODO: remove proof-shell-init-cmd in favour of this hook
+(defcustom proof-shell-init-hook nil
+  "Hooks run when the proof process has started up."
+  :type '(list function)
+  :group 'proof-shell)
 
 (defcustom proof-shell-restart-cmd ""
    "A command for re-initialising the proof process."
