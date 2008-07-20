@@ -173,14 +173,8 @@ to the default toolbar."
     ;; First set the button variables to glyphs (bit long-windedly).
     (mapcar
      (lambda (buttons)
-       (let ((var	(car buttons))
-	     (iconfiles
-	      (mapcar (lambda (name)
-			(concat proof-images-directory "pg-"
-				name
-				icontype)) (cdr buttons))))
-	 (set var
-		(concat "epg-" (eval (cadr buttons))))))
+       (set (car buttons)
+	    (concat "epg-" (eval (cadr buttons)))))
      proof-toolbar-icon-list)
 
     (setq proof-toolbar (make-sparse-keymap))
