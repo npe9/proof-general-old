@@ -359,6 +359,10 @@ matches contents of quotes for quoted identifiers.")
    (cons isar-improper-regexp 'font-lock-reference-face)
    (cons isar-antiq-regexp '(0 'font-lock-variable-name-face t))))
 
+;; Indicate we're going to use font lock to manage 'invisible property
+(put 'isar-goals-mode 'font-lock-extra-managed-props '(invisible))
+(put 'isar-response-mode 'font-lock-extra-managed-props '(invisible))
+
 (defun isar-output-flk (start regexp end face)
   `(,(concat "\\(" start "\\)\\(" regexp "\\)\\(" end "\\)")
     (1 '(face nil invisible t) prepend)
@@ -367,8 +371,10 @@ matches contents of quotes for quoted identifiers.")
 
 (defvar isar-output-font-lock-keywords-1
   (list
-   '("\^AI\\|\^AJ\\|\^AK\\|\^AO\\|\^AP" (0 '(face nil invisible t) t))
+   '("\^AI\\|\^AJ\\|\^AK\\|\^AM\\|\^AN\\|\^AO\\|\^AP" (0 '(face nil invisible t) t))
    (isar-output-flk "\^A0" "\\(?:[^\^A]\\|\^A[^1]\\)*" "\^A1" 'proof-warning-face)
+;; done generically at the moment:
+;;  (isar-output-flk "\^AM" "\\(?:[^\^A]\\|\^A[^N]\\)*" "\^AN" 'proof-error-face)
    (isar-output-flk "\^AB" isar-long-id-stuff "\^AA" 'isabelle-class-name-face)
    (isar-output-flk "\^AC'" isar-id "\^AA" 'isabelle-tfree-name-face)
    (isar-output-flk "\^AD'" isar-idx "\^AA" 'isabelle-tvar-name-face)
