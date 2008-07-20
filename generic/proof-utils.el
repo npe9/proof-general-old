@@ -714,6 +714,9 @@ The name of the defined function is returned."
 ;;; Macris for defining user-level functions (previously in proof-menu.el)
 ;;;
 
+(defun proof-escape-keymap-doc (string)
+  ;; avoid work of substitute-command-keys
+  (replace-in-string string "\\\\" "\\\\=\\\\"))
 
 (defmacro proof-defshortcut (fn string &optional key)
   "Define shortcut function FN to insert STRING, optional keydef KEY.
@@ -725,8 +728,7 @@ KEY is added onto proof-assistant map."
 	 (define-key (proof-ass keymap) (quote ,key) (quote ,fn)))
      (defun ,fn ()
        ,(concat "Shortcut command to insert "
-		(replace-in-string  
-		 string "\\\\" "\\\\=\\\\") ;; for substitute-command-keys
+		(proof-escape-keymap-doc string)
 		" into the current buffer.\nThis simply calls `proof-insert', which see.")
        (interactive)
        (proof-insert ,string))))
