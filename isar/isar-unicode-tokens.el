@@ -47,7 +47,7 @@
     ("Frakt" "bfrakt" "efrakt" frakt)
     ("Roman" "bserif" "eserif" serif)))
     
-(defconst isar-fontsymb-properties 
+(defcustom isar-fontsymb-properties 
   '((sub      (display (raise -0.4)))
     (sup      (display (raise 0.4)))
     (loc      (face proof-declaration-name-face))
@@ -55,7 +55,9 @@
     (italic   (face (:slant italic)))
     (script   (face unicode-tokens-script-font-face))
     (frakt    (face unicode-tokens-fraktur-font-face))
-    (serif    (face unicode-tokens-serif-font-face))))
+    (serif    (face unicode-tokens-serif-font-face)))
+  "Mapping from symbols to property lists used for markup scheme."
+  :set 'proof-set-value)
 
 ;;
 ;; Symbols
@@ -120,7 +122,6 @@
     ("leftrightarrow" "↔")
     ("Leftrightarrow" "⇔")
     ("mapsto" "↦")
-    ;; Real long symbols, may work in some places
     ("longleftarrow" "⟵")
     ("Longleftarrow" "⟸")
     ("longrightarrow" "⟶")
@@ -128,15 +129,6 @@
     ("longleftrightarrow" "⟷")
     ("Longleftrightarrow" "⟺")
     ("longmapsto" "⟼")
-    ;; Faked long symbols, for use otherwise:
-    ("longleftarrow" "←–")
-    ("Longleftarrow" "⇐–")
-    ("longrightarrow" "–→")
-    ("Longrightarrow" "–⇒")
-    ("longleftrightarrow" "←→")
-    ("Longleftrightarrow" "⇐⇒")
-    ("longmapsto" "❘→")
-    ;; End fakes
     ("midarrow" "–") ; #x002013 en dash
     ("Midarrow" "‗") ; #x002017 double low line (not mid)
     ("hookleftarrow" "↩")
@@ -171,13 +163,6 @@
     ("rbrakk" "⟧")
     ("lbrace" "⦃")
     ("rbrace" "⦄")
-    ;; bracket composition alternatives
-    ("lparr" "(|")  ;; alt
-    ("rparr" "|)")  ;; alt
-    ("lbrakk" "[|") ;; alt
-    ("rbrakk" "|]") ;; alt
-    ("lbrace" "{|") ;; alt
-    ("rbrace" "|}") ;; alt
     ("guillemotleft" "«")
     ("guillemotright" "»")
     ("bottom" "⊥")
@@ -398,6 +383,34 @@
     ("eightsuperior" "⁸")
     ("ninesuperior" "⁹")))
 
+(defun isar-try-char (charset code1 code2)
+  (and (charsetp charset) ; prevent error
+       (char-to-string (make-char charset code1 code2))))
+
+(defconst isar-symbols-tokens-fallbacks
+  `(;; Faked long symbols
+    ("longleftarrow" "←–")
+    ("Longleftarrow" "⇐–")
+    ("longrightarrow" "–→")
+    ("Longrightarrow" "–⇒")
+    ("longleftrightarrow" "←→")
+    ("Longleftrightarrow" "⇐⇒")
+    ("longmapsto" "❘→")
+    ;; bracket composition alternatives
+    ("lparr" "(|")  
+    ("rparr" "|)") 
+    ;; an example of using characters from another charset.
+    ;; to expand this table, see output of M-x list-charset-chars
+    ("lbrakk" ,(isar-try-char 'japanese-jisx0208 #x22 #x5A))
+    ("rbrakk" ,(isar-try-char 'japanese-jisx0208 #x22 #x5B))
+    ("lbrakk" "[|")
+    ("rbrakk" "|]")
+    ("lbrace" "{|")
+    ("rbrace" "|}"))
+  "Fallback alternatives to `isar-symbols-tokens'.
+The first displayable composition will be displayed to replace the
+tokens.")
+
 (defconst isar-bold-nums-tokens 
   '(("zero" "0" bold)
     ("one" "1" bold)
@@ -434,6 +447,7 @@
 (defcustom isar-token-symbol-map
   (append
    isar-symbols-tokens
+   isar-symbols-tokens-fallbacks
    isar-greek-letters-tokens
    isar-bold-nums-tokens
    isar-script-letters-tokens
@@ -452,6 +466,7 @@ results will be undefined when files are saved."
   :set 'proof-set-value
   :group 'isabelle
   :tag "Isabelle Unicode Token Mapping")
+
 
 
 (defconst isar-symbol-shortcuts

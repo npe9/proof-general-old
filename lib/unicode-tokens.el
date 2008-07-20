@@ -83,6 +83,7 @@ and `unicode-tokens-control-characters'.")
 The alist is added to the input mode for tokens.
 Behaviour is much like abbrev.")
 
+
 ;;
 ;; Variables that can be overridden in instances: control tokens
 ;;
@@ -96,6 +97,24 @@ Behaviour is much like abbrev.")
 (defvar unicode-tokens-control-region-format-beg nil)
 (defvar unicode-tokens-control-region-format-end nil)
 (defvar unicode-tokens-control-char-format nil)
+
+;;
+;; A list of the above variables
+;;
+
+(defconst unicode-tokens-configuration-variables
+  '(token-symbol-map
+    token-format
+    token-variant-format-regexp
+    fontsymb-properties
+    shortcut-alist
+    control-region-format-regexp
+    control-region-format-beg
+    control-region-format-end
+    control-char-format-regexp
+    control-char-format
+    control-regions
+    control-characters))
 
 ;;
 ;; Variables set in the mode 
@@ -494,15 +513,19 @@ Calculated from `unicode-tokens-token-name-alist' and
 	  (set-buffer-multibyte t))
 
       (add-to-invisibility-spec 'unicode-tokens-show-controls)
+      
+      ;; our conventions: 
+      ;; 1. set default for font-lock-extra-managed-props 
+      ;;    as property on major mode symbol (ordinarily nil).
       (font-lock-add-keywords nil flks)
 
-      (setq font-lock-extra-managed-props nil) 
+      (setq font-lock-extra-managed-props 
+	    (get 'font-lock-extra-managed-props major-mode))
       (mapcar 
        (lambda (p) (add-to-list 'font-lock-extra-managed-props p))
        unicode-tokens-font-lock-extra-managed-props)
 
-      (if font-lock-fontified ; redo it
-	  (font-lock-fontify-buffer))
+      (font-lock-fontify-buffer)
 	
       (if unicode-tokens-use-shortcuts
 	  (set-input-method "Unicode tokens"))
@@ -513,21 +536,20 @@ Calculated from `unicode-tokens-token-name-alist' and
       (set (make-local-variable 'maths-menu-tokenise-insert)
 	   (lambda (uchar) 
 	     (unicode-tokens-insert-token
-	      (gethash uchar unicode-tokens-uchar-hash-table))))
+	      (gethash uchar unicode-tokens-uchar-hash-table)))))
 
     (when (not unicode-tokens-mode)
-      ;; FIXME: removal doesn't work?.  But does in edebug.
       (when flks
-	(font-lock-remove-keywords nil flks)
-	(font-lock-fontify-buffer) 
-	(setq font-lock-extra-managed-props nil) 
+	(font-lock-unfontify-buffer) 
+	(setq font-lock-extra-managed-props 
+	      (get 'font-lock-extra-managed-props major-mode))
+	(setq font-lock-set-defaults nil) ; force font-lock-set-defaults to reinit
+	(font-lock-fontify-buffer)
 	(set-input-method nil))
       
       ;; Remove hooks from maths menu
       (kill-local-variable 'maths-menu-filter-predicate)
-      (kill-local-variable 'maths-menu-tokenise-insert))
-      
-    )))
+      (kill-local-variable 'maths-menu-tokenise-insert))))
 
 ;; 
 ;; Key bindings
