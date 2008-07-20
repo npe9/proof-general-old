@@ -199,7 +199,9 @@ This function also initialises the important tables for the mode."
     (reduce (lambda (x y) (and x (char-displayable-p y)))
 	    comp
 	    :initial-value t))
-   (t
+   ((char-valid-p comp)
+    (char-displayable-p comp))
+   (comp ;; assume any other non-null is OK
     t)))
 
 (defun unicode-tokens-help-echo ()
