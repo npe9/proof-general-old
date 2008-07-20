@@ -5,6 +5,9 @@
 ** Generic changes
 
 *** XEmacs is no longer supported; PG only works with GNU Emacs 22.2+
+
 *** Font-lock based Unicode Tokens mode replaces X-Symbol
+
 *** X-Symbol is no longer used or bundled
-*** Removed configuration options:
+
+*** Removed configuration options
