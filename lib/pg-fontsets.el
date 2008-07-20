@@ -17,6 +17,11 @@
 ;;
 ;;  DejaVu LGC (Sans and Sans Mono).  See http://dejavu.sourceforge.net
 ;;    - missing Uplus, smile, frown, join
+;;
+;; TODO:
+;; -- make a fontset which combines symbol characters from a
+;;    symbol-rich font
+;;
 
 ;;; Code:
 
