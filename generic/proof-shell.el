@@ -659,8 +659,6 @@ Then we call `proof-shell-error-or-interrupt-action', which see."
   ;; [FIXME: Why not flush goals also for interrupts?]
   ;; Flush goals or response buffer (from some last successful proof step)
   (unless proof-shell-no-error-display
-    ;; FIXME FIXME FIXME: some terrible memory leak here in XEmacs, when
-    ;; next line is executed.
     (save-excursion
       (proof-shell-handle-delayed-output))
     (proof-shell-handle-output
@@ -1839,6 +1837,7 @@ processing."
 	    ;; Now send the initialisation commands.
 	    (unwind-protect
 		(progn
+		  (run-hooks 'proof-shell-init-hook)
 		  (if proof-shell-init-cmd
 		      (proof-shell-invisible-command proof-shell-init-cmd t))
 		  (if proof-assistant-settings
