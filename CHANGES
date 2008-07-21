@@ -11,3 +11,4 @@
 *** X-Symbol is no longer used or bundled
 
 *** Removed configuration options
+    proof-toolbar-use-button-enablers  (now always enabled)

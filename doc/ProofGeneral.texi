@@ -2872,15 +2872,6 @@ of processed text.  NB: the history manipulation only works on GNU Emacs.
 
 The default value is @code{nil}.
 @end defopt
-@c TEXI DOCSTRING MAGIC: proof-toolbar-use-button-enablers
-@defopt proof-toolbar-use-button-enablers 
-If non-nil, toolbars buttons may be enabled/disabled automatically.@*
-Toolbar buttons can be automatically enabled/disabled according to
-the context.  Set this variable to nil if you don't like this feature
-or if you find it unreliable.
-
-The default value is @code{t}.
-@end defopt
 
 @c This one removed: proof-auto-retract
 
