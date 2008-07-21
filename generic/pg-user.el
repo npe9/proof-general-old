@@ -92,7 +92,8 @@ you can use the usual `yank' and similar commands to retrieve the
 deleted text."
   (interactive)
   (proof-undo-last-successful-command-1 'delete)
-  (proof-script-new-command-advance))
+  ;; FIXME (proof-script-new-command-advance)
+  )
 
 (defun proof-undo-last-successful-command-1 (&optional delete)
   "Undo last successful command at end of locked region.
@@ -210,7 +211,7 @@ handling of interrupt signals."
 ;; be nicer behaviour than actually moving point into locked region
 ;; which is only useful for cut and paste, really.
 (defun proof-mouse-goto-point (event)
-  "Call proof-goto-point on the click position EVENT."
+  "Call `proof-goto-point' on the click position EVENT."
   (interactive "e")
   (proof-maybe-save-point
    (mouse-set-point event)
@@ -309,7 +310,7 @@ a proof command."
 ;;; Non-scripting proof assistant commands.
 ;;;
 
-;; These are based on defcustom'd settings so that users may 
+;; These are based on defcustom'd settings so that users may
 ;; re-configure the system to their liking.
 
 
@@ -419,8 +420,8 @@ Typically, a list of syntax of commands available."
 	  default-directory))
 
 (defun proof-cd-sync ()
-  "If proof-shell-cd-cmd is set, do proof-cd and wait for prover ready.
-This is intended as a value for proof-activate-scripting-hook"
+  "If `proof-shell-cd-cmd' is set, do `proof-cd' and wait for prover ready.
+This is intended as a value for `proof-activate-scripting-hook'"
   ;; The hook is set in proof-mode before proof-shell-cd-cmd may be set,
   ;; so we explicitly test it here.
   (if proof-shell-cd-cmd
@@ -486,7 +487,7 @@ This is intended as a value for proof-activate-scripting-hook"
 
 ;;;###autoload
 (defun proof-electric-term-incomment-fn ()
-  "Used as argument to proof-assert-until-point."
+  "Used as argument to `proof-assert-until-point'."
   ;; CAREFUL: (1) dynamic scoping here  (incomment, ins, mrk)
   ;;          (2) needs this name to be recognized in
   ;;		  proof-assert-until-point
@@ -534,7 +535,7 @@ comment, and insert or skip to the next semi)."
 
 (defun proof-electric-terminator ()
   "Insert the terminator, perhaps sending the command to the assistant.
-If `proof-electric-terminator-enable' is non-nil, the command will be
+If variable `proof-electric-terminator-enable' is non-nil, the command will be
 sent to the assistant."
   (interactive)
   (if proof-electric-terminator-enable
@@ -1060,13 +1061,13 @@ The function `substitute-command-keys' is called on the argument."
 ;;
 
 (defvar pg-input-ring nil
-  "Ring of previous inputs")
+  "Ring of previous inputs.")
 
 (defvar pg-input-ring-index nil
-  "Position of last matched command")
+  "Position of last matched command.")
 
 (defvar pg-stored-incomplete-input nil
-  "Stored incomplete input: string between point and locked")
+  "Stored incomplete input: string between point and locked.")
 
 (defun pg-previous-input (arg)
   "Cycle backwards through input history, saving input."
@@ -1264,7 +1265,7 @@ of the last item added."
 ;;;###autoload
 (defun pg-remove-from-input-history (cmd)
   "Maybe remove CMD from the end of the input history.
-This is called when the command is undone.  It's only 
+This is called when the command is undone.  It's only
 removed if it matches the last item in the ring."
   (if (and (ring-p pg-input-ring)
 	   (not (ring-empty-p pg-input-ring))
@@ -1278,4 +1279,5 @@ removed if it matches the last item in the ring."
 
 
 (provide 'pg-user)
-;;; pg-user.el ends here.
+
+;;; pg-user.el ends here
