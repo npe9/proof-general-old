@@ -143,6 +143,10 @@ This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
 ;; Constants
 ;;
 
+(defgroup unicode-tokens-faces nil
+  "The faces used in Unicode Tokens mode."
+  :group 'faces)
+
 (defface unicode-tokens-script-font-face
   (cond
    ((eq window-system 'x) ; Linux/Unix
@@ -151,7 +155,8 @@ This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
      (eq window-system 'ns)
      (eq window-system 'carbon))
     '((t :family "Lucida Calligraphy"))))
-  "Script font face")
+  "Script font face"
+  :group 'unicode-tokens-faces)
 
 (defface unicode-tokens-fraktur-font-face
   (cond
@@ -161,7 +166,8 @@ This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
      (eq window-system 'ns)
      (eq window-system 'carbon))
     '((t :family "Lucida Blackletter"))))
-  "Fraktur font face")
+  "Fraktur font face"
+  :group 'unicode-tokens-faces)
 
 (defface unicode-tokens-serif-font-face
   (cond
@@ -171,7 +177,8 @@ This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
      (eq window-system 'ns)
      (eq window-system 'carbon))
     '((t :family "Lucida"))))
-  "Serif (roman) font face")
+  "Serif (roman) font face"
+  :group 'unicode-tokens-faces)
 
 (defconst unicode-tokens-font-lock-extra-managed-props 
   '(composition help-echo display invisible)
@@ -210,8 +217,8 @@ This function also initialises the important tables for the mode."
 	     (if unicode-tokens-token-variant-format-regexp
 		 (format unicode-tokens-token-variant-format-regexp
 			 (regexp-opt toks t))
-	       (regexp-opt (mapcar (lambda (t)
-				     (format unicode-tokens-token-format t)) 
+	       (regexp-opt (mapcar (lambda (tok)
+				     (format unicode-tokens-token-format tok)) 
 				   toks) t)))
        (cons 
 	`(,unicode-tokens-token-match-regexp
