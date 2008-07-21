@@ -31,11 +31,13 @@
 ;; 
 
 ;; TODO:
-;; -- Turning off does not work
 ;; -- insert tokens via numeric code (extra format string)
-;; -- reverse lookup that optimistically converts unicode to tokens
+;; -- insert unicode character as token (reverse lookup)
 
 (require 'cl)
+
+(eval-when-compile
+  (require 'maths-menu))		; nuke compile warnings
 
 ;;
 ;; Variables that can be overridden in instances: symbol tokens
@@ -410,7 +412,7 @@ Calculated from `unicode-tokens-token-name-alist' and
   (interactive (list (completing-read 
 		      "Insert control symbol: "
 		      unicode-tokens-control-characters)))
-  (insert (format unicode-tokens-control-char-format ctrl)))
+  (insert (format unicode-tokens-control-char-format name)))
 
 (defun unicode-tokens-insert-uchar-as-token (char)
   "Insert CHAR as a symbolic token, if possible."
@@ -422,7 +424,7 @@ Calculated from `unicode-tokens-token-name-alist' and
 (defun unicode-tokens-delete-token-at-point ()
   (interactive)
   (when (looking-at unicode-tokens-token-match-regexp)
-    (kill-region (match-string 0))))
+    (kill-region (match-beginning 0) (match-end 0))))
 
 (defvar unicode-tokens-rotate-token-last-token nil)
 
@@ -563,8 +565,7 @@ of symbol compositions, and will lose layout information."
     (when unicode-tokens-mode
       (unless flks
 	(setq flks (unicode-tokens-initialise)))
-      (make-variable-buffer-local 'font-lock-extra-managed-props)
-      (make-variable-buffer-local 'unicode-tokens-alist)
+      (make-local-variable 'font-lock-extra-managed-props)
       ;; make sure buffer can display 16 bit chars
       (if (and
 	   (fboundp 'set-buffer-multibyte)
