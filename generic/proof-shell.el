@@ -1758,10 +1758,6 @@ usual, unless NOERROR is non-nil."
   (setq proof-shell-urgent-message-scanner (make-marker))
   (set-marker proof-shell-urgent-message-scanner (point-min))
 
-  (easy-menu-add proof-shell-mode-menu proof-shell-mode-map)
-
-  ;; [ Should already be in proof-goals-buffer, really.]
-
   ;; FIXME da: before entering proof assistant specific code,
   ;; we'd do well to check that process is actually up and
   ;; running now.  If not, call the process sentinel function
@@ -1773,11 +1769,6 @@ usual, unless NOERROR is non-nil."
   ;; that can lead to "lisp nesting exceeded" somewhere, when
   ;; shell startup fails.  Ugly, but low priority to fix.
   );)
-
-(easy-menu-define proof-shell-mode-menu proof-shell-mode-map
-  "Menu used in Proof General shell mode."
-  (proof-aux-menu))
-
 
 ;;
 ;; Sanity checks on important settings
