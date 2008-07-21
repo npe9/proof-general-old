@@ -173,66 +173,64 @@ by end of configuring proof mode.
 Otherwise, timeout inside this function after 10 seconds or so."
  (interactive "P")
  (proof-splash-set-frame-titles)
-  (let*
-      ;; Keep win config explicitly instead of pushing/popping because
-      ;; if the user switches windows by hand in some way, we want
-      ;; to ignore the saved value.  Unfortunately there seems to
-      ;; be no way currently to remove the top item of the stack.
-      ((winconf   (current-window-configuration))
-       (curwin	  (get-buffer-window (current-buffer)))
-       (curfrm    (and curwin (window-frame curwin)))
-       (splashbuf (get-buffer-create proof-splash-welcome))
-       (after-change-functions nil)	; no font-lock, thank-you.
-       ;; NB: maybe leave next one in for frame-crazy folk
-       ;;(pop-up-frames nil)		; display in the same frame.
-       (splash-contents (append
-			 (eval proof-splash-contents)
-			 (eval proof-splash-startup-msg)))
-       s)
-    (with-current-buffer splashbuf
-      (erase-buffer)
-      ;; [ Don't use do-list to avoid loading cl ]
-      (while splash-contents
-	(setq s (car splash-contents))
-	(cond
-	 ((proof-emacs-imagep s)
-	  (indent-to (proof-splash-centre-spaces s))
-	  (insert-image s))
-	 ((stringp s)
-	  (indent-to (proof-splash-centre-spaces s))
-	  (insert s)))
-	(newline)
-	(setq splash-contents (cdr splash-contents)))
-      (goto-char (point-min))
-      (set-buffer-modified-p nil)
-      (let* ((splashwin     (display-buffer splashbuf))
-	     (splashfm      (window-frame splashwin))
-	     ;; Only save window config if we're on same frame
-	     (savedwincnf   (if (eq curfrm splashfm) winconf)))
-	(delete-other-windows splashwin)
-	(if (fboundp 'redisplay-frame)
-	    (redisplay-frame nil t)	; XEmacs special
-	  (sit-for 0))
-	(setq proof-splash-timeout-conf
-	      (cons
-	       (add-timeout (if timeout proof-splash-time 10)
-			    'proof-splash-remove-screen nil)
-	       savedwincnf))))
-    ;; PROBLEM: when to call proof-splash-display-screen?
-    ;; We'd like to call it during loading/initialising.  But it's
-    ;; hard to make the screen persist after loading because of the
-    ;; action of display-buffer invoked after the mode function
-    ;; during find-file.
-    ;; To approximate the best behaviour, we assume that this file is
-    ;; loaded by a call to proof-mode.  We display the screen now and add
-    ;; a wait procedure temporarily to proof-mode-hook which prevents
-    ;; redisplay until proof-splash-time has elapsed.
-    (if timeout
-	(add-hook 'proof-mode-hook 'proof-splash-timeout-waiter)
-      ;; Otherwise, this was an "about" type of call, so we wait
-      ;; for a key press or timeout event
-      (proof-splash-timeout-waiter))
-    (setq proof-splash-seen t)))
+ (let*
+     ;; Keep win config explicitly instead of pushing/popping because
+     ;; if the user switches windows by hand in some way, we want
+     ;; to ignore the saved value.  Unfortunately there seems to
+     ;; be no way currently to remove the top item of the stack.
+     ((winconf   (current-window-configuration))
+      (curwin	  (get-buffer-window (current-buffer)))
+      (curfrm    (and curwin (window-frame curwin)))
+      (splashbuf (get-buffer-create proof-splash-welcome))
+      (after-change-functions nil)	; no font-lock, thank-you.
+      ;; NB: maybe leave next one in for frame-crazy folk
+      ;;(pop-up-frames nil)		; display in the same frame.
+      (splash-contents (append
+			(eval proof-splash-contents)
+			(eval proof-splash-startup-msg)))
+      s)
+   (with-current-buffer splashbuf
+     (erase-buffer)
+     ;; [ Don't use do-list to avoid loading cl ]
+     (while splash-contents
+       (setq s (car splash-contents))
+       (cond
+	((proof-emacs-imagep s)
+	 (indent-to (proof-splash-centre-spaces s))
+	 (insert-image s))
+	((stringp s)
+	 (indent-to (proof-splash-centre-spaces s))
+	 (insert s)))
+       (newline)
+       (setq splash-contents (cdr splash-contents)))
+     (goto-char (point-min))
+     (set-buffer-modified-p nil)
+     (let* ((splashwin     (display-buffer splashbuf))
+	    (splashfm      (window-frame splashwin))
+	    ;; Only save window config if we're on same frame
+	    (savedwincnf   (if (eq curfrm splashfm) winconf)))
+       (delete-other-windows splashwin)
+       (sit-for 10)
+       (setq proof-splash-timeout-conf
+	     (cons
+	      (add-timeout (if timeout proof-splash-time 10)
+			   'proof-splash-remove-screen nil)
+	      savedwincnf))))
+   ;; PROBLEM: when to call proof-splash-display-screen?
+   ;; We'd like to call it during loading/initialising.  But it's
+   ;; hard to make the screen persist after loading because of the
+   ;; action of display-buffer invoked after the mode function
+   ;; during find-file.
+   ;; To approximate the best behaviour, we assume that this file is
+   ;; loaded by a call to proof-mode.  We display the screen now and add
+   ;; a wait procedure temporarily to proof-mode-hook which prevents
+   ;; redisplay until proof-splash-time has elapsed.
+   (if timeout
+       (add-hook 'proof-mode-hook 'proof-splash-timeout-waiter)
+     ;; Otherwise, this was an "about" type of call, so we wait
+     ;; for a key press or timeout event
+     (proof-splash-timeout-waiter))
+   (setq proof-splash-seen t)))
 
 ;;;###autoload
 (defun proof-splash-message ()

@@ -14,7 +14,6 @@
 ;; can be set to affect load behaviour; see info documentation.
 ;;
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Master table of supported proof assistants. 
@@ -125,8 +124,9 @@ You can use customize to set this variable."
 (add-to-list 'load-path (concat proof-home-directory "generic/"))
 (add-to-list 'load-path (concat proof-home-directory "lib/"))
 
-;; Declare some global variables
+;; Declare some global variables and autoloads
 (require 'pg-vars)
+(require 'proof-autoloads)
 
 ;; Add the info directory to the Info path
 (if ;; NB: proof-info-directory is bogus in RPM distrib.
