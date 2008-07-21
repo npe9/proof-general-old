@@ -126,11 +126,17 @@ Behaviour is much like abbrev.")
 (defvar unicode-tokens-hash-table nil
   "Hash table mapping token names (strings) to composition and properties.")
 
-(defvar unicode-tokens-uchar-hash-table nil
-  "Hash table mapping unicode characters to symbolic token names")
-
 (defvar unicode-tokens-token-match-regexp nil
   "Regular expression used by font-lock to match tokens.")
+
+(defvar unicode-tokens-uchar-hash-table nil
+  "Hash table mapping unicode strings to symbolic token names.
+This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
+
+(defvar unicode-tokens-uchar-regexp nil
+  "Regular expression matching converted tokens.
+This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
+
 
 
 ;;
@@ -175,13 +181,13 @@ Behaviour is much like abbrev.")
 ;;; Code:
 ;;
 
-;; Credit to Stefan Monnier for original version of this.
 (defun unicode-tokens-font-lock-keywords ()
   "Calculate and return value for `font-lock-keywords'.
 This function also initialises the important tables for the mode."
+  ;; Credit to Stefan Monnier for much slimmer original version 
   (let ((hash       (make-hash-table :test 'equal))
-	(ucharhash  (make-hash-table))
-	toks)
+	(ucharhash  (make-hash-table :test 'equal))
+	toks uchars)
      (dolist (x   unicode-tokens-token-symbol-map)
        (let ((tok  (car x))
 	     (comp (cadr x)))
@@ -189,14 +195,17 @@ This function also initialises the important tables for the mode."
 	   (unless (gethash tok hash)
 	     (puthash tok (cdr x) hash)
 	       (push tok toks)
-	       (if (stringp comp) 
-		   (let ((uchar (string-to-char comp)))
-		     (unless (gethash uchar ucharhash)
-		       (puthash uchar tok ucharhash))))))))
+	       (if (stringp comp) ;; reverse map only for string comps
+		   (unless (or (gethash comp ucharhash)
+			       ;; ignore plain chars for reverse map
+			       (string-match "[a-zA-Z0-9]+" comp))
+		     (push comp uchars)
+		     (puthash comp tok ucharhash)))))))
      (when toks
        (setq unicode-tokens-hash-table hash)
        (setq unicode-tokens-uchar-hash-table ucharhash)
        (setq unicode-tokens-token-list (reverse toks))
+       (setq unicode-tokens-uchar-regexp (regexp-opt uchars))
        (setq unicode-tokens-token-match-regexp 
 	     (if unicode-tokens-token-variant-format-regexp
 		 (format unicode-tokens-token-variant-format-regexp
@@ -235,11 +244,11 @@ This function also initialises the important tables for the mode."
 Regexp match data number MATCH selects the token name, while 0 matches the
 whole expression. 
 Token symbol is searched for in `unicode-tokens-hash-table'."
-  (let* ((start   (match-beginning 0))
-         (end     (match-end 0))
-	 (compps  (gethash (match-string match) 
-			   unicode-tokens-hash-table))
-	 (props   (cdr-safe compps)))
+  (let* ((start     (match-beginning 0))
+         (end       (match-end 0))
+	 (compps    (gethash (match-string match) 
+		    	   unicode-tokens-hash-table))
+	 (props     (cdr-safe compps)))
     (if (and compps (not unicode-tokens-show-symbols))
 	(compose-region start end (car compps)))
     (if props
@@ -481,6 +490,49 @@ Calculated from `unicode-tokens-token-name-alist' and
 	    (insert "\n")
 	    (setq count 0)))))))
 
+
+(defun unicode-tokens-copy (beg end)
+  "Copy presentation of region between BEG and END.
+This is an approximation; it makes assumptions about the behaviour
+of symbol compositions, and will lose layout information."
+  (interactive "r")
+  ;; cf kill-ring-save, uncode-tokens-font-lock-compose-symbol
+  (let ((visible 
+	  ;; actually: leave in control tokens as they can have logical meaning
+	  ;; (proof-visible-buffer-substring beg end)
+		 (buffer-substring-no-properties beg end))
+	(match   (- (regexp-opt-depth unicode-tokens-token-match-regexp) 2)))
+    (with-temp-buffer
+      (insert visible)
+      (goto-char (point-min))
+      (while (re-search-forward unicode-tokens-token-match-regexp nil t)
+	;; TODO: interpret more exotic compositions here
+	(let* ((tstart    (match-beginning 0))
+	       (tend      (match-end 0))
+	       (comp      (car-safe
+			   (gethash (match-string match) 
+				    unicode-tokens-hash-table))))
+	  (when comp
+	    (delete-region tstart tend)
+	    ;; TODO: improve this: interpret vector, strip tabs
+	    (insert comp)))) ;; gross approximation to compose-region
+      (copy-region-as-kill (point-min) (point-max)))))
+
+(defun unicode-tokens-paste ()
+  (interactive)
+  (let ((start (point)) end)
+    (clipboard-yank)
+    (setq end (point-marker))
+    (while (re-search-backward unicode-tokens-uchar-regexp start t)
+      (let* ((useq	(match-string 0))
+	     (token     (gethash useq unicode-tokens-uchar-hash-table))
+	     (pos	(point)))
+	(when token
+	  (replace-match (format unicode-tokens-token-format token) t t)
+	  (goto-char pos))))
+    (goto-char end)
+    (set-marker end nil)))
+
 ;; 
 ;; Minor mode
 ;;
@@ -601,6 +653,13 @@ Calculated from `unicode-tokens-token-name-alist' and
   				     (downcase (car fmt)))
   		       :active 'mark-active))
  	     unicode-tokens-control-regions))
+       "---"
+      ["Copy as unicode" unicode-tokens-copy
+       :active 'mark-active
+       :help "Copy text from buffer, converting tokens to Unicode"]
+      ["Paste from unicode" unicode-tokens-paste
+       :active (and kill-ring (not buffer-read-only))
+       :help "Paste from clipboard, converting Unicode to tokens"]
        "---"
       ["Show control tokens" unicode-tokens-show-controls
        :style toggle
