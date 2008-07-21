@@ -1200,7 +1200,7 @@ If N is negative, find the next or Nth next match."
   (let ((pos (pg-previous-matching-input-string-position regexp n)))
     ;; Has a match been found?
     (if (null pos)
-	(error "Match not found" regexp)
+	(error "Match not found for regexp %s" regexp)
       ;; If leaving the edit line, save partial input
       (if (null pg-input-ring-index)	;not yet on ring
 	  (setq pg-stored-incomplete-input (pg-get-old-input)))
