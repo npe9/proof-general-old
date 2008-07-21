@@ -4,9 +4,9 @@
 #
 # Set EMACS to override choice of Emacs version
 #
-# PGHOME must be set to the directory where the lisp files of
-# Proof General are installed.  Script checks standard locations
-# in /usr/share/emacs/site-lisp, or uses PGHOMEDEFAULT
+# PGHOME must be set to the directory where the lisp files of Proof
+# General are installed.  Script checks standard locations in
+# /usr/share/emacs/site-lisp, or uses PGHOMEDEFAULT defined at top.
 #
 # We load ~/.proofgeneral instead of ~/.emacs if it exists.
 #
@@ -16,7 +16,7 @@
 #
 
 # The default path should work if you are using the Proof General RPM
-# or unpack Proof General in your home directory.
+# or unpack Proof General in your home directory.  Otherwise edit below.
 # NB: no trailing backslash here!
 PGHOMEDEFAULT=$HOME/ProofGeneral
 
@@ -26,10 +26,16 @@ if [ -d $PGHOMEDEFAULT ]; then
 elif [ -d /usr/share/${EMACSVERSION}/site-lisp/proofgeneral ]; then
     PGHOME=/usr/share/${EMACSVERSION}/site-lisp/proofgeneral
 else
-    echo "Cannot find the Proof General lisp files: please set PGHOMEDEFAULT"
+    echo "Cannot find the Proof General lisp files: please edit script to set PGHOMEDEFAULT correctly."
     exit 1
 fi
 
+# Try to find a default Emacs executable 
+if [ -z "$EMACS" ] || [ ! -x "$EMACS" ]; then
+    if which emacs > /dev/null; then 
+	EMACS=`which emacs`
+    fi
+fi
 
 NAME=`basename $0`
 
@@ -37,7 +43,7 @@ HELP="Usage: proofgeneral [OPTION] [FILE]...
 Launches Emacs Proof General, editing the proof script FILE.
 
 Options:
-  --emacsbin <EMACS>  startup Proof General with emacs binary <EMACS>
+  --emacs <EMACS>     startup Proof General with emacs binary <EMACS>
   -h, --help          show this help and exit
   -v, --version       output version information and exit
 
@@ -65,19 +71,14 @@ while
     --help)
 	echo "$HELP"
 	exit 0;;
-    -v) 
-	VERSION=`grep proof-general-version $PGHOME/generic/proof-site.el | sed -e 's/.*Version //g' | sed -e 's/\. .*//g'`
-	echo "$NAME" "($VERSION)"
-	echo "$VERSIONBLURB"
-	exit 0;;
-    --version) 
-	VERSION=`grep proof-general-version $PGHOME/generic/proof-site.el | sed -e 's/.*Version //g' | sed -e 's/\. .*//g'`
-	echo "$NAME" "($VERSION)"
-	echo "$VERSIONBLURB"
-	exit 0;;
-    --emacsbin)
+    --emacs)
 	EMACS=$2
 	shift;;
+    --version|-v) 
+	VERSION=`grep proof-general-version $PGHOME/generic/proof-site.el | head -1 | sed -e 's/.*Version //g' | sed -e 's/\. .*//g'`
+	echo "$NAME" "--- script to launch Proof General $VERSION"
+	echo "$VERSIONBLURB"
+	exit 0;;
     *) break;;
   esac
 do shift; done
@@ -86,8 +87,6 @@ if [ ! -x "$EMACS" ]; then
     echo "$NAME: cannot find an Emacs executable.  Edit this script or your PATH." 1>&2
     exit 1
 fi
-
-EMACSVERSION=`basename $EMACS`
 
 # Deal with UTF issue
 if [ `locale | grep LC_CTYPE | grep UTF` ]; then
