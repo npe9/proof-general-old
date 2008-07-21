@@ -1067,6 +1067,11 @@ To be used in `proof-shell-process-output-system-specific'."
   "*Whether to display timing information for each command."
   :type 'boolean)
 
+(defpacustom undo-limit 100
+  "*Depth of undo history."
+  :type 'integer
+  :setting "Set Undo %i . ")
+
 (defpacustom auto-compile-vos nil
   "Whether to automatically compile vos and track dependencies."
   :type 'boolean)
