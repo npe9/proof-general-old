@@ -29,7 +29,7 @@
 ;;; History:
 ;; 
 
-(require 'span)
+(eval-when-compile (require 'span))
 (require 'cl)
 
 ;;; Help:
