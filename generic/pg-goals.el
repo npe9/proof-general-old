@@ -8,14 +8,15 @@
 ;; $Id$
 ;;
 
+;;; Commentary:
+
 ;;; Code:
 (eval-when-compile
   (require 'easymenu)			; easy-menu-add, etc
   (require 'cl)				; incf
   (require 'span))			; span-*
 
-;;; Commentary:
-
+(require 'proof-utils)
 (require 'pg-assoc)
 (require 'bufhist)
 
