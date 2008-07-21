@@ -238,14 +238,6 @@ goals and response windows to fit their contents."
   :type 'boolean
   :group 'proof-user-options)
 
-(defcustom proof-toolbar-use-button-enablers t
-  "*If non-nil, toolbars buttons may be enabled/disabled automatically.
-Toolbar buttons can be automatically enabled/disabled according to
-the context.  Set this variable to nil if you don't like this feature
-or if you find it unreliable."
-  :type 'boolean
-  :group 'proof-user-options)
-
 (defcustom proof-query-file-save-when-activating-scripting
   t
 "*If non-nil, query user to save files when activating scripting.
@@ -2242,7 +2234,6 @@ retracted, or after a command has been sent to the prover with
 `proof-shell-invisible-command'.
 
 This hook is used within Proof General to refresh the toolbar."
-
   :type '(repeat function)
   :group 'proof-shell)
 
