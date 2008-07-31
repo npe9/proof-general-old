@@ -40,7 +40,7 @@
   (require 'maths-menu))		; nuke compile warnings
 
 ;;
-;; Variables that can be overridden in instances: symbol tokens
+;; Variables that should be set by client modes
 ;;
 
 (defvar unicode-tokens-token-symbol-map nil
@@ -303,7 +303,9 @@ Token symbol is searched for in `unicode-tokens-hash-table'."
   (when unicode-tokens-show-controls
     (remove-from-invisibility-spec 'unicode-tokens-show-controls))
   (when (not unicode-tokens-show-controls)
-    (add-to-invisibility-spec 'unicode-tokens-show-controls)))
+    (add-to-invisibility-spec 'unicode-tokens-show-controls))
+  ;; EMACS ISSUE: how to force redisplay here to notice invis spec change?
+  (redisplay t))
 
 (defun unicode-tokens-control-char (name s &rest props)
   `(,(format unicode-tokens-control-char-format-regexp s)
@@ -478,26 +480,27 @@ Calculated from `unicode-tokens-token-name-alist' and
   'action #'(lambda (button) 
 	      (unicode-tokens-copy-token (button-get button 'unicode-token))))
 
-;; TODO: improve layout, can we use tabs
 (defun unicode-tokens-list-tokens ()
   "Show a buffer of all tokens."
   (interactive)
   (with-output-to-temp-buffer "*Unicode Tokens List*"
     (with-current-buffer standard-output
+      (make-local-variable 'unicode-tokens-show-symbols)
+      (setq unicode-tokens-show-symbols nil)
       (unicode-tokens-mode)
       (insert "Click or RET on a character to copy into kill ring.\n\n")
       (let ((count 0) toks)
 	;; display in originally given order
 	(dolist (tok unicode-tokens-token-list)
-	  (insert-text-button 
-	   (format unicode-tokens-token-format tok)
-	   :type 'unicode-tokens-list
-	   'unicode-token tok)
-	  (incf count)
-	  (if (< count 10)
-	      (insert "\t")
-	    (insert "\n")
-	    (setq count 0)))))))
+	    (insert-text-button 
+	     (format unicode-tokens-token-format tok)
+	     :type 'unicode-tokens-list
+	     'unicode-token tok)
+	    (incf count)
+	    (if (< count 10)
+		(insert "\t")
+	      (insert "\n")
+	      (setq count 0)))))))
 
 
 (defun unicode-tokens-copy (beg end)
@@ -565,18 +568,20 @@ of symbol compositions, and will lose layout information."
     (when unicode-tokens-mode
       (unless flks
 	(setq flks (unicode-tokens-initialise)))
-      (make-local-variable 'font-lock-extra-managed-props)
       ;; make sure buffer can display 16 bit chars
       (if (and
 	   (fboundp 'set-buffer-multibyte)
 	   (not (buffer-base-buffer)))
 	  (set-buffer-multibyte t))
 
-      (add-to-invisibility-spec 'unicode-tokens-show-controls)
+      (make-local-variable 'font-lock-extra-managed-props)
+
+      (when (not unicode-tokens-show-controls)
+	(add-to-invisibility-spec 'unicode-tokens-show-controls))
       
-      ;; our conventions: 
-      ;; 1. set default for font-lock-extra-managed-props 
-      ;;    as property on major mode symbol (ordinarily nil).
+      ;; a convention: 
+      ;; - set default for font-lock-extra-managed-props 
+      ;;   as property on major mode symbol (ordinarily nil).
       (font-lock-add-keywords nil flks)
 
       (setq font-lock-extra-managed-props 
@@ -592,11 +597,13 @@ of symbol compositions, and will lose layout information."
 
       ;; adjust maths menu to insert tokens
       (set (make-local-variable 'maths-menu-filter-predicate)
-	   (lambda (uchar) (gethash uchar unicode-tokens-uchar-hash-table)))
+	   (lambda (uchar) (gethash (char-to-string uchar)
+				    unicode-tokens-uchar-hash-table)))
       (set (make-local-variable 'maths-menu-tokenise-insert)
 	   (lambda (uchar) 
 	     (unicode-tokens-insert-token
-	      (gethash uchar unicode-tokens-uchar-hash-table)))))
+	      (gethash (char-to-string uchar) 
+		       unicode-tokens-uchar-hash-table)))))
 
     (when (not unicode-tokens-mode)
       (when flks
@@ -631,7 +638,7 @@ of symbol compositions, and will lose layout information."
 
     
 ;;
-;; Menu
+;; Menu -- defined at load time, so client variables should be set
 ;;
 
 (easy-menu-define unicode-tokens-menu unicode-tokens-mode-map
@@ -641,7 +648,7 @@ of symbol compositions, and will lose layout information."
       ["Insert token..." unicode-tokens-insert-token]
       ["Next token"      unicode-tokens-rotate-token-forward]
       ["Prev token"      unicode-tokens-rotate-token-backward]
-      ["List tokens" unicode-tokens-list-tokens]
+      ["List tokens"     unicode-tokens-list-tokens]
        (cons "Format char"
 	     (mapcar 
  	     (lambda (fmt)
