@@ -56,16 +56,16 @@
 ;				     pg-dev-lisp-font-lock-keywords)))
 
 
-;;;
-;;; Autoloads (as used by "make autoloads")
-;;;
+;;
+;; Autoloads (as used by "make autoloads")
+;;
 
 (setq autoload-package-name "proof")
 (setq generated-autoload-file "proof-autoloads.el")
 
-;;;
-;;; Unload utility (not wholly successful)
-;;;
+;;
+;; Unload utility (not wholly successful)
+;;
 
 (defun unload-pg ()
   "Attempt to unload Proof General (for development use only)."
@@ -90,8 +90,21 @@
      coq-indent coq-autotest)))
 
      
+;;
+;; paren low-lighting -- a bit subjective
+;;
 
+(defface paren-face
+  '((((class color) (background dark))
+     (:foreground "grey20"))
+    (((class color) (background light))
+     (:foreground "grey40")))
+  "Face used to dim parentheses.")
 
+(add-hook 'emacs-lisp-mode-hook 
+ 	  (lambda ()
+ 	    (font-lock-add-keywords nil 
+ 				    '(("(\\|)" . 'paren-face)))))
 
 (provide 'pg-dev)
 
