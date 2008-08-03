@@ -1,5 +1,5 @@
 ;;; -*- coding: utf-8; -*-
-;; coq-unicode-tokens.el --- (No) Tokens for Unicode Tokens package
+;; coq-unicode-tokens.el --- Tokens for Unicode Tokens package
 ;;
 ;; Copyright(C) 2008 David Aspinall / LFCS Edinburgh
 ;; Author:    David Aspinall <David.Aspinall@ed.ac.uk>
@@ -10,19 +10,117 @@
 ;; unicode-tokens-<foo> is set from coq-<foo>.  See the corresponding
 ;; variable for documentation.
 ;;
-;; For Coq, there is no dedicated token syntax, it's preferable to
-;; use UTF-8 notation directly (see utf8.v).  So the configuration
-;; here just makes some handy shortcuts for symbol input.
+;; For Coq, there is no dedicated token syntax, you may use plain
+;; sequences of characters or use UTF-8 directly with Notation
+;; commands (see utf8.v), or even (at risk of confusion!) mix the two.
+;; 
+
+;;
+;; Controls
+;;
+
+(defconst coq-control-region-format-regexp "\\(%s\\)\\(.*?\\)\\(%s\\)")
+
+(defconst coq-control-regions
+  '(("Subscript" ",{" "}" sub)
+    ("Superscript" "\\^{" "}" sup)))
+
+(defconst coq-control-char-format-regexp "\\(%s\\)\\(\\<.*?\\>\\)")
+
+(defconst coq-control-characters
+  '(("Subscript" "__" sub) 
+    ("Superscript" "\\^\\^" sup)))
+
+(defcustom coq-fontsymb-properties 
+  '((sub      (display (raise -0.4) (display (height -1))))
+    (sup      (display (raise 0.4) (height -1))))
+  "Mapping from symbols to property lists used for markup scheme."
+  :set 'proof-set-value)
+
+
+;;
+;; Symbols
 ;;
 
 (defconst coq-token-format "%s")
-(defconst coq-charref-format nil)
-(defconst coq-token-prefix nil)
-(defconst coq-token-suffix nil)
-(defconst coq-token-match nil)
-(defconst coq-hexcode-match nil)
 
-(defcustom coq-token-name-alist nil
+(defconst coq-greek-letters-tokens
+  '(("alpha" "α")
+    ("beta" "β")
+    ("gamma" "γ")
+    ("delta" "δ")
+    ("epsilon" "ε") ; actually varepsilon (some is epsilon)
+    ("zeta" "ζ")
+    ("eta" "η")
+    ("theta" "θ")
+    ("iota" "ι")
+    ("kappa" "κ")
+    ("lambda" "λ")
+    ("mu" "μ")
+    ("nu" "ν")
+    ("xi" "ξ")
+    ("pi" "π")
+    ("rho" "ρ")
+    ("sigma" "σ")
+    ("tau" "τ")
+    ("upsilon" "υ")
+    ("phi" "ϕ")
+    ("chi" "χ")
+    ("psi" "ψ")
+    ("omega" "ω")
+    ("Gamma" "Γ")
+    ("Delta" "Δ")
+    ("Theta" "Θ")
+    ("Lambda" "Λ")
+    ("Xi" "Ξ")
+    ("Pi" "Π")
+    ("Sigma" "Σ")
+    ("Upsilon" "Υ")
+    ("Phi" "Φ")
+    ("Psi" "Ψ")
+    ("Omega" "Ω")))
+
+(defconst coq-misc-letters-tokens
+  '(("bool" "IB")
+    ("complex" "ℂ")
+    ("nat" "ℕ")
+    ("rat" "ℚ")
+    ("real" "ℝ")
+    ("int" "ℤ")
+    ;; these ones?
+    ;; "H1"  "H2" "H3" ?
+    ))
+
+(defconst coq-symbol-tokens
+  '(("~" "¬")
+    ("/\\"  "∧")
+    ("\\/"  "∨")
+    ("forall" "∀")
+    ("exists" "∃")
+    (":=" "≔")
+    ("<-" "←")
+    ("->" "→")
+    ("=>" "⇒")
+    ("<=" "≤")
+    (">=" "≥")
+    ("<->" "≡")
+    ("<>" "≠")
+    ("fun" "λ")
+    ("|-" )
+    ("|=" )
+    
+    ))
+;; Others
+;;
+;; ++>
+;; ==>
+;; -->
+
+(defcustom coq-token-symbol-map
+  (append
+   coq-symbol-tokens
+   coq-misc-letters-tokens
+   coq-greek-letters-tokens)
   ;; an alist of token name, unicode char sequence
   "Table mapping Coq tokens to Unicode strings.
 
@@ -37,13 +135,17 @@ results will be undefined when files are saved."
   :type '(repeat (cons (string :tag "Token name")
 		       (string :tag "Unicode string")))
   :set 'proof-set-value
-  :group 'isabelle
+  :group 'coq
   :tag "Coq Unicode Token Mapping")
 
 
+;; TODO: maybe give user a choice between storing Unicode in file and
+;; not.  In first case, should not use tokens, but use Unicode.
+;; In second case, should use Unicode but not not tokens.
+;; At the moment, these shortcuts should *not* overlap with plain tokens!
 (defcustom coq-shortcut-alist
   '(; short cut, unicode string
-    ("<>" . "⋄")
+    ("<>" . "≠")
     ("|>" . "⊳")
     ("\\/" . "∨")
     ("/\\" . "∧")
@@ -77,7 +179,6 @@ results will be undefined when files are saved."
     ("~~/" . "≉")
     ("~==/" . "≇")
     ("<-" . "←")
-    ("<=" . "⇐")
     ("->" . "→")
     ("=>" . "⇒")
     ("<->" . "↔")
