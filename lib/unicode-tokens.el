@@ -95,9 +95,6 @@ Behaviour is much like abbrev.")
 (defvar unicode-tokens-control-char-format-regexp nil)
 (defvar unicode-tokens-control-regions nil)
 (defvar unicode-tokens-control-characters nil)
-
-(defvar unicode-tokens-control-region-format-beg nil)
-(defvar unicode-tokens-control-region-format-end nil)
 (defvar unicode-tokens-control-char-format nil)
 
 ;;
@@ -111,8 +108,6 @@ Behaviour is much like abbrev.")
     fontsymb-properties
     shortcut-alist
     control-region-format-regexp
-    control-region-format-beg
-    control-region-format-end
     control-char-format-regexp
     control-char-format
     control-regions
@@ -182,6 +177,15 @@ This is used for an approximate reverse mapping, see `unicode-tokens-paste'.")
   "Serif (roman) font face"
   :group 'unicode-tokens-faces)
 
+(defface unicode-tokens-highlight-face
+  '((((min-colors 88) (background dark))
+     (:background "yellow1" :foreground "black"))
+    (((background dark)) (:background "yellow" :foreground "black"))
+    (((min-colors 88)) (:background "yellow1"))
+    (t (:background "yellow")))
+  "Face used for highlighting in Unicode tokens."
+  :group 'unicode-tokens-faces)
+
 (defconst unicode-tokens-font-lock-extra-managed-props 
   '(composition help-echo display invisible)
   "Value for `font-lock-extra-managed-props' here.")
@@ -221,12 +225,12 @@ This function also initialises the important tables for the mode."
 			 (regexp-opt toks t))
 	       (regexp-opt (mapcar (lambda (tok)
 				     (format unicode-tokens-token-format tok)) 
-				   toks) t)))
+				   toks) 'words)))
        (cons 
 	`(,unicode-tokens-token-match-regexp
 	  (0 (unicode-tokens-help-echo) 'prepend)
 	  (0 (unicode-tokens-font-lock-compose-symbol 
-	      ,(- (regexp-opt-depth unicode-tokens-token-match-regexp) 2))
+	      ,(- (regexp-opt-depth unicode-tokens-token-match-regexp) 1))
 	      'prepend))
 	(unicode-tokens-control-font-lock-keywords)))))
 
@@ -436,7 +440,7 @@ Calculated from `unicode-tokens-token-name-alist' and
 				      (beginning-of-line 0) (point)) t)))
     (if match
 	(match-string 
-	 (1- (regexp-opt-depth unicode-tokens-token-match-regexp))))))
+	 (regexp-opt-depth unicode-tokens-token-match-regexp)))))
 
 (defun unicode-tokens-rotate-token-forward (&optional n)
   "Rotate the token before point by N steps in the table."
@@ -513,7 +517,7 @@ of symbol compositions, and will lose layout information."
 	  ;; actually: leave in control tokens as they can have logical meaning
 	  ;; (proof-visible-buffer-substring beg end)
 		 (buffer-substring-no-properties beg end))
-	(match   (- (regexp-opt-depth unicode-tokens-token-match-regexp) 2)))
+	(match   (- (regexp-opt-depth unicode-tokens-token-match-regexp) 1)))
     (with-temp-buffer
       (insert visible)
       (goto-char (point-min))
@@ -544,6 +548,28 @@ of symbol compositions, and will lose layout information."
 	  (goto-char pos))))
     (goto-char end)
     (set-marker end nil)))
+
+(defvar unicode-tokens-highlight-unicode nil
+  "Non-nil to highlight Unicode characters.")
+
+(defconst unicode-tokens-unicode-highlight-pattern
+  '("[^\000-\177]" . 'unicode-tokens-highlight-face)
+  "Font lock pattern for highlighting Unicode tokens.")
+
+(defun unicode-tokens-highlight-unicode ()
+  "Hilight Unicode characters in the buffer.
+This uses font lock to hig"
+  (interactive)
+  (setq unicode-tokens-highlight-unicode
+	(not unicode-tokens-highlight-unicode))
+  (if unicode-tokens-highlight-unicode
+    (font-lock-add-keywords 
+     nil 
+     (list unicode-tokens-unicode-highlight-pattern))
+    (font-lock-remove-keywords 
+     nil
+     (list unicode-tokens-unicode-highlight-pattern)))
+  (font-lock-fontify-buffer))
 
 ;; 
 ;; Minor mode
@@ -613,7 +639,7 @@ of symbol compositions, and will lose layout information."
 	(setq font-lock-set-defaults nil) ; force font-lock-set-defaults to reinit
 	(font-lock-fontify-buffer)
 	(set-input-method nil))
-      
+
       ;; Remove hooks from maths menu
       (kill-local-variable 'maths-menu-filter-predicate)
       (kill-local-variable 'maths-menu-tokenise-insert))))
@@ -687,6 +713,10 @@ of symbol compositions, and will lose layout information."
        :style toggle
        :selected unicode-tokens-show-symbols
        :help "Show tokens for symbols"]
+      ["Highlight real Unicode chars" unicode-tokens-highlight-unicode
+       :style toggle
+       :selected unicode-tokens-highlight-unicode
+       :help "Hightlight non-ASCII characters in buffer which are saved as Unicode"]
       ["Enable shortcuts" unicode-tokens-use-shortcuts
        :style toggle
        :selected unicode-tokens-use-shortcuts
