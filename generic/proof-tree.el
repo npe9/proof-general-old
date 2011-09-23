@@ -768,6 +768,9 @@ points:
     ;; undo changes in other state vars
     (proof-tree-undo-existentials proof-state)
     (proof-tree-undo-current-proof proof-state)
+    ;; disable proof tree display when undoing to a point outside a proof
+    (unless proof-tree-current-proof
+      (setq proof-tree-external-display nil))
     ;; send undo
     (if (proof-tree-is-running)
 	(proof-tree-send-undo proof-state))
