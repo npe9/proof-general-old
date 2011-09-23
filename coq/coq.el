@@ -192,13 +192,14 @@ On Windows you might need something like:
 
 (defcustom coq-proof-tree-current-goal-regexp
   (concat "^[0-9]+ subgoal\\(?:s, subgoal 1\\)? "
-	  "(ID \\([0-9]+\\))\n\\s-*\n\\(\\(?:.+\n\\)*\\)\n")
+	  "(ID \\([0-9]+\\))\n\\s-*\n\\(\\(?:.+\n\\)*\\)\\(?:\n\\|$\\)")
   "Regexp for `proof-tree-current-goal-regexp'."
   :type 'regexp
   :group 'coq-proof-tree)
 
 (defcustom coq-proof-tree-update-goal-regexp
-  "^subgoal [0-9]+ (ID \\([0-9]+\\)) is:\n\\s-*\n\\(\\(?:.+\n\\)*\\)\n"
+  (concat "^subgoal [0-9]+ (ID \\([0-9]+\\)) is:\n"
+          "\\s-*\n\\(\\(?:.+\n\\)*\\)\\(?:\n\\|$\\)")
   "Regexp for `proof-tree-update-goal-regexp'."
   :type 'regexp
   :group 'coq-proof-tree)
@@ -220,7 +221,8 @@ On Windows you might need something like:
   :type 'regexp
   :group 'coq-proof-tree)
 
-(defcustom coq-proof-tree-proof-completed-regexp "^Proof completed\\."
+(defcustom coq-proof-tree-proof-completed-regexp
+  "^\\(?:Proof completed\\)\\|\\(?:No more subgoals\\)\\."
   "Regexp for `proof-tree-proof-completed-regexp'."
   :type 'regexp
   :group 'coq-proof-tree)
@@ -2084,7 +2086,7 @@ This function is the first Coq specific function called as part
 of the urgent prooftree actions. Therefore, it sets up
 `coq-sequent-id-assoc' such that
 `coq-proof-tree-get-new-subgoals' and `coq-show-sequent-command'
-have access to the relevant information with needing to parse the
+have access to the relevant information without needing to parse the
 current proof assistant output again.
 
 This function returns the list of currently instantiated existential variables."

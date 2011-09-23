@@ -399,6 +399,7 @@ variables."
 				   current-sequent-id current-sequent-text
 				   additional-sequent-ids)
   "Send the current goal state to prooftree."
+  ;; (message "PTSGS id %s sequent %s" current-sequent-id current-sequent-text)
   (let ((add-id-string (mapconcat 'identity additional-sequent-ids " ")))
     (process-send-string
      proof-tree-process
@@ -645,7 +646,7 @@ is stored in `proof-tree-existentials-alist'."
 
 (defun proof-tree-extract-goals (start end)
   "Extract the current goal state information from the delayed output.
-If there is a current goal, return a list containing with (in
+If there is a current goal, return a list containing (in
 this order) the ID of the current sequent, the text of the
 current sequent and the list of ID's of additionally open goals.
 The delayed output is expected between START and END in the
@@ -872,7 +873,7 @@ the flags and SPAN is the span."
 	    (proof-tree-ensure-running)
 	    (proof-tree-handle-proof-command cmd proof-info)))))
 
-      ;; finally check if must reassert some part of the proof, because
+      ;; finally check if we must reassert some part of the proof, because
       ;; someone started the proof-tree display in the middle of a proof.
       (when (and proof-tree-redo-display-position (null proof-action-list))
 	;; bind proof-tree-redo-display-position locally to reset it before any
