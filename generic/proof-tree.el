@@ -73,9 +73,6 @@
 ;; newly generated subgoals and for goals that contain an existential
 ;; variable that got instantiated in the last proof step.
 ;;
-;;
-;; Todo:
-;;   - display toggle menu and toolbar entry
 
 ;;; Code:
 
@@ -195,7 +192,16 @@ contains in the following order:
 
 The state number is used to implement undo in prooftree. The
 proof name is used to distinguish different proofs inside
-prooftree."
+prooftree.
+
+The state number is interpreted as the state that has been
+reached after the last command has been processed. It must be
+consistent in the following sense. Firstly, it must be strictly
+increasing for successive commands that can be individually
+retracted. Secondly, the state number reported for a command X
+must be strictly greater than the state reported when X is
+retracted. Finally, state numbers of commands preceding X must be
+less than or equal the state reported when X is retracted."
   :type 'function
   :group 'proof-tree-internals)
 
@@ -569,9 +575,10 @@ Do nothing if this mapping does already exist."
 ;; Process output from the proof assistant
 ;;
 
-(defun proof-tree-show-goal-callback ()
-  "Callback for display-goal commands inserted by this package."
-  ())
+(defun proof-tree-show-goal-callback (span)
+  "Callback for display-goal commands inserted by this package.
+Runs the hooks in `proof-state-change-hook'."
+  (run-hooks 'proof-state-change-hook))
 
 (defun proof-tree-urgent-action (cmd flags)
   "Handle urgent points before the next item is sent to the proof assistant.

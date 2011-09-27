@@ -2040,17 +2040,13 @@ set to nil just before leaving `coq-show-sequent-command'.")
 
 (defun coq-proof-tree-get-proof-info (cmd flags)
   "Coq instance of `proof-tree-get-proof-info'."
-  (let* ((info (coq-last-prompt-info-safe))
+  (let* ((info (coq-last-prompt-info-safe)))
          ;; info is now a list with
          ;; * the state number
          ;; * the proof stack depth
          ;; * the list of all open proofs
          ;; * the name of the current proof or nil
-         (cmd-string (mapconcat 'identity cmd " "))
-	 (backtrack-cmd (string-match coq-backtrack-command-regexp cmd-string)))
-    (list
-     (if backtrack-cmd (car info) (- (car info) 1))
-     (nth 3 info))))
+    (list (car info) (nth 3 info))))
 
 (defun coq-extract-goal-numbers (start end)
   "Store current sequent numbers in `coq-sequent-id-assoc'.
