@@ -25,6 +25,7 @@
     (defvar smie-rules-function nil))     ; smie
 
   (defvar queueitems nil)       ; dynamic scope in p-s-extend-queue-hook
+  (defvar proof-info nil)       ; dynamic scope in proof-tree-urgent-action
   (defvar coq-time-commands nil)        ; defpacustom
   (defvar coq-use-editing-holes nil)    ; defpacustom
   (defvar coq-compile-before-require nil)       ; defpacustom
@@ -2157,9 +2158,13 @@ The not yet delayed output is in the region
               (cons (proof-shell-action-list-item
                      (format "Show %s." subgoal-number)
                      'proof-tree-show-goal-callback
-                     '(no-response-display
-                       no-goals-display
-                       proof-tree-show-subgoal))
+                     ;; XXX Store current state as special flag inside the
+                     ;; flags list, see comment in generic/proof-tree.el inside
+                     ;; proof-tree-urgent-action.
+                     (cons (car proof-info)
+                           '(no-response-display
+                             no-goals-display
+                             proof-tree-show-subgoal)))
                     proof-action-list)))))
   (setq coq-sequent-id-assoc-valid nil))
   

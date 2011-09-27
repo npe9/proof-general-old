@@ -73,6 +73,24 @@
 ;; newly generated subgoals and for goals that contain an existential
 ;; variable that got instantiated in the last proof step.
 ;;
+;;
+;;; Hacks:
+;;
+;; This package relies on some hacks, that I would like to get rid
+;; off, if somebody could tell me how.
+;;
+;; - proof-shell-exec-loop might return t if proof-action-list is
+;;   non-empty. This is because the last real proof command might be
+;;   followed by a number of invisible show-goal commands.
+;;
+;; - proof-assert-until-point is called from within
+;;   proof-shell-filter-manage-output when a user starts prooftree in
+;;   the middle of a proof.
+;;
+;; - The flag list in a proof-action-list item contains a number for
+;;   invisible show-goal commands.
+
+
 
 ;;; Code:
 
@@ -242,16 +260,20 @@ information computed there."
 (defcustom proof-tree-urgent-action-hook ()
   "Normal hook for prooftree actions that cannot be delayed.
 This hook is called (indirectly) from inside
-`proof-shell-exec-loop' after the preceeding command has been
-choped off `proof-action-list' and before the next command is
-sent to the proof assistant. This hook can therefore be used to
-insert additional commands into `proof-action-list' that must be
-executed before the next real proof command.
+`proof-shell-exec-loop' after the preceeding command and any
+comments that follow have been choped off `proof-action-list' and
+before the next command is sent to the proof assistant. This hook
+can therefore be used to insert additional commands into
+`proof-action-list' that must be executed before the next real
+proof command.
 
 If `proof-tree-extract-instantiated-existentials' is called then
 it is called before this hook. However, if there are currently no
 uninstantiated existential variables, then the call to
 `proof-tree-extract-instantiated-existentials' might be skipped.
+
+Functions in this hook can rely on `proof-info' being bound to
+the result of `proof-tree-get-proof-info'.
 
 This hook is used, for instance, for Coq to insert Show commands
 for newly generated subgoals. (The normal Coq output does not
@@ -572,7 +594,7 @@ Do nothing if this mapping does already exist."
 
 
 ;;
-;; Process output from the proof assistant
+;; Process urgent output from the proof assistant
 ;;
 
 (defun proof-tree-show-goal-callback (span)
@@ -596,11 +618,12 @@ The not yet delayed output is in the region
   ;; 	   proof-action-list
   ;; 	   proof-tree-existentials-alist)
   (let* ((proof-info (funcall proof-tree-get-proof-info cmd flags))
+	 (state (car proof-info))
 	 (start proof-shell-delayed-output-start)
 	 (end proof-shell-delayed-output-end)
 	 inst-ex-vars)
     (when (and (not (memq 'proof-tree-show-subgoal flags))
-	       (> (car proof-info) proof-tree-last-state))
+	       (> state proof-tree-last-state))
       ;; Only deal with existentials if the proof assistant has them
       ;; (i.e., proof-tree-existential-regexp is set) and if there are some
       ;; goals with existentials.
@@ -621,12 +644,27 @@ The not yet delayed output is in the region
 			    (cons (proof-shell-action-list-item
 				   show-cmd
 				   'proof-tree-show-goal-callback
-				   '(no-response-display
-				     no-goals-display
-				     proof-tree-show-subgoal))
+				   ;; XXX Store current state as a special flag
+				   ;; in the flags list in order to associate
+				   ;; the update-sequent command with the state
+				   ;; that we reached now (in contrast to the
+				   ;; state that will be reached after the
+				   ;; show-goals command has been processed).
+				   ;; This is needed if the current command is
+				   ;; followed by a comment, because the
+				   ;; comment will be retired together with the
+				   ;; current command before the show-goal
+				   ;; commands that we insert now are
+				   ;; processed. Therefore, the update-sequent
+				   ;; commnds that result from these show-goals
+				   ;; would be undone if the user retracts to
+				   ;; the beginning of the comment.
+				   (cons state
+					 '(no-response-display
+					   no-goals-display
+					   proof-tree-show-subgoal)))
 				  proof-action-list)))))
-	      (proof-tree-delete-existential-assoc (car proof-info)
-						   var-goal-assoc)))))
+	      (proof-tree-delete-existential-assoc state var-goal-assoc)))))
       (run-hooks 'proof-tree-urgent-action-hook))
     ;; (message "PTUA END pal %s ptea %s"
     ;; 	   proof-action-list
@@ -784,7 +822,7 @@ points:
     (setq proof-tree-last-state (- proof-state 1))))
 
 
-(defun proof-tree-update-sequent (proof-info)
+(defun proof-tree-update-sequent (flags proof-info)
   "Prepare an update-sequent command for prooftree.
 This function processes delayed output that the proof assistant
 generated in response to commands that Proof General inserted in
@@ -795,11 +833,21 @@ This function uses `proof-tree-update-goal-regexp' to find a
 sequent and its ID in the delayed output. If something is found
 an appropriate update-sequent command is sent to prooftree.
 
+If FLAGS contain a number, the update-sequent command is
+associated with this number as state (which should be the state
+of the command that caused this update sequent). Otherwise the
+current state from proof-info is taken (which will result in
+wrong undo behavior inside prooftree, if the command that caused
+this update-sequent command is followed by a comment).
+
 The delayed output is in the region
 \[proof-shell-delayed-output-start, proof-shell-delayed-output-end]."
   (let ((start proof-shell-delayed-output-start)
 	(end   proof-shell-delayed-output-end)
-	(proof-state (car proof-info))
+	(proof-state
+	 (or
+	  (some (function (lambda (flag) (and (integerp flag) flag))) flags)
+	  (car proof-info)))
 	(proof-name (cadr proof-info)))
     (goto-char start)
     (if (proof-re-search-forward proof-tree-update-goal-regexp end t)
@@ -815,7 +863,8 @@ The delayed output is in the region
 	    (puthash sequent-id proof-state proof-tree-sequent-hash))
 	  (proof-tree-register-existentials proof-state sequent-id sequent-text)
 	  ;; remember state for undo
-	  (setq proof-tree-last-state proof-state)))))
+	  ;; here we use the real current state
+	  (setq proof-tree-last-state (car proof-info))))))
 
 
 (defun proof-tree-handle-delayed-output-internal (cmd flags span)
@@ -877,7 +926,7 @@ the flags and SPAN is the span."
 		 (memq 'proof-tree-show-subgoal flags))
 	    ;; display of a known sequent to update it in prooftree
 	    (proof-tree-ensure-running)
-	    (proof-tree-update-sequent proof-info))
+	    (proof-tree-update-sequent flags proof-info))
 	   ((and proof-tree-external-display current-proof-name)
 	    ;; we are inside a proof: display something
 	    (proof-tree-ensure-running)
