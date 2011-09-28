@@ -352,17 +352,18 @@ Needed for undo.")
   
 (defvar proof-tree-redo-display-position nil
   "Internal variable for starting the proof-tree display inside a proof.
-When the proof-tree display is started in the middle of a proof
-then this variable remembers the locked region. To display the
-proof, everything is retracted to the beginning of the proof.
-Then, the proof-tree display is switched on and
-`proof-tree-handle-delayed-output-internal' sees that this
+When the proof-tree display is started in the middle of a proof,
+this variable remembers the locked region and the cursor
+position. To display the proof, everything is retracted to the
+beginning of the proof. Then, the proof-tree display is switched
+on and `proof-tree-handle-delayed-output-internal' sees that this
 variable is non-nil and re-assert all the material that was
 locked before.
 
-If non-nil, the variable holds a list with three elements, the
-current scripting buffer, the end of the locked region, and the
-position of point, in this order.")
+If non-nil, the variable holds a list with 5 elements, the
+current scripting buffer, the end of the locked region, the
+position of point, the window that displays the scripting buffer
+and buffer start position in this window, in this order.")
 
 ;;
 ;; Utilities
@@ -943,7 +944,9 @@ the flags and SPAN is the span."
 	  (with-current-buffer (car redo-pos)
 	    (goto-char (nth 1 redo-pos))
 	    (proof-assert-until-point)
-	    (goto-char (nth 2 redo-pos))))))))
+	    (set-window-start (nth 3 redo-pos) (nth 4 redo-pos))
+	    (goto-char (nth 2 redo-pos))
+	    (set-window-point (nth 3 redo-pos) (nth 2 redo-pos))))))))
 
 
 (defun proof-tree-handle-delayed-output (cmd flags span)
@@ -986,7 +989,8 @@ the locked region."
   (let ((point (point))
 	(locked-end (span-end proof-locked-span)))
     (setq proof-tree-redo-display-position
-	  (list (current-buffer) locked-end point))
+	  (list (current-buffer) locked-end point
+		(selected-window) (window-start)))
     (goto-char (cdr proof-tree-current-proof))
     (proof-retract-until-point)))
 
