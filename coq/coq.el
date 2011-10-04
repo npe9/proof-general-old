@@ -56,6 +56,18 @@
 ;; (defun proofstack () (coq-get-span-proofstack (span-at (point) 'type)))
 ;; End debugging
 
+(defcustom coq-prog-name
+  (proof-locate-executable "coqtop" t '("C:/Program Files/Coq/bin"))
+   "*Name of program to run as Coq. See `proof-prog-name', set from this. 
+On Windows with latest Coq package you might need something like:
+   C:/Program Files/Coq/bin/coqtop.opt.exe
+instead of just \"coqtop\".
+This must be a single program name with no arguments; see `coq-prog-args'
+to manually adjust the arguments to the Coq process.
+See also `coq-prog-env' to adjust the environment."
+   :type 'string
+   :group 'coq)
+
 ;; coq-prog-args is the user-set list of arguments to pass to Coq process,
 ;; see 'defpacustom prog-args' in proof-config for documentation.
 
@@ -97,14 +109,13 @@ Set to t if you want this feature."
   :type 'string
   :group 'coq)
 
-;; Command to initialize the Coq Proof Assistant
-
 (defcustom coq-default-undo-limit 200
   "Maximum number of Undo's possible when doing a proof."
   :type 'number
   :group 'coq)
 
 (defconst coq-shell-init-cmd
+  "Command to initialize the Coq Proof Assistant."
   (format "Set Undo %s . " coq-default-undo-limit))
 
 (require 'coq-syntax)
@@ -309,7 +320,7 @@ command for which additional Show commands are inserted into
 
 (defcustom coq-use-smie nil
   "If non-nil, Coq mode will try to use SMIE for indentation.
-SMIE is a navigation and indentation framework available in Emacs ≥ 23.3."
+SMIE is a navigation and indentation framework available in Emacs >= 23.3."
   :type 'boolean
   :group 'coq)
 
@@ -1238,6 +1249,7 @@ This is specific to `coq-mode'."
 
 ;; FIXME: to handle "printing all" properly, we should change the state
 ;; of the variables that also depend on it.
+;; da: 
 (defpacustom print-fully-explicit nil
   "Print fully explicit terms."
   :type 'boolean
@@ -1331,15 +1343,6 @@ minibuffer if `coq-confirm-external-compilation' is t."
                     coq-confirm-external-compilation)))
   :group 'coq-auto-compile)
 
-(defpacustom confirm-external-compilation t
-  "If set let user change and confirm the compilation command.
-Otherwise start the external compilation without confirmation.
-
-This option can be set/reset via menu
-`Coq -> Settings -> Confirm External Compilation'."
-  :type 'boolean
-  :group 'coq-auto-compile)
-
 (defconst coq-compile-substitution-list
   '(("%p" physical-dir)
     ("%o" module-object)
@@ -1359,6 +1362,57 @@ directory containing the source file, the Coq object file in
 'physical-dir whose object will be loaded, the qualified module
 identifier that occurs in the \"Require\" command, and the file
 that contains the \"Require\".")
+
+(defcustom coq-load-path nil
+  "Non-standard coq library load path.
+This list specifies the LoadPath extension for coqdep, coqc and
+coqtop. Usually, the elements of this list are strings (for
+\"-I\") or lists of two strings (for \"-R\" dir \"-as\" path).
+
+The possible forms of elements of this list correspond to the 4
+possible forms of the Add LoadPath command and the 4 forms of the
+include options ('-I' and '-R'). An element can be
+
+  - A string, specifying a directory to be mapped to the empty
+    logical path ('-I').
+  - A list of the form '(rec dir path)' (where dir and path are
+    strings) specifying a directory to be recursively mapped to the
+    logical path 'path' ('-R dir -as path').
+  - A list of the form '(rec dir)', specifying a directory to be
+    recursively mapped to the empty logical path ('-R dir').
+  - A list of the form '(norec dir path)', specifying a directory
+    to be mapped to the logical path 'path' ('-I dir -as path').
+
+For convenience the symbol 'rec' can be omitted and entries of
+the form '(dir)' and '(dir path)' are interpreted as '(rec dir)
+and '(rec dir path)', respectively.
+
+Under normal circumstances this list does not need to
+contain the coq standard library or \".\" for the current
+directory (see `coq-load-path-include-current')."
+  :type '(repeat (choice (string :tag "simple directory without path (-I)")
+                         (list :tag "recursive directory without path (-R)"
+                               (const rec) (string :tag "directory"))
+                         (list :tag
+                               "recursive directory with path (-R ... -as ...)"
+                               (const rec)
+                               (string :tag "directory")
+                               (string :tag "log path"))
+                         (list :tag
+                               "simple directory with path (-I ... -as ...)"
+                               (const nonrec)
+                               (string :tag "directory")
+                               (string :tag "log path"))))
+  :safe '(lambda (v) (every
+                      '(lambda (entry)
+                         (or (stringp entry)
+                             (and (eq (car entry) 'rec)
+                                  (every 'stringp (cdr entry)))
+                             (and (eq (car entry) 'nonrec)
+                                  (every 'stringp (cdr entry)))
+                             (every 'stringp entry)))
+                      v))
+  :group 'coq-auto-compile)
 
 (defcustom coq-compile-auto-save 'ask-coq
   "Buffers to save before checking dependencies for compilation.
@@ -1394,14 +1448,20 @@ locked when the \"Require\" command is processed."
   :safe 'booleanp
   :group 'coq-auto-compile)
 
-(defcustom coq-compile-ignore-library-directory t
-  "If non-nil, ProofGeneral does not compile modules from the coq library.
-Should be t for normal coq users. If nil library modules are
-compiled if their sources are newer.
+(defpacustom confirm-external-compilation t
+  "If set let user change and confirm the compilation command.
+Otherwise start the external compilation without confirmation.
 
-This option has currently no effect, because Proof General uses
-coqdep to translate qualified identifiers into library file names
-and coqdep does not output dependencies in the standard library."
+This option can be set/reset via menu
+`Coq -> Settings -> Confirm External Compilation'."
+  :type 'boolean
+  :group 'coq-auto-compile)
+
+(defcustom coq-load-path-include-current t
+  "If `t' let coqdep search the current directory too.
+Should be `t' for normal users. If `t' pass \"-I dir\" to coqdep when
+processing files in directory \"dir\" in addition to any entries
+in `coq-load-path'."
   :type 'boolean
   :safe 'booleanp
   :group 'coq-auto-compile)
@@ -1419,28 +1479,32 @@ that dependency checking takes noticeable time."
   :safe '(lambda (v) (every 'stringp v))
   :group 'coq-auto-compile)
 
-(defcustom coq-load-path nil
-  "Non-standard coq library load path.
-List of directories to be added to the LoadPath of coqdep, coqc
-and coqtop. Under normal circumstances this list does not need to
-contain \".\" for the current directory (see
-`coq-load-path-include-current') or the coq standard
-library.
+(defcustom coq-compile-ignore-library-directory t
+  "If non-nil, ProofGeneral does not compile modules from the coq library.
+Should be `t' for normal coq users. If `nil' library modules are
+compiled if their sources are newer.
 
-For coqdep and coqc these directories are passed via \"-I\"
-options over the command line. For interactive scripting an
-\"Add LoadPath\" command is used."
-  :type '(repeat string)
-  :safe '(lambda (v) (every 'stringp v))
-  :group 'coq-auto-compile)
-
-(defcustom coq-load-path-include-current t
-  "If `t' let coqdep search the current directory too.
-Should be `t' for normal users. If `t' pass \"-I dir\" to coqdep when
-processing files in directory \"dir\" in addition to any entries
-in `coq-load-path'."
+This option has currently no effect, because Proof General uses
+coqdep to translate qualified identifiers into library file names
+and coqdep does not output dependencies in the standard library."
   :type 'boolean
   :safe 'booleanp
+  :group 'coq-auto-compile)
+
+(defcustom coq-coqdep-error-regexp
+  (concat "^\\*\\*\\* Warning: in file .*, library .* is required "
+          "and has not been found")
+  "Regexp to match errors in the output of coqdep.
+coqdep indicates errors not via a non-zero exit status, but only
+via printing warnings. This regular expression is used for
+recognizing error conditions in the output of coqdep. Its
+default value matches the warning that some required library
+cannot be found on the load path and ignores the warning for
+finding a library at multiple places in the load path. If you
+want to turn the latter condition into an error, then set this
+variable to \"^\\*\\*\\* Warning\"."
+  :type 'string
+  :safe 'stringp
   :group 'coq-auto-compile)
 
 (defconst coq-require-command-regexp
@@ -1570,20 +1634,37 @@ is up-to-date."
 Chops off the last character of LIB-OBJ-FILE to convert \"x.vo\" to \"x.v\"."
   (substring lib-obj-file 0 (- (length lib-obj-file) 1)))
 
+(defun coq-option-of-load-path-entry (entry)
+  "Translate a single element from `coq-load-path' into options.
+See `coq-load-path' for the possible forms of entry and to which
+options they are translated."
+  (cond
+   ((stringp entry)
+    (list "-I" (expand-file-name entry)))
+   ((eq (car entry) 'nonrec)
+    (list "-I" (expand-file-name (nth 1 entry)) "-as" (nth 2 entry)))
+   (t
+    (if (eq (car entry) 'rec)
+        (setq entry (cdr entry)))
+    (if (nth 1 entry)
+        (list "-R" (expand-file-name (car entry)) "-as" (nth 1 entry))
+      (list "-R" (expand-file-name (car entry)))))))
+
 (defun coq-include-options (file)
-  "Build a -I options list for coqc and coqdep.
-The options list includes all directories from `coq-load-path' and,
-if `coq-load-path-include-current' is enabled, the directory base of FILE.
-The resulting list is fresh for every call, callers can append more
-arguments with `nconc'.
+  "Build the list of include options for coqc, coqdep and coqtop.
+The options list includes all entries from `coq-load-path'
+prefixed with suitable options and, if
+`coq-load-path-include-current' is enabled, the directory base of
+FILE. The resulting list is fresh for every call, callers can
+append more arguments with `nconc'.
 
 FILE should be an absolute file name. It can be nil if
 `coq-load-path-include-current' is nil."
   (let ((result nil))
     (when coq-load-path
-      (setq result (list "-I" (expand-file-name (car coq-load-path))))
-      (dolist (dir (cdr coq-load-path))
-        (nconc result (list "-I" (expand-file-name dir)))))
+      (setq result (coq-option-of-load-path-entry (car coq-load-path)))
+      (dolist (entry (cdr coq-load-path))
+        (nconc result (coq-option-of-load-path-entry entry))))
     (if coq-load-path-include-current
         (setq result
               (cons "-I" (cons (file-name-directory file) result))))
@@ -1628,7 +1709,7 @@ the command whose output will appear in the buffer."
 
 (defun coq-get-library-dependencies (lib-src-file &optional command-intro)
   "Compute dependencies of LIB-SRC-FILE.
-Invoke \"coqdep\" on lib-src-file and parse the output to
+Invoke \"coqdep\" on LIB-SRC-FILE and parse the output to
 compute the compiled coq library object files on which
 LIB-SRC-FILE depends. The return value is either a string or a
 list. If it is a string then an error occurred and the string is
@@ -1636,7 +1717,7 @@ the core of the error message. If the return value is a list no
 error occurred and the returned list is the (possibly empty) list
 of file names LIB-SRC-FILE depends on.
 
-If an error occurs this funtion displays the
+If an error occurs this funtion displays
 `coq-compile-response-buffer' with the complete command and its
 output. The optional argument COMMAND-INTRO is only used in the
 error case. It is prepended to the displayed command.
@@ -1656,7 +1737,7 @@ break."
       (setq coqdep-output (buffer-string)))
     (if coq-debug-auto-compilation
         (message "coqdep output on %s: %s" lib-src-file coqdep-output))
-    (if (string-match "^\\*\\*\\* Warning" coqdep-output)
+    (if (string-match coq-coqdep-error-regexp coqdep-output)
         (let* ((this-command (cons coq-dependency-analyzer coqdep-arguments))
                (full-command (if command-intro
                                  (cons command-intro this-command)
@@ -2004,7 +2085,8 @@ the proof shell without asking the user for
 confirmation (assuming she agreed already on switching the active
 scripting buffer). This is needed to ensure the load path is
 correct in the new scripting buffer."
-  (proof-shell-exit t))
+  (unless proof-shell-exit-in-progress
+    (proof-shell-exit t)))
 
 
 (add-hook 'proof-deactivate-scripting-hook

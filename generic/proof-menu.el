@@ -227,8 +227,8 @@ without adjusting window layout."
 (defvar proof-help-menu
   '("Help"
     ["About PG"        proof-splash-display-screen t]
-    ["PG Info"	(info "ProofGeneral") t]
-    ["PG Homepage"	(browse-url proof-general-home-page) t]
+    ["Info"	(info "ProofGeneral") t]
+    ["Homepage"	(browse-url proof-general-home-page) t]
     ["Send Bug Report" proof-submit-bug-report t])
   "Proof General help menu.")
 
@@ -334,7 +334,7 @@ without adjusting window layout."
        :style toggle
        :selected proof-electric-terminator-enable
        :help "Automatically send commands when terminator typed"]
-      ["Beep on errors" proof-shell-quiet-errors-toggle
+      ["Beep on Errors" proof-shell-quiet-errors-toggle
        :style toggle
        :selected (not proof-shell-quiet-errors)
        :help "Beep on errors or interrupts"]      
@@ -377,11 +377,11 @@ without adjusting window layout."
       :selected (and (boundp 'unicode-tokens-mode)
 		     unicode-tokens-mode)
       :help "Enable display of tokens as Unicode characters"]
-      ["Minibuffer messages" proof-minibuffer-messages-toggle
+      ["Minibuffer Messages" proof-minibuffer-messages-toggle
        :style toggle
        :selected proof-minibuffer-messages
        :help "Show progress messages in minibuffer"]
-      ["Output tooltips" proof-output-tooltips-toggle
+      ["Output Tooltips" proof-output-tooltips-toggle
        :style toggle
        :selected proof-output-tooltips
        :help "Add tooltips for prover output"]

@@ -278,7 +278,9 @@ command end regexp."
                             (goto-char (match-beginning 1))
                             (not (coq-empty-command-p)))
                         nil)
-                      (proof-buffer-syntactic-context)))
+                      (and 
+                       (goto-char foundend)
+                       (proof-buffer-syntactic-context))))
         ;; go back as far as possible before the start of the current
         ;; matching string, this way we will match consecutive endings
         ;; like ine "}."
@@ -310,9 +312,9 @@ and return nil."
     ;; first shift if we are in the middle of a ending pattern
     (if (> (coq-is-on-ending-context) 0)
         (ignore-errors(forward-char (coq-is-on-ending-context))))
-    (let (foundend next-pos)
+    (let (foundbeg next-pos)
       ;; Find end of command
-      (while (and (setq foundend
+      (while (and (setq foundbeg
                         (and
                          (re-search-backward proof-script-command-end-regexp limit t)
                          (match-beginning 1)))
@@ -323,10 +325,12 @@ and return nil."
                             (goto-char (match-beginning 1))
                             (not (coq-empty-command-p)))
                         nil)
-                      (proof-buffer-syntactic-context)))
+                      (and
+                       (goto-char foundbeg)
+                       (proof-buffer-syntactic-context))))
         (ignore-errors (goto-char next-pos)))
-      (if (and foundend
-	       (goto-char foundend)	; move to command end
+      (if (and foundbeg
+	       (goto-char foundbeg)	; move to command end
 	       (not (proof-buffer-syntactic-context)))
 	  ;; Found command end outside string/comment
 	  'cmd
