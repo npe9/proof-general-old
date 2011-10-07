@@ -39,6 +39,12 @@
 ;; Emacs idle, because it must first process the delayed part of the
 ;; undo command before reasserting is possible.
 ;; 
+;; A fourth problem is that proof tree display can only work when the
+;; prover output is not supressed (via `proof-full-annotation').
+;; Therefore, whenver proof-tree display is started
+;; `proof-full-annotation-internal' is set to t and reset to the value
+;; of `proof-full-annotation' when finished.
+;; 
 ;; The design of prooftree (the visualization program), the glue code
 ;; inside Proof General (mostly in this file) and the communication
 ;; protocol tries to achieve the following two goals:
@@ -212,24 +218,33 @@ The state number is used to implement undo in prooftree. The
 proof name is used to distinguish different proofs inside
 prooftree.
 
+This function must work regardless of the value of
+`proof-full-annotation-internal', that is, it must produce
+correct results even if the normal prover output is suppressed.
+
 The state number is interpreted as the state that has been
 reached after the last command has been processed. It must be
 consistent in the following sense. Firstly, it must be strictly
 increasing for successive commands that can be individually
-retracted. Secondly, the state number reported for a command X
-must be strictly greater than the state reported when X is
-retracted. Finally, state numbers of commands preceding X must be
-less than or equal the state reported when X is retracted."
+retracted. Secondly, the state number reported after some command
+X has been processed must be strictly greater than the state
+reported when X is retracted. Finally, state numbers of commands
+preceding X must be less than or equal the state reported when X
+is retracted (but no stuff before X)."
   :type 'function
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-extract-instantiated-existentials nil
   "Proof assistant specific function for instantiated existential variables.
-This function should return the list of currently instantiated
-existential variables as a list of strings. The function is
-called with the `proof-shell-buffer' as current buffer and with
-two arguments start and stop, which designate the region
-containing the last output from the proof assistant.
+This function must only be defined if the prover has existential
+variables, that is, if `proof-tree-existential-regexp' is
+non-nil.
+
+If defined, this function should return the list of currently
+instantiated existential variables as a list of strings. The
+function is called with the `proof-shell-buffer' as current
+buffer and with two arguments start and stop, which designate the
+region containing the last output from the proof assistant.
 
 Depending on the distribution of existential variables the
 function `proof-tree-show-sequent-command' might be called
@@ -288,7 +303,12 @@ contain the complete sequent text of newly generated subgoals.)"
 
 (defvar proof-tree-external-display nil
   "Display proof trees in external prooftree windows if t.
-Controlled by `proof-tree-external-display-toggle'.")
+Controlled by `proof-tree-external-display-toggle'.
+
+Should only be changed with `proof-tree-enable-external-display'
+and `proof-tree-disable-external-display' because of the required
+invariant that `proof-full-annotation-internal' must be t
+whenever this variable is t.")
 
 (defvar proof-tree-process nil
   "Emacs lisp process object of the prooftree process.")
@@ -364,6 +384,24 @@ If non-nil, the variable holds a list with 5 elements, the
 current scripting buffer, the end of the locked region, the
 position of point, the window that displays the scripting buffer
 and buffer start position in this window, in this order.")
+
+;;
+;; proof-tree-external-display manipulation
+;;
+
+(defun proof-tree-enable-external-display ()
+  "Internal function for enabling proof-tree display.
+Ensure that `proof-tree-external-display' implies
+`proof-full-annotation-internal'."
+  (setq proof-tree-external-display t)
+  (setq proof-full-annotation-internal t))
+
+(defun proof-tree-disable-external-display ()
+  "Internal function for disabling proof-tree display.
+Reset `proof-full-annotation-internal' to the user preference in
+`proof-full-annotation'."
+  (setq proof-tree-external-display nil)
+  (setq proof-full-annotation-internal proof-full-annotation))
 
 ;;
 ;; Utilities
@@ -610,6 +648,10 @@ call `proof-tree-urgent-action-hook'. All this is only done if
 the current output does not come from a command (with the
 'proof-tree-show-subgoal flag) that this package inserted itself.
 
+This function assumes that the prover output is not suppressed.
+Therefore this function should not be called when
+`proof-tree-external-display' is nil.
+
 The not yet delayed output is in the region
 \[proof-shell-delayed-output-start, proof-shell-delayed-output-end]."
   ;; (message "PTUA flags %s start %s end %s pal %s ptea %s"
@@ -816,7 +858,7 @@ points:
     (proof-tree-undo-current-proof proof-state)
     ;; disable proof tree display when undoing to a point outside a proof
     (unless proof-tree-current-proof
-      (setq proof-tree-external-display nil))
+      (proof-tree-disable-external-display))
     ;; send undo
     (if (proof-tree-is-running)
 	(proof-tree-send-undo proof-state))
@@ -890,7 +932,8 @@ if `proof-action-list' is empty.
 All arguments are (former) fields of the `proof-action-list'
 entry that is now finally retired. CMD is the command, FLAGS are
 the flags and SPAN is the span."
-  ;; (message "PTHDOI cmd %s flags %s" cmd flags)
+  ;; (message "PTHDOI cmd %s flags %s span %s-%s" cmd flags
+  ;; 	   (if span (span-start span)) (if span (span-end span)))
   (unless (memq 'invisible flags)
     (let* ((proof-info (funcall proof-tree-get-proof-info cmd flags))
 	   (current-proof-name (cadr proof-info)))
@@ -909,7 +952,7 @@ the flags and SPAN is the span."
 	   ((and proof-tree-current-proof (null current-proof-name))
 	    ;; finished the current proof
 	    (proof-tree-end-proof (car proof-info))
-	    (setq proof-tree-external-display nil))
+	    (proof-tree-disable-external-display))
 	   ((and proof-tree-current-proof current-proof-name
 		 (not (equal (car proof-tree-current-proof)
 			     current-proof-name)))
@@ -940,7 +983,7 @@ the flags and SPAN is the span."
 	;; error can occur
 	(let ((redo-pos proof-tree-redo-display-position))
 	  (setq proof-tree-redo-display-position nil)
-	  (setq proof-tree-external-display t)
+	  (proof-tree-enable-external-display)
 	  (with-current-buffer (car redo-pos)
 	    (goto-char (nth 1 redo-pos))
 	    (proof-assert-until-point)
@@ -1006,7 +1049,7 @@ display is switched off."
   (cond
    (proof-tree-external-display
     ;; Currently on -> switch off
-    (setq proof-tree-external-display nil)
+    (proof-tree-disable-external-display)
     (if proof-tree-current-proof
 	(proof-tree-send-quit-proof (car proof-tree-current-proof)))
     (message "External proof-tree display switched off"))
@@ -1015,7 +1058,7 @@ display is switched off."
     (proof-tree-display-current-proof))
    (t
     ;; Currently off and outside a proof -> switch on for the next proof
-    (setq proof-tree-external-display t)
+    (proof-tree-enable-external-display)
     (message "External proof-tree display switched on for the next proof"))))
     
 

@@ -3500,7 +3500,8 @@ If a there is a next command after that, send it to the process.
 If the action list becomes empty, unlock the process and remove
 the queue region.
 
-The return value is non-nil if the action list is now empty.
+The return value is non-nil if the action list is now empty or
+contains only invisible elements for prooftree synchronization.
 @end defun
 
 Input is actually inserted into the shell buffer and sent to the process
