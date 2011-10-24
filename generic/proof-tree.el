@@ -192,10 +192,37 @@ Existential variables exist for instance in Isabelle/Hol and in
 Coq. They are placeholders for terms that might (for Coq they
 must) get instantiated in a later stage of the proof. This regexp
 should match one existential variable in subgroup 1. It is used
-inside a while loop to extract all existential variables from the goal text.
+inside a while loop to extract all existential variables from the
+goal text or from a list of existential variables.
 
 Leave this variable at nil for proof assistants that do not have
 existential variables."
+  :type 'regexp
+  :group 'proof-tree-internals)
+
+(defcustom proof-tree-uninstantiated-existentials-start-regexp nil
+  "Regexp to match the start of the list of not instantiated existentials.
+Together with
+`proof-tree-uninstantiated-existentials-end-regexp', this regular
+expression is used to determine the region in which
+`proof-tree-existential-regexp' is used to extract all
+existential variables that have not been instantiated yet. Leave
+this variable nil, if there is no list of not instantiated
+existentials."
+  :type 'regexp
+  :group 'proof-tree-internals)
+
+(defcustom proof-tree-uninstantiated-existentials-end-regexp nil
+  "Regexp to match the end of the list of not instantiated existentials.
+Together with
+`proof-tree-uninstantiated-existentials-start-regexp', this
+regular expression is used to determine the region in which
+`proof-tree-existential-regexp' is used to extract all
+existential variables that have not been instantiated yet. If
+this variable is nil (and if
+`proof-tree-uninstantiated-existentials-start-regexp' is
+non-nil), then the region to search expands to the end of the
+prover output."
   :type 'regexp
   :group 'proof-tree-internals)
 
@@ -250,7 +277,10 @@ Depending on the distribution of existential variables the
 function `proof-tree-show-sequent-command' might be called
 shortly afterwards. Therefore
 `proof-tree-extract-instantiated-existentials' can setup a cache
-for `proof-tree-show-sequent-command'."
+for `proof-tree-show-sequent-command'.
+
+`proof-tree-extract-list' might be useful for writing this
+function."
   :type 'function
   :group 'proof-tree-internals)
 
@@ -464,28 +494,32 @@ variables."
 
 (defun proof-tree-send-goal-state (state proof-name command-string cheated-flag
 				   current-sequent-id current-sequent-text
-				   additional-sequent-ids)
+				   additional-sequent-ids existentials)
   "Send the current goal state to prooftree."
   ;; (message "PTSGS id %s sequent %s" current-sequent-id current-sequent-text)
-  (let ((add-id-string (mapconcat 'identity additional-sequent-ids " ")))
+  (let ((add-id-string (mapconcat 'identity additional-sequent-ids " "))
+	(ex-string (mapconcat 'identity existentials " ")))
     (process-send-string
      proof-tree-process
      (format
       (concat "current-goals state %d current-sequent %s %s "
 	      "proof-name-bytes %d "
-	      "command-bytes %d sequent-text-bytes %d additional-id-bytes %d\n"
-	      "%s\n%s\n%s\n%s\n")
+	      "command-bytes %d sequent-text-bytes %d "
+	      "additional-id-bytes %d existential-bytes %d\n"
+	      "%s\n%s\n%s\n%s\n%s\n")
       state
       current-sequent-id
       (if cheated-flag "cheated" "not-cheated")
-      (+ (string-bytes proof-name) 1)
-      (+ (string-bytes command-string) 1)
-      (+ (string-bytes current-sequent-text) 1)
-      (+ (string-bytes add-id-string) 1)
+      (1+ (string-bytes proof-name))
+      (1+ (string-bytes command-string))
+      (1+ (string-bytes current-sequent-text))
+      (1+ (string-bytes add-id-string))
+      (1+ (string-bytes ex-string))
       proof-name
       command-string
       current-sequent-text
-      add-id-string))))
+      add-id-string
+      ex-string))))
 
 (defun proof-tree-send-update-sequent (state proof-name sequent-id sequent-text)
   "Send the updated sequent text to prooftree."
@@ -495,8 +529,8 @@ variables."
     (concat "update-sequent state %d sequent %s proof-name-bytes %d "
 	    "sequent-text-bytes %d\n%s\n%s\n")
     state sequent-id
-    (+ (string-bytes proof-name) 1)
-    (+ (string-bytes sequent-text) 1)
+    (1+ (string-bytes proof-name))
+    (1+ (string-bytes sequent-text))
     proof-name
     sequent-text)))
 
@@ -507,7 +541,7 @@ variables."
    (format "switch-goal state %d sequent %s proof-name-bytes %d\n%s\n"
 	   proof-state
 	   current-id
-	   (+ (string-bytes proof-name) 1)
+	   (1+ (string-bytes proof-name))
 	   proof-name)))
 
 (defun proof-tree-send-proof-completed (state proof-name
@@ -519,8 +553,8 @@ variables."
     "proof-complete state %d %s proof-name-bytes %d command-bytes %d\n%s\n%s\n"
     state
     (if cheated-flag "cheated" "not-cheated")
-    (+ (string-bytes proof-name) 1)
-    (+ (string-bytes cmd-string) 1)
+    (1+ (string-bytes proof-name))
+    (1+ (string-bytes cmd-string))
     proof-name
     cmd-string)))
 
@@ -533,7 +567,7 @@ variables."
   "Tell prooftree to close the window for PROOF-NAME."
   (process-send-string proof-tree-process
 		       (format "quit-proof proof-name-bytes %d\n%s\n"
-			       (+ (string-bytes proof-name) 1)
+			       (1+ (string-bytes proof-name))
 			       proof-name)))
 
 ;;
@@ -720,7 +754,7 @@ The not yet delayed output is in the region
 ;;
 
 (defun proof-tree-register-existentials (current-state sequent-id sequent-text)
-  "Register existential variables in SEQUENT-TEXT.
+  "Register existential variables that appear in SEQUENT-TEXT.
 If SEQUENT-TEXT contains existential variables, then SEQUENT-ID
 is stored in `proof-tree-existentials-alist'."
   (if proof-tree-existential-regexp
@@ -759,6 +793,46 @@ current buffer."
 	(list sequent-id sequent-text additional-goal-ids))
     nil))
 
+
+(defun proof-tree-extract-list (start end start-regexp end-regexp item-regexp)
+  "Extract items between START-REGEXP and END-REGEXP.
+In the region given by START and END, determine the subregion
+between START-REGEXP and END-REGEXP and return the list of all
+items in the subregion. An item is a match of subgroub 1 of
+ITEM-REGEXP.
+
+Return nil if START-REGEXP or ITEM-REGEXP is nil. The subregion
+extends up to END if END-REGEXP is nil."
+  (let (result)
+    (when (and start-regexp item-regexp)
+      (goto-char start)
+      (when (proof-re-search-forward start-regexp end t)
+	(setq start (point))
+	(if (and end-regexp (proof-re-search-forward end-regexp end t))
+	    (setq end (match-beginning 0)))
+	(goto-char start)
+        (while (proof-re-search-forward item-regexp end t)
+          (setq result (cons (buffer-substring-no-properties
+                              (match-beginning 1)
+                              (match-end 1))
+                             result)))))
+    result))
+
+(defun proof-tree-extract-uninstantiated-existentials (start end)
+  "Extract the not yet instantiated existential variables.
+This function uses
+`proof-tree-uninstantiated-existentials-start-regexp',
+`proof-tree-uninstantiated-existentials-end-regexp' and
+`proof-tree-existential-regexp' to extract the list of not yet
+instantiated existential variables from the current goal. The
+delayed output is expected between START and END in the current
+buffer."
+  (proof-tree-extract-list
+   start end
+   proof-tree-uninstantiated-existentials-start-regexp
+   proof-tree-uninstantiated-existentials-end-regexp
+   proof-tree-existential-regexp))
+
 (defun proof-tree-handle-proof-progress (cmd-string proof-info)
   "Send CMD-STRING and goals in delayed output to prooftree.
 This function is called if there is some real progress in a
@@ -778,7 +852,9 @@ The delayed output is in the region
 	 (proof-name (cadr proof-info))
 	 (cheated-flag (proof-string-match
 			proof-tree-cheating-regexp cmd-string))
-	 (current-goals (proof-tree-extract-goals start end)))
+	 (current-goals (proof-tree-extract-goals start end))
+	 (existentials
+	  (proof-tree-extract-uninstantiated-existentials start end)))
     (if current-goals
 	(let ((current-sequent-id (car current-goals))
 	      (current-sequent-text (nth 1 current-goals))
@@ -790,7 +866,8 @@ The delayed output is in the region
 	   cheated-flag
 	   current-sequent-id
 	   current-sequent-text
-	   (nth 2 current-goals))
+	   (nth 2 current-goals)
+	   existentials)
 	  ;; put current sequent into hash (if it is not there yet)
 	  (unless (gethash current-sequent-id proof-tree-sequent-hash)
 	    (puthash current-sequent-id proof-state proof-tree-sequent-hash))
