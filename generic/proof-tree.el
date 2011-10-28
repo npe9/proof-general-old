@@ -799,7 +799,8 @@ current buffer."
 In the region given by START and END, determine the subregion
 between START-REGEXP and END-REGEXP and return the list of all
 items in the subregion. An item is a match of subgroub 1 of
-ITEM-REGEXP.
+ITEM-REGEXP. The items in the returned list have the same order
+as in the text.
 
 Return nil if START-REGEXP or ITEM-REGEXP is nil. The subregion
 extends up to END if END-REGEXP is nil."
@@ -816,7 +817,7 @@ extends up to END if END-REGEXP is nil."
                               (match-beginning 1)
                               (match-end 1))
                              result)))))
-    result))
+    (nreverse result)))
 
 (defun proof-tree-extract-uninstantiated-existentials (start end)
   "Extract the not yet instantiated existential variables.
