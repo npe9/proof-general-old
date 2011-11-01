@@ -239,7 +239,7 @@ the current output. This function must return a list, which
 contains in the following order:
 
 * the current state number (as positive integer)
-* the name of the current proof (as string)
+* the name of the current proof (as string) or nil
 
 The state number is used to implement undo in prooftree. The
 proof name is used to distinguish different proofs inside
@@ -372,7 +372,7 @@ changed via `proof-tree-start-proof' or `proof-tree-end-proof'.")
   "Alist mapping state numbers to old values of `proof-tree-current-proof'.
 Needed for undo.")
 
-(defvar proof-tree-sequent-hash (make-hash-table :test 'equal)
+(defvar proof-tree-sequent-hash nil
   "Hash table to remember sequent ID's.
 Needed because some proof assistants do not distinguish between
 new subgoals, which have been created by the last proof command,
@@ -383,7 +383,9 @@ The hash is mostly used as a set of sequent ID's. However, for
 undo operations it is necessary to delete all those sequents from
 the hash that have been created in a state later than the undo
 state. For this purpose this hash maps sequent ID's to the state
-number in which the sequent has been created.")
+number in which the sequent has been created.
+
+The hash table is initialized in `proof-tree-start-process'.")
 
 (defvar proof-tree-existentials-alist nil
   "Alist mapping existential variables to sequent ID's.
@@ -598,7 +600,7 @@ HISTORY-SYMBOL is (the symbol of) the undo history alist."
 	(history (symbol-value history-symbol))
 	(var (symbol-value var-symbol)))
     (while (and undo-not-finished history)
-      (if (>= (caar history) proof-state)
+      (if (> (caar history) proof-state)
 	  (progn
 	    (setq var (cdr (car history)))
 	    (setq history (cdr history)))
@@ -928,7 +930,7 @@ points:
     ;; delete sequents from the hash
     (maphash
      (lambda (sequent-id state)
-       (if (>= state proof-state)
+       (if (> state proof-state)
 	   (remhash sequent-id proof-tree-sequent-hash)))
      proof-tree-sequent-hash)
     ;; undo changes in other state vars
