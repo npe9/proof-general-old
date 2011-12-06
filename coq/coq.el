@@ -227,20 +227,20 @@ On Windows you might need something like:
   :type 'regexp
   :group 'coq-proof-tree)
 
-(defcustom coq-instantiated-existentials-start-regexp
-  "^Instantiated existentials: "
-  "Regexp to match the start of the list of instantiated existential variables."
+(defcustom coq-proof-tree-instantiated-existential-regexp
+  (concat coq-proof-tree-existential-regexp " using")
+  "Regexp for recognizing an instantiated existential variable."
   :type 'regexp
   :group 'coq-proof-tree)
 
-(defcustom coq-proof-tree-uninstantiated-existentials-start-regexp
-  "^Uninstantiated existentials: "
-  "Coq instance of `proof-tree-uninstantiated-existentials-start-regexp'."
+(defcustom coq-proof-tree-existentials-state-start-regexp
+  "^(dependent evars: "
+  "Coq instance of `proof-tree-existentials-state-start-regexp'."
   :type 'regexp
   :group 'proof-tree-internals)
 
-(defcustom coq-proof-tree-uninstantiated-existentials-end-regexp "\n"
-  "Coq instance of `proof-tree-uninstantiated-existentials-end-regexp'."
+(defcustom coq-proof-tree-existentials-state-end-regexp ")\n"
+  "Coq instance of `proof-tree-existentials-state-end-regexp'."
   :type 'regexp
   :group 'proof-tree-internals)
 
@@ -1217,10 +1217,10 @@ This is specific to `coq-mode'."
    proof-tree-current-goal-regexp coq-proof-tree-current-goal-regexp
    proof-tree-update-goal-regexp coq-proof-tree-update-goal-regexp
    proof-tree-existential-regexp coq-proof-tree-existential-regexp
-   proof-tree-uninstantiated-existentials-start-regexp
-                      coq-proof-tree-uninstantiated-existentials-start-regexp
-   proof-tree-uninstantiated-existentials-end-regexp
-                        coq-proof-tree-uninstantiated-existentials-end-regexp
+   proof-tree-existentials-state-start-regexp
+                      coq-proof-tree-existentials-state-start-regexp
+   proof-tree-existentials-state-end-regexp
+                        coq-proof-tree-existentials-state-end-regexp
    proof-tree-additional-subgoal-ID-regexp
                               coq-proof-tree-additional-subgoal-ID-regexp
    proof-tree-proof-completed-regexp coq-proof-tree-proof-completed-regexp
@@ -2187,9 +2187,9 @@ This function returns the list of currently instantiated existential variables."
   (coq-extract-goal-numbers start end)
   (proof-tree-extract-list
    start end
-   coq-instantiated-existentials-start-regexp
-   nil
-   coq-proof-tree-existential-regexp))
+   coq-proof-tree-existentials-state-start-regexp
+   coq-proof-tree-existentials-state-end-regexp
+   coq-proof-tree-instantiated-existential-regexp))
 
 (defun coq-show-sequent-command (sequent-id)
   "Coq specific function for `proof-tree-show-sequent-command'.

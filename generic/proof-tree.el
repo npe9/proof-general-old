@@ -57,7 +57,7 @@
 ;;
 ;;   * To avoid synchronization trouble the communication between
 ;;     Proof General and prooftree is one way: Only Proof General
-;;     sends display or undo command to prooftree. Prooftree does only
+;;     sends display or undo commands to prooftree. Prooftree does only
 ;;     print welcome or error messages. This goal requires that some
 ;;     of the heuristics, which decide which subgoals are new, need to
 ;;     be implemented here.
@@ -200,29 +200,26 @@ existential variables."
   :type 'regexp
   :group 'proof-tree-internals)
 
-(defcustom proof-tree-uninstantiated-existentials-start-regexp nil
-  "Regexp to match the start of the list of not instantiated existentials.
-Together with
-`proof-tree-uninstantiated-existentials-end-regexp', this regular
-expression is used to determine the region in which
-`proof-tree-existential-regexp' is used to extract all
-existential variables that have not been instantiated yet. Leave
-this variable nil, if there is no list of not instantiated
-existentials."
+(defcustom proof-tree-existentials-state-start-regexp nil
+  "Regexp to match the start of the state display of existential variables.
+Together with `proof-tree-existentials-state-end-regexp', this
+regular expression is used to determine the state display of
+existential variables, which contains information about which
+existentials are still uninstantiated and about dependencies of
+instantiated existential variables. Leave this variable nil, if
+there is no such state display."
   :type 'regexp
   :group 'proof-tree-internals)
 
-(defcustom proof-tree-uninstantiated-existentials-end-regexp nil
-  "Regexp to match the end of the list of not instantiated existentials.
-Together with
-`proof-tree-uninstantiated-existentials-start-regexp', this
-regular expression is used to determine the region in which
-`proof-tree-existential-regexp' is used to extract all
-existential variables that have not been instantiated yet. If
-this variable is nil (and if
-`proof-tree-uninstantiated-existentials-start-regexp' is
-non-nil), then the region to search expands to the end of the
-prover output."
+(defcustom proof-tree-existentials-state-end-regexp nil
+  "Regexp to match the end of the state display of existential variables.
+Together with `proof-tree-existentials-state-start-regexp', this
+regular expression is used to determine the state display of
+existential variables, which contains information about which
+existentials are still uninstantiated and about dependencies of
+instantiated existential variables. If this variable is nil (and
+if `proof-tree-existentials-state-start-regexp' is non-nil), then
+the state display expands to the end of the prover output."
   :type 'regexp
   :group 'proof-tree-internals)
 
@@ -269,7 +266,7 @@ non-nil.
 
 If defined, this function should return the list of currently
 instantiated existential variables as a list of strings. The
-function is called with the `proof-shell-buffer' as current
+function is called with `proof-shell-buffer' as current
 buffer and with two arguments start and stop, which designate the
 region containing the last output from the proof assistant.
 
@@ -684,9 +681,13 @@ call `proof-tree-urgent-action-hook'. All this is only done if
 the current output does not come from a command (with the
 'proof-tree-show-subgoal flag) that this package inserted itself.
 
+Urgent actions are only needed if the external proof display is
+currently running. Therefore this function should not be called
+when `proof-tree-external-display' is nil. 
+
 This function assumes that the prover output is not suppressed.
-Therefore this function should not be called when
-`proof-tree-external-display' is nil.
+Therefore, `proof-tree-external-display' being t is actually a
+necessary precondition.
 
 The not yet delayed output is in the region
 \[proof-shell-delayed-output-start, proof-shell-delayed-output-end]."
@@ -735,7 +736,7 @@ The not yet delayed output is in the region
 				   ;; current command before the show-goal
 				   ;; commands that we insert now are
 				   ;; processed. Therefore, the update-sequent
-				   ;; commnds that result from these show-goals
+				   ;; commands that result from these show-goals
 				   ;; would be undone if the user retracts to
 				   ;; the beginning of the comment.
 				   (cons state
@@ -824,17 +825,19 @@ extends up to END if END-REGEXP is nil."
 (defun proof-tree-extract-uninstantiated-existentials (start end)
   "Extract the not yet instantiated existential variables.
 This function uses
-`proof-tree-uninstantiated-existentials-start-regexp',
-`proof-tree-uninstantiated-existentials-end-regexp' and
+`proof-tree-existentials-state-start-regexp',
+`proof-tree-existentials-state-end-regexp' and
 `proof-tree-existential-regexp' to extract the list of not yet
 instantiated existential variables from the current goal. The
 delayed output is expected between START and END in the current
 buffer."
   (proof-tree-extract-list
    start end
-   proof-tree-uninstantiated-existentials-start-regexp
-   proof-tree-uninstantiated-existentials-end-regexp
-   proof-tree-existential-regexp))
+   proof-tree-existentials-state-start-regexp
+   proof-tree-existentials-state-end-regexp
+   "\\(\\?[0-9]+\\) open"
+   ;XXX proof-tree-existential-regexp
+   ))
 
 (defun proof-tree-handle-proof-progress (cmd-string proof-info)
   "Send CMD-STRING and goals in delayed output to prooftree.
@@ -855,14 +858,13 @@ The delayed output is in the region
 	 (proof-name (cadr proof-info))
 	 (cheated-flag (proof-string-match
 			proof-tree-cheating-regexp cmd-string))
-	 (current-goals (proof-tree-extract-goals start end))
-	 (existentials
-	  (proof-tree-extract-uninstantiated-existentials start end)))
+	 (current-goals (proof-tree-extract-goals start end)))
     (if current-goals
 	(let ((current-sequent-id (car current-goals))
 	      (current-sequent-text (nth 1 current-goals))
 	      ;; nth 2 current-goals  contains the  additional ID's
-	      )
+	      (existentials
+	       (proof-tree-extract-uninstantiated-existentials start end)))
 	  ;; send all to prooftree
 	  (proof-tree-send-goal-state
 	   proof-state proof-name cmd-string
