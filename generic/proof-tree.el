@@ -778,18 +778,14 @@ The delayed output is expected between START and END in the
 current buffer."
   (goto-char start)
   (if (proof-re-search-forward proof-tree-current-goal-regexp end t)
-      (let ((sequent-id (buffer-substring-no-properties (match-beginning 1)
-							(match-end 1)))
-	    (sequent-text
-	     (buffer-substring-no-properties
-	      (match-beginning 2) (match-end 2)))
+      (let ((sequent-id (match-string-no-properties 1))
+	    (sequent-text (match-string-no-properties 2))
 	    additional-goal-ids)
 	(goto-char start)
 	(while (proof-re-search-forward proof-tree-additional-subgoal-ID-regexp
 					end t)
 	  (let ((next-start (match-end 0))
-		(other-id (buffer-substring-no-properties (match-beginning 1)
-							  (match-end 1))))
+		(other-id (match-string-no-properties 1)))
 	    (setq additional-goal-ids (cons other-id additional-goal-ids))
 	    (goto-char next-start)))
 	(setq additional-goal-ids (nreverse additional-goal-ids))
@@ -816,9 +812,7 @@ extends up to END if END-REGEXP is nil."
 	    (setq end (match-beginning 0)))
 	(goto-char start)
         (while (proof-re-search-forward item-regexp end t)
-          (setq result (cons (buffer-substring-no-properties
-                              (match-beginning 1)
-                              (match-end 1))
+          (setq result (cons (match-string-no-properties 1)
                              result)))))
     (nreverse result)))
 
@@ -901,8 +895,7 @@ The delayed output of the navigation command is in the region
 	(proof-name (cadr proof-info)))
     (goto-char start)
     (if (proof-re-search-forward proof-tree-current-goal-regexp end t)
-	(let ((current-id (buffer-substring-no-properties (match-beginning 1)
-							  (match-end 1))))
+	(let ((current-id (match-string-no-properties 1)))
 	  ;; send all to prooftree
 	  (proof-tree-send-switch-goal proof-state proof-name current-id)))))
 
@@ -976,11 +969,8 @@ The delayed output is in the region
 	(proof-name (cadr proof-info)))
     (goto-char start)
     (if (proof-re-search-forward proof-tree-update-goal-regexp end t)
-	(let ((sequent-id (buffer-substring-no-properties (match-beginning 1)
-							  (match-end 1)))
-	      (sequent-text
-	       (buffer-substring-no-properties
-		(match-beginning 2) (match-end 2))))
+	(let ((sequent-id (match-string-no-properties 1))
+	      (sequent-text (match-string-no-properties 2)))
 	  (proof-tree-send-update-sequent
 	   proof-state proof-name sequent-id sequent-text)
 	  ;; put current sequent into hash (if it is not there yet)

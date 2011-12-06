@@ -2155,16 +2155,10 @@ found are stored in `coq-sequent-id-assoc' for later use."
         coq-sequent-id-assoc-valid t)
   (goto-char start)
   (if (proof-re-search-forward coq-proof-tree-current-goal-regexp end t)
-      (let ((current-id (buffer-substring-no-properties
-                         (match-beginning 1)
-                         (match-end 1))))
+      (let ((current-id (match-string-no-properties 1)))
         (while (proof-re-search-forward coq-additional-subgoal-regexp end t)
-          (let ((subgoal-number (buffer-substring-no-properties
-                                 (match-beginning 1)
-                                 (match-end 1)))
-                (subgoal-id (buffer-substring-no-properties
-                             (match-beginning 2)
-                             (match-end 2))))
+          (let ((subgoal-number (match-string-no-properties 1))
+                (subgoal-id (match-string-no-properties 2)))
             (setq coq-sequent-id-assoc
                   (cons (cons subgoal-id subgoal-number)
                         coq-sequent-id-assoc))))
