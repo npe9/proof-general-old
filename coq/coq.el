@@ -234,7 +234,7 @@ On Windows you might need something like:
   :group 'coq-proof-tree)
 
 (defcustom coq-proof-tree-existentials-state-start-regexp
-  "^(dependent evars: "
+  "^(dependent evars:"
   "Coq instance of `proof-tree-existentials-state-start-regexp'."
   :type 'regexp
   :group 'proof-tree-internals)

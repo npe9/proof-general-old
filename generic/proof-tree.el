@@ -493,11 +493,11 @@ variables."
 
 (defun proof-tree-send-goal-state (state proof-name command-string cheated-flag
 				   current-sequent-id current-sequent-text
-				   additional-sequent-ids existentials)
+				   additional-sequent-ids existential-info)
   "Send the current goal state to prooftree."
-  ;; (message "PTSGS id %s sequent %s" current-sequent-id current-sequent-text)
-  (let ((add-id-string (mapconcat 'identity additional-sequent-ids " "))
-	(ex-string (mapconcat 'identity existentials " ")))
+  ;; (message "PTSGS id %s sequent %s ex-info %s"
+  ;; 	   current-sequent-id current-sequent-text existential-info)
+  (let ((add-id-string (mapconcat 'identity additional-sequent-ids " ")))
     (process-send-string
      proof-tree-process
      (format
@@ -513,12 +513,12 @@ variables."
       (1+ (string-bytes command-string))
       (1+ (string-bytes current-sequent-text))
       (1+ (string-bytes add-id-string))
-      (1+ (string-bytes ex-string))
+      (1+ (string-bytes existential-info))
       proof-name
       command-string
       current-sequent-text
       add-id-string
-      ex-string))))
+      existential-info))))
 
 (defun proof-tree-send-update-sequent (state proof-name sequent-id sequent-text)
   "Send the updated sequent text to prooftree."
@@ -816,22 +816,25 @@ extends up to END if END-REGEXP is nil."
                              result)))))
     (nreverse result)))
 
-(defun proof-tree-extract-uninstantiated-existentials (start end)
-  "Extract the not yet instantiated existential variables.
-This function uses
-`proof-tree-existentials-state-start-regexp',
-`proof-tree-existentials-state-end-regexp' and
-`proof-tree-existential-regexp' to extract the list of not yet
-instantiated existential variables from the current goal. The
-delayed output is expected between START and END in the current
-buffer."
-  (proof-tree-extract-list
-   start end
-   proof-tree-existentials-state-start-regexp
-   proof-tree-existentials-state-end-regexp
-   "\\(\\?[0-9]+\\) open"
-   ;XXX proof-tree-existential-regexp
-   ))
+(defun proof-tree-extract-existential-info (start end)
+  "Extract the information display of existential variables.
+This function cuts out the text between
+`proof-tree-existentials-state-start-regexp' and
+`proof-tree-existentials-state-end-regexp' from the prover
+output, including the matches of these regular expressions. If
+the start regexp is nil, the empty string is returned. If the end
+regexp is nil, the match expands to the end of the prover output."
+  (if (and proof-tree-existentials-state-start-regexp
+	   (proof-re-search-forward proof-tree-existentials-state-start-regexp
+				    end t))
+      (progn
+	(setq start (match-beginning 0))
+	(when (and proof-tree-existentials-state-end-regexp
+		   (proof-re-search-forward
+		    proof-tree-existentials-state-end-regexp end t))
+	  (setq end (match-end 0)))
+	(buffer-substring-no-properties start end))
+    ""))
 
 (defun proof-tree-handle-proof-progress (cmd-string proof-info)
   "Send CMD-STRING and goals in delayed output to prooftree.
@@ -857,8 +860,8 @@ The delayed output is in the region
 	(let ((current-sequent-id (car current-goals))
 	      (current-sequent-text (nth 1 current-goals))
 	      ;; nth 2 current-goals  contains the  additional ID's
-	      (existentials
-	       (proof-tree-extract-uninstantiated-existentials start end)))
+	      (existential-info
+	       (proof-tree-extract-existential-info start end)))
 	  ;; send all to prooftree
 	  (proof-tree-send-goal-state
 	   proof-state proof-name cmd-string
@@ -866,7 +869,7 @@ The delayed output is in the region
 	   current-sequent-id
 	   current-sequent-text
 	   (nth 2 current-goals)
-	   existentials)
+	   existential-info)
 	  ;; put current sequent into hash (if it is not there yet)
 	  (unless (gethash current-sequent-id proof-tree-sequent-hash)
 	    (puthash current-sequent-id proof-state proof-tree-sequent-hash))
