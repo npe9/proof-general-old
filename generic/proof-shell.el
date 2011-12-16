@@ -1045,7 +1045,7 @@ contains only invisible elements for prooftree synchronization."
 			    (proof-shell-slurp-comments)))
 
 	(if proof-tree-external-display
-	    (proof-tree-urgent-action cmd flags))
+	    (proof-tree-urgent-action flags))
 
 	;; if action list is (nearly) empty, ensure prover is noisy.
 	(if (and proof-shell-silent
@@ -1453,7 +1453,8 @@ by the filter is to send the next command from the queue."
 		;; only display result for last output
 		(proof-shell-handle-delayed-output)))
       ;; send output to the proof tree visualizer
-      (proof-tree-handle-delayed-output cmd flags span))))
+      (if proof-tree-external-display
+	  (proof-tree-handle-delayed-output cmd flags span)))))
 
 
 (defsubst proof-shell-display-output-as-response (flags str)

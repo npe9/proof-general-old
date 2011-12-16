@@ -230,10 +230,8 @@ the state display expands to the end of the prover output."
 
 (defcustom proof-tree-get-proof-info nil
   "Proof assistant specific function for information about the current proof.
-This function must take two arguments, the command and the flags
-as they occur in the item of `proof-action-list' that produced
-the current output. This function must return a list, which
-contains in the following order:
+This function takes no arguments. It must return a list, which
+contains, in the following order:
 
 * the current state number (as positive integer)
 * the name of the current proof (as string) or nil
@@ -241,10 +239,6 @@ contains in the following order:
 The state number is used to implement undo in prooftree. The
 proof name is used to distinguish different proofs inside
 prooftree.
-
-This function must work regardless of the value of
-`proof-full-annotation-internal', that is, it must produce
-correct results even if the normal prover output is suppressed.
 
 The state number is interpreted as the state that has been
 reached after the last command has been processed. It must be
@@ -299,6 +293,17 @@ information computed there."
   :type 'function
   :group 'proof-tree-internals)
 
+(defcustom proof-tree-find-begin-of-unfinished-proof nil
+  "Proof assistant specific function for the start of the current proof.
+This function is called with no argument when the user switches
+the external proof-tree display on. Then, this function must
+determin if there is a currently unfinished proof for which the
+proof-tree display should be started. If yes this function must
+return the starting position of the command that started this
+proof. If there is no such proof, this function must return nil."
+  :type 'function
+  :group 'proof-tree-internals)
+
 (defcustom proof-tree-urgent-action-hook ()
   "Normal hook for prooftree actions that cannot be delayed.
 This hook is called (indirectly) from inside
@@ -330,6 +335,13 @@ contain the complete sequent text of newly generated subgoals.)"
 
 (defvar proof-tree-external-display nil
   "Display proof trees in external prooftree windows if t.
+Actually, if this variable is t then the user requested an
+external proof-tree display. If there was no unfinished proof
+when proof-tree display was requested and if no proof has been
+started since then, then there is obviously no proof-tree
+display. In this case, this variable stays t and the proof-tree
+display will be started for the next proof.
+
 Controlled by `proof-tree-external-display-toggle'.
 
 Should only be changed with `proof-tree-enable-external-display'
@@ -352,22 +364,9 @@ whenever this variable is t.")
 Used for undoing in prooftree.")
 
 (defvar proof-tree-current-proof nil
-  "Name and start pos of the current proof or nil if there is none.
-This variable is used for `proof-tree-external-display-toggle' to
-display the proof tree of the current proof. It is further used
-to display a warning when the user starts a nested proof.
-
-The value is nil if there is no current proof. Otherwise it is a
-cons cell. Its car is the name of the proof. Its cdr is the start
-position of the span that contains the command that started this
-proof.
-
-To support proper undo operation, this variable should only be
-changed via `proof-tree-start-proof' or `proof-tree-end-proof'.")
-
-(defvar proof-tree-current-proof-history nil
-  "Alist mapping state numbers to old values of `proof-tree-current-proof'.
-Needed for undo.")
+  "Name of the current proof or nil if there is none.
+This variable is only maintained and meaningful if
+`proof-tree-external-display' is t.")
 
 (defvar proof-tree-sequent-hash nil
   "Hash table to remember sequent ID's.
@@ -639,33 +638,6 @@ Do nothing if this mapping does already exist."
 
 
 ;;
-;; proof-tree-current-proof manipulations and history
-;;
-
-(defun proof-tree-record-current-proof-state (state)
-  "Store current state of `proof-tree-current-proof' for undo purposes."
-  (setq proof-tree-current-proof-history
-	(cons (cons state proof-tree-current-proof)
-	      proof-tree-current-proof-history)))
-
-(defun proof-tree-undo-current-proof (proof-state)
-  "Reestablish state PROOF-STATE of `proof-tree-current-proof'."
-  (proof-tree-undo-state-var proof-state
-			     'proof-tree-current-proof
-			     'proof-tree-current-proof-history))
-
-(defun proof-tree-start-proof (state name start-pos)
-  "Set `proof-tree-current-proof'."
-  (proof-tree-record-current-proof-state state)
-  (setq proof-tree-current-proof (cons name start-pos)))
-
-(defun proof-tree-end-proof (state)
-  "Clear `proof-tree-current-proof'."
-  (proof-tree-record-current-proof-state state)
-  (setq proof-tree-current-proof nil))
-
-
-;;
 ;; Process urgent output from the proof assistant
 ;;
 
@@ -674,7 +646,7 @@ Do nothing if this mapping does already exist."
 Runs the hooks in `proof-state-change-hook'."
   (run-hooks 'proof-state-change-hook))
 
-(defun proof-tree-urgent-action (cmd flags)
+(defun proof-tree-urgent-action (flags)
   "Handle urgent points before the next item is sent to the proof assistant.
 Schedule goal updates when existential variables have changed and
 call `proof-tree-urgent-action-hook'. All this is only done if
@@ -697,7 +669,7 @@ The not yet delayed output is in the region
   ;; 	   proof-shell-delayed-output-end
   ;; 	   proof-action-list
   ;; 	   proof-tree-existentials-alist)
-  (let* ((proof-info (funcall proof-tree-get-proof-info cmd flags))
+  (let* ((proof-info (funcall proof-tree-get-proof-info))
 	 (state (car proof-info))
 	 (start proof-shell-delayed-output-start)
 	 (end proof-shell-delayed-output-end)
@@ -921,8 +893,7 @@ internal state of this package. The latter involves currently two
 points:
 * delete those goals from `proof-tree-sequent-hash' that have
   been generated after the state to which we undo now
-* change proof-tree-existentials-alist and
-  proof-tree-current-proof back to its previous contents"
+* change proof-tree-existentials-alist back to its previous content"
   ;; (message "PTHU info %s" proof-info)
   (let ((proof-state (car proof-info)))
     ;; delete sequents from the hash
@@ -933,7 +904,11 @@ points:
      proof-tree-sequent-hash)
     ;; undo changes in other state vars
     (proof-tree-undo-existentials proof-state)
-    (proof-tree-undo-current-proof proof-state)
+    (unless (equal (cadr proof-info) proof-tree-current-proof)
+      ;; went back to a point before the start of the proof that we
+      ;; are displaying;
+      ;; or we have not started to display something
+      (setq proof-tree-current-proof nil))
     ;; disable proof tree display when undoing to a point outside a proof
     (unless proof-tree-current-proof
       (proof-tree-disable-external-display))
@@ -1009,8 +984,9 @@ entry that is now finally retired. CMD is the command, FLAGS are
 the flags and SPAN is the span."
   ;; (message "PTHDOI cmd %s flags %s span %s-%s" cmd flags
   ;; 	   (if span (span-start span)) (if span (span-end span)))
+  (assert proof-tree-external-display)
   (unless (memq 'invisible flags)
-    (let* ((proof-info (funcall proof-tree-get-proof-info cmd flags))
+    (let* ((proof-info (funcall proof-tree-get-proof-info))
 	   (current-proof-name (cadr proof-info)))
       (save-excursion
 	(if (<= (car proof-info) proof-tree-last-state)
@@ -1022,31 +998,27 @@ the flags and SPAN is the span."
 	  (cond
 	   ((and (null proof-tree-current-proof) current-proof-name)
 	    ;; started a new proof
-	    (proof-tree-start-proof (car proof-info) current-proof-name
-				    (span-start span)))
+	    (setq proof-tree-current-proof current-proof-name))
 	   ((and proof-tree-current-proof (null current-proof-name))
 	    ;; finished the current proof
-	    (proof-tree-end-proof (car proof-info))
+	    (setq proof-tree-current-proof nil)
 	    (proof-tree-disable-external-display))
 	   ((and proof-tree-current-proof current-proof-name
-		 (not (equal (car proof-tree-current-proof)
-			     current-proof-name)))
+		 (not (equal proof-tree-current-proof current-proof-name)))
 	    ;; new proof before old was finished?
 	    (proof-tree-warning
 	     "Nested proofs are not supported in prooftree display"
 	     :warning)
 	    ;; try to keep consistency nevertheless
-	    (proof-tree-start-proof (car proof-info) current-proof-name
-				    (span-start span))))
+	    (setq proof-tree-current-proof current-proof-name)))
 
 	  ;; send stuff to prooftree now
 	  (cond
-	   ((and proof-tree-external-display
-		 (memq 'proof-tree-show-subgoal flags))
+	   ((memq 'proof-tree-show-subgoal flags)
 	    ;; display of a known sequent to update it in prooftree
 	    (proof-tree-ensure-running)
 	    (proof-tree-update-sequent flags proof-info))
-	   ((and proof-tree-external-display current-proof-name)
+	   (current-proof-name
 	    ;; we are inside a proof: display something
 	    (proof-tree-ensure-running)
 	    (proof-tree-handle-proof-command cmd proof-info)))))
@@ -1090,18 +1062,19 @@ the flags and SPAN is the span."
 ;; User interface
 ;;
 
-(defun proof-tree-display-current-proof ()
+(defun proof-tree-display-current-proof (proof-start)
   "Start an external proof-tree display for the current proof.
 Coq (and probably other proof assistants as well) does not
 support outputing the current proof tree. Therefore this function
 retracts to the start of the current proof, switches the
 proof-tree display on, and reasserts then until the former end of
-the locked region."
+the locked region. Argument PROOF-START must contain the start
+position of the current proof."
   (unless (and proof-script-buffer
 	       (equal proof-script-buffer (current-buffer)))
     (error
      "Enabling prooftree inside a proof outside the current scripting buffer"))
-  ;; XXX only continue if the proofer is idle, howto check this?
+  (proof-shell-ready-prover)
   (assert proof-locked-span)
   (message "Start proof-tree display for current proof")
   (let ((point (point))
@@ -1109,7 +1082,7 @@ the locked region."
     (setq proof-tree-redo-display-position
 	  (list (current-buffer) locked-end point
 		(selected-window) (window-start)))
-    (goto-char (cdr proof-tree-current-proof))
+    (goto-char proof-start)
     (proof-retract-until-point)))
 
 (defun proof-tree-external-display-toggle ()
@@ -1126,15 +1099,23 @@ display is switched off."
     ;; Currently on -> switch off
     (proof-tree-disable-external-display)
     (if proof-tree-current-proof
-	(proof-tree-send-quit-proof (car proof-tree-current-proof)))
+	(proof-tree-send-quit-proof proof-tree-current-proof))
     (message "External proof-tree display switched off"))
-   (proof-tree-current-proof
-    ;; Currently off and inside a proof -> start for this proof
-    (proof-tree-display-current-proof))
    (t
-    ;; Currently off and outside a proof -> switch on for the next proof
-    (proof-tree-enable-external-display)
-    (message "External proof-tree display switched on for the next proof"))))
+    ;; Currently off
+    (let ((proof-start (funcall proof-tree-find-begin-of-unfinished-proof)))
+      (proof-tree-enable-external-display)
+      (setq proof-tree-current-proof nil)
+      (setq proof-tree-last-state (car (funcall proof-tree-get-proof-info)))
+      ;; sync prooftree to current state, if it is running
+      (if (proof-tree-is-running)
+	  (proof-tree-send-undo proof-tree-last-state))
+      (if proof-start
+	  ;; inside an unfinished proof -> start for this proof
+	  (proof-tree-display-current-proof proof-start)
+	;; outside a proof -> wait for the next proof
+	(message
+	 "External proof-tree display switched on for the next proof"))))))
     
 
 ;;

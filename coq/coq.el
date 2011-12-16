@@ -1228,6 +1228,8 @@ This is specific to `coq-mode'."
    proof-tree-extract-instantiated-existentials
      'coq-extract-instantiated-existentials
    proof-tree-show-sequent-command 'coq-show-sequent-command
+   proof-tree-find-begin-of-unfinished-proof
+     'coq-find-begin-of-unfinished-proof
    )
         
   (proof-shell-config-done))
@@ -2136,7 +2138,7 @@ The variable is set to t inside `coq-extract-goal-numbers' and
 set to nil just before leaving `coq-show-sequent-command'.")
 
 
-(defun coq-proof-tree-get-proof-info (cmd flags)
+(defun coq-proof-tree-get-proof-info ()
   "Coq instance of `proof-tree-get-proof-info'."
   (let* ((info (coq-last-prompt-info-safe)))
          ;; info is now a list with
@@ -2254,6 +2256,25 @@ The not yet delayed output is in the region
   
 (add-hook 'proof-tree-urgent-action-hook 'coq-proof-tree-get-new-subgoals)
 
+
+(defun coq-find-begin-of-unfinished-proof ()
+  "Return start position of current unfinished proof or nil."
+  (let ((span (span-at (1- (proof-unprocessed-begin)) 'type)))
+    ;; go backward as long as we are inside the proof
+    ;; the proofstack property is set inside the proof
+    ;; the command before the proof has the goalcmd property
+    (while (and span
+                (span-property span 'proofstack)
+                (not (span-property span 'goalcmd)))
+          (setq span (span-at (1- (span-start span)) 'type)))
+    ;; Beware of completed proofs! They have type goalsave and for
+    ;; strange reasons the whole completed proof has the goalcmd property.
+    (if (and span
+             (not (eq 'goalsave (span-property span 'type)))
+             (span-property span 'goalcmd))
+        (span-start span)
+      nil)))
+    
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
