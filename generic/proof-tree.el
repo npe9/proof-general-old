@@ -92,9 +92,6 @@
 ;; - proof-assert-until-point is called from within
 ;;   proof-shell-filter-manage-output when a user starts prooftree in
 ;;   the middle of a proof.
-;;
-;; - The flag list in a proof-action-list item contains a number for
-;;   invisible show-goal commands.
 
 
 
@@ -635,10 +632,30 @@ Do nothing if this mapping does already exist."
 ;; Process urgent output from the proof assistant
 ;;
 
-(defun proof-tree-show-goal-callback (span)
+(defun proof-tree-show-goal-callback (state)
   "Callback for display-goal commands inserted by this package.
-Runs the hooks in `proof-state-change-hook'."
+Update the sequent and run hooks in `proof-state-change-hook'.
+Argument STATE is the state number (i.e., an integer) with which
+the update sequent command should be associated.
+
+The STATE is necessary, because a comment following a branching
+command cat get retired together with the branching command
+before the show-goal commands that update sequents are processed.
+The effect of the sequent update would therefore be undone when
+the comment alone is retracted.
+
+You CANNOT put this function directly as callback into
+`proof-action-list' because callbacks receive the span as
+argument and this function expects an integer! Rather you should
+call `proof-tree-make-show-goal-callback', which evaluates to a
+lambda expressions that you can put into `proof-action-list'."
+  ;;(message "PTSGC %s" state)
+  (proof-tree-update-sequent state)
   (run-hooks 'proof-state-change-hook))
+
+(defun proof-tree-make-show-goal-callback (state)
+  "Create the callback for display-goal commands."
+  `(lambda (span) (proof-tree-show-goal-callback ,state)))
 
 (defun proof-tree-urgent-action (flags)
   "Handle urgent points before the next item is sent to the proof assistant.
@@ -689,26 +706,8 @@ The not yet delayed output is in the region
 		      (setq proof-action-list
 			    (cons (proof-shell-action-list-item
 				   show-cmd
-				   'proof-tree-show-goal-callback
-				   ;; XXX Store current state as a special flag
-				   ;; in the flags list in order to associate
-				   ;; the update-sequent command with the state
-				   ;; that we reached now (in contrast to the
-				   ;; state that will be reached after the
-				   ;; show-goals command has been processed).
-				   ;; This is needed if the current command is
-				   ;; followed by a comment, because the
-				   ;; comment will be retired together with the
-				   ;; current command before the show-goal
-				   ;; commands that we insert now are
-				   ;; processed. Therefore, the update-sequent
-				   ;; commands that result from these show-goals
-				   ;; would be undone if the user retracts to
-				   ;; the beginning of the comment.
-				   (cons state
-					 '(no-response-display
-					   no-goals-display
-					   proof-tree-show-subgoal)))
+				   (proof-tree-make-show-goal-callback state)
+				   '(invisible proof-tree-show-subgoal))
 				  proof-action-list)))))
 	      (proof-tree-delete-existential-assoc state var-goal-assoc)))))
       (run-hooks 'proof-tree-urgent-action-hook))
@@ -912,7 +911,7 @@ points:
     (setq proof-tree-last-state (- proof-state 1))))
 
 
-(defun proof-tree-update-sequent (flags proof-info)
+(defun proof-tree-update-sequent (proof-state)
   "Prepare an update-sequent command for prooftree.
 This function processes delayed output that the proof assistant
 generated in response to commands that Proof General inserted in
@@ -923,35 +922,34 @@ This function uses `proof-tree-update-goal-regexp' to find a
 sequent and its ID in the delayed output. If something is found
 an appropriate update-sequent command is sent to prooftree.
 
-If FLAGS contain a number, the update-sequent command is
-associated with this number as state (which should be the state
-of the command that caused this update sequent). Otherwise the
-current state from proof-info is taken (which will result in
-wrong undo behavior inside prooftree, if the command that caused
-this update-sequent command is followed by a comment).
+The update-sequent command is associated with state PROOF-STATE
+for proper undo effects, see also the comments for
+`proof-tree-show-goal-callback'.
 
 The delayed output is in the region
 \[proof-shell-delayed-output-start, proof-shell-delayed-output-end]."
-  (let ((start proof-shell-delayed-output-start)
-	(end   proof-shell-delayed-output-end)
-	(proof-state
-	 (or
-	  (some (function (lambda (flag) (and (integerp flag) flag))) flags)
-	  (car proof-info)))
-	(proof-name (cadr proof-info)))
-    (goto-char start)
-    (if (proof-re-search-forward proof-tree-update-goal-regexp end t)
-	(let ((sequent-id (match-string-no-properties 1))
-	      (sequent-text (match-string-no-properties 2)))
-	  (proof-tree-send-update-sequent
-	   proof-state proof-name sequent-id sequent-text)
-	  ;; put current sequent into hash (if it is not there yet)
-	  (unless (gethash sequent-id proof-tree-sequent-hash)
-	    (puthash sequent-id proof-state proof-tree-sequent-hash))
-	  (proof-tree-register-existentials proof-state sequent-id sequent-text)
-	  ;; remember state for undo
-	  ;; here we use the real current state
-	  (setq proof-tree-last-state (car proof-info))))))
+  ;; (message "PTUS buf %s output %d-%d state %s"
+  ;; 	   (current-buffer)
+  ;; 	   proof-shell-delayed-output-start proof-shell-delayed-output-end
+  ;; 	   proof-state)
+  (if (proof-tree-is-running)
+      (with-current-buffer proof-shell-buffer
+	(let* ((start proof-shell-delayed-output-start)
+	       (end   proof-shell-delayed-output-end)
+	       (proof-info (funcall proof-tree-get-proof-info))
+	       (proof-name (cadr proof-info)))
+	  (goto-char start)
+	  (if (proof-re-search-forward proof-tree-update-goal-regexp end t)
+	      (let ((sequent-id (match-string-no-properties 1))
+		    (sequent-text (match-string-no-properties 2)))
+		(proof-tree-send-update-sequent
+		 proof-state proof-name sequent-id sequent-text)
+		;; put current sequent into hash (if it is not there yet)
+		(unless (gethash sequent-id proof-tree-sequent-hash)
+		  (puthash sequent-id proof-state proof-tree-sequent-hash))
+		(proof-tree-register-existentials proof-state
+						  sequent-id
+						  sequent-text)))))))
 
 
 (defun proof-tree-handle-delayed-output (cmd flags span)
@@ -1003,15 +1001,10 @@ the flags and SPAN is the span."
 	    (setq proof-tree-current-proof current-proof-name)))
 
 	  ;; send stuff to prooftree now
-	  (cond
-	   ((memq 'proof-tree-show-subgoal flags)
-	    ;; display of a known sequent to update it in prooftree
-	    (proof-tree-ensure-running)
-	    (proof-tree-update-sequent flags proof-info))
-	   (current-proof-name
+	  (when current-proof-name
 	    ;; we are inside a proof: display something
 	    (proof-tree-ensure-running)
-	    (proof-tree-handle-proof-command cmd proof-info)))))
+	    (proof-tree-handle-proof-command cmd proof-info))))
 
       ;; finally check if we must reassert some part of the proof, because
       ;; someone started the proof-tree display in the middle of a proof.

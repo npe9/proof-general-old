@@ -2247,14 +2247,8 @@ The not yet delayed output is in the region
         (setq proof-action-list
               (cons (proof-shell-action-list-item
                      (format "Show %s." subgoal-number)
-                     'proof-tree-show-goal-callback
-                     ;; XXX Store current state as special flag inside the
-                     ;; flags list, see comment in generic/proof-tree.el inside
-                     ;; proof-tree-urgent-action.
-                     (cons (car proof-info)
-                           '(no-response-display
-                             no-goals-display
-                             proof-tree-show-subgoal)))
+                     (proof-tree-make-show-goal-callback state)
+                     '(invisible proof-tree-show-subgoal))
                     proof-action-list)))))
   (setq coq-sequent-id-assoc-valid nil))
   
