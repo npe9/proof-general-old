@@ -1912,7 +1912,7 @@ generic/proof-toolbar.el,2401
 (defun proof-toolbar-interrupt-enable-p 264,7416
 (defun proof-toolbar-scripting-menu 272,7569
 
-generic/proof-tree.el,2978
+generic/proof-tree.el,3032
 (defgroup proof-tree 110,4552
 (defcustom proof-tree-program 115,4693
 (defcustom proof-tree-arguments 120,4839
@@ -1943,37 +1943,38 @@ generic/proof-tree.el,2978
 (defvar proof-tree-existentials-alist-history 397,16140
 (defvar proof-tree-redo-display-position 401,16293
 (defun proof-tree-enable-external-display 420,17098
-(defun proof-tree-start-process 439,17691
-(defun proof-tree-is-running 469,18805
-(defun proof-tree-ensure-running 474,18966
-(defun proof-tree-send-goal-state 484,19170
-(defun proof-tree-send-update-sequent 513,20277
-(defun proof-tree-send-switch-goal 526,20701
-(defun proof-tree-send-proof-completed 536,21014
-(defun proof-tree-send-undo 550,21442
-(defun proof-tree-send-quit-proof 555,21608
-(defun proof-tree-record-existentials-state 566,21940
-(defun proof-tree-undo-state-var 579,22490
-(defun proof-tree-undo-existentials 598,23271
-(defun proof-tree-delete-existential-assoc 606,23586
-(defun proof-tree-add-existential-assoc 612,23849
-(defun proof-tree-reset-existentials 625,24464
-(defun proof-tree-show-goal-callback 635,24740
-(defun proof-tree-make-show-goal-callback 656,25727
-(defun proof-tree-urgent-action 660,25888
-(defun proof-tree-register-existentials 724,28388
-(defun proof-tree-extract-goals 737,28932
-(defun proof-tree-extract-list 761,29934
-(defun proof-tree-extract-existential-info 784,30904
-(defun proof-tree-handle-proof-progress 804,31775
-(defun proof-tree-handle-navigation 853,33805
-(defun proof-tree-handle-proof-command 871,34531
-(defun proof-tree-handle-undo 882,35082
-(defun proof-tree-update-sequent 914,36392
-(defun proof-tree-handle-delayed-output 955,38160
-(defun proof-tree-leave-buffer 1029,41282
-(defun proof-tree-display-current-proof 1041,41565
-(defun proof-tree-external-display-toggle 1064,42574
+(defun proof-tree-disable-external-display 427,17365
+(defun proof-tree-start-process 439,17690
+(defun proof-tree-is-running 469,18804
+(defun proof-tree-ensure-running 474,18965
+(defun proof-tree-send-goal-state 484,19169
+(defun proof-tree-send-update-sequent 513,20276
+(defun proof-tree-send-switch-goal 526,20700
+(defun proof-tree-send-proof-completed 536,21013
+(defun proof-tree-send-undo 550,21441
+(defun proof-tree-send-quit-proof 555,21607
+(defun proof-tree-record-existentials-state 566,21939
+(defun proof-tree-undo-state-var 579,22489
+(defun proof-tree-undo-existentials 598,23270
+(defun proof-tree-delete-existential-assoc 606,23585
+(defun proof-tree-add-existential-assoc 612,23848
+(defun proof-tree-reset-existentials 625,24463
+(defun proof-tree-show-goal-callback 635,24739
+(defun proof-tree-make-show-goal-callback 656,25726
+(defun proof-tree-urgent-action 660,25887
+(defun proof-tree-register-existentials 724,28387
+(defun proof-tree-extract-goals 737,28931
+(defun proof-tree-extract-list 761,29933
+(defun proof-tree-extract-existential-info 784,30903
+(defun proof-tree-handle-proof-progress 804,31774
+(defun proof-tree-handle-navigation 853,33804
+(defun proof-tree-handle-proof-command 871,34530
+(defun proof-tree-handle-undo 882,35081
+(defun proof-tree-update-sequent 914,36391
+(defun proof-tree-handle-delayed-output 955,38159
+(defun proof-tree-leave-buffer 1029,41281
+(defun proof-tree-display-current-proof 1041,41564
+(defun proof-tree-external-display-toggle 1064,42573
 
 generic/proof-unicode-tokens.el,497
 (defvar proof-unicode-tokens-initialised 31,827
