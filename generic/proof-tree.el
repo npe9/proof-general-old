@@ -434,15 +434,6 @@ Reset `proof-full-annotation-internal' to the user preference in
   (setq proof-tree-external-display nil)
   (setq proof-full-annotation-internal proof-full-annotation))
 
-;;
-;; Utilities
-;;
-
-(defun proof-tree-warning (message level)
-  "Display warning MESSAGE and throw 'proof-tree-exit if LEVEL is :error."
-  (display-warning '(proof-general proof-tree) message level)
-  (if (or (eq level :error) (eq level :emergency))
-      (throw 'proof-tree-exit nil)))
 
 ;;
 ;; Process creation
@@ -963,16 +954,11 @@ The delayed output is in the region
 	  (setq proof-tree-last-state (car proof-info))))))
 
 
-(defun proof-tree-handle-delayed-output-internal (cmd flags span)
+(defun proof-tree-handle-delayed-output (cmd flags span)
   "Process delayed output for prooftree.
-Examines the delayed output in order to find out whether some
-undo command occured, whether there is a new current goal, or
-whether there is output that has been generated for prooftree
-only. Then the appropriate action is taken, which eventually will
-send appropriate commands to prooftree.
-
-This function is also responsible for maintaining
-`proof-tree-current-proof' consistent.
+This function is the main entry point of the Proof General
+prooftree support. It examines the delayed output in order to
+take appropriate actions and maintains the internal state.
 
 This function is called from `proof-shell-filter-manage-output',
 after `proof-shell-exec-loop' has finished. It can therefore call
@@ -1009,7 +995,8 @@ the flags and SPAN is the span."
 	   ((and proof-tree-current-proof current-proof-name
 		 (not (equal proof-tree-current-proof current-proof-name)))
 	    ;; new proof before old was finished?
-	    (proof-tree-warning
+	    (display-warning
+	     '(proof-general proof-tree)
 	     "Nested proofs are not supported in prooftree display"
 	     :warning)
 	    ;; try to keep consistency nevertheless
@@ -1040,26 +1027,6 @@ the flags and SPAN is the span."
 	    (set-window-start (nth 3 redo-pos) (nth 4 redo-pos))
 	    (goto-char (nth 2 redo-pos))
 	    (set-window-point (nth 3 redo-pos) (nth 2 redo-pos))))))))
-
-
-(defun proof-tree-handle-delayed-output (cmd flags span)
-  "Process delayed output for prooftree.
-This function is the main entry point of the Proof General
-prooftree support. It examines the delayed output in order to
-take appropriate actions and maintains some part of the internal
-state.
-
-Actually all useful work is done inside
-`proof-tree-handle-delayed-output-internal', see there for more
-details. This function is only a wrapper around
-`proof-tree-handle-delayed-output-internal' to catch non-local
-exits (which are not present in the current version any more).
-
-The arguments are (former) fields of the `proof-action-list'
-entry that is now finally retired. CMD is the command, FLAGS are
-the flags and SPAN is the span."
-  (catch 'proof-tree-exit
-    (proof-tree-handle-delayed-output-internal cmd flags span)))
 
 
 ;;
@@ -1125,9 +1092,10 @@ display is switched off."
       (proof-tree-enable-external-display)
       (setq proof-tree-current-proof nil)
       (setq proof-tree-last-state (car (funcall proof-tree-get-proof-info)))
-      ;; sync prooftree to current state, if it is running
-      (if (proof-tree-is-running)
-	  (proof-tree-send-undo proof-tree-last-state))
+      ;; ensure internal variables are initialized, because otherwise
+      ;; we cannot process undo's after this
+      (proof-tree-ensure-running)
+      (proof-tree-send-undo proof-tree-last-state)
       (if proof-start
 	  ;; inside an unfinished proof -> start for this proof
 	  (proof-tree-display-current-proof proof-start)
