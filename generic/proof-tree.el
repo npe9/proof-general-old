@@ -707,7 +707,8 @@ The not yet delayed output is in the region
 			    (cons (proof-shell-action-list-item
 				   show-cmd
 				   (proof-tree-make-show-goal-callback state)
-				   '(invisible proof-tree-show-subgoal))
+				   '(no-goals-display no-response-display
+				     proof-tree-show-subgoal))
 				  proof-action-list)))))
 	      (proof-tree-delete-existential-assoc state var-goal-assoc)))))
       (run-hooks 'proof-tree-urgent-action-hook))
@@ -720,6 +721,16 @@ The not yet delayed output is in the region
 ;;
 ;; Process output from the proof assistant
 ;;
+
+(defun proof-tree-quit-proof ()
+  "Reset internal state when there is no current proof any more.
+Because currently it is not possible to undo into the middle of a
+proof, we can safely flush the `proof-tree-sequent-hash' and
+`proof-tree-existentials-alist-history' when the current proof is
+finished or quit."
+  (clrhash proof-tree-sequent-hash)
+  (setq proof-tree-existentials-alist-history nil)
+  (setq proof-tree-current-proof nil))
 
 (defun proof-tree-register-existentials (current-state sequent-id sequent-text)
   "Register existential variables that appear in SEQUENT-TEXT.
@@ -901,7 +912,7 @@ points:
       ;; went back to a point before the start of the proof that we
       ;; are displaying;
       ;; or we have not started to display something
-      (setq proof-tree-current-proof nil))
+      (proof-tree-quit-proof))
     ;; disable proof tree display when undoing to a point outside a proof
     (unless proof-tree-current-proof
       (proof-tree-disable-external-display))
@@ -972,7 +983,7 @@ the flags and SPAN is the span."
   ;; (message "PTHDOI cmd %s flags %s span %s-%s" cmd flags
   ;; 	   (if span (span-start span)) (if span (span-end span)))
   (assert proof-tree-external-display)
-  (unless (memq 'invisible flags)
+  (unless (or (memq 'invisible flags) (memq 'proof-tree-show-subgoal flags))
     (let* ((proof-info (funcall proof-tree-get-proof-info))
 	   (current-proof-name (cadr proof-info)))
       (save-excursion
@@ -988,7 +999,7 @@ the flags and SPAN is the span."
 	    (setq proof-tree-current-proof current-proof-name))
 	   ((and proof-tree-current-proof (null current-proof-name))
 	    ;; finished the current proof
-	    (setq proof-tree-current-proof nil)
+	    (proof-tree-quit-proof)
 	    (proof-tree-disable-external-display))
 	   ((and proof-tree-current-proof current-proof-name
 		 (not (equal proof-tree-current-proof current-proof-name)))
@@ -1076,8 +1087,9 @@ display is switched off."
    (proof-tree-external-display
     ;; Currently on -> switch off
     (proof-tree-disable-external-display)
-    (if proof-tree-current-proof
-	(proof-tree-send-quit-proof proof-tree-current-proof))
+    (when proof-tree-current-proof
+      (proof-tree-send-quit-proof proof-tree-current-proof)
+      (proof-tree-quit-proof))
     (message "External proof-tree display switched off"))
    (t
     ;; Currently off

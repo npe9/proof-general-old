@@ -57,20 +57,22 @@ ACTION is the callback to be invoked when this item has been
 processed by the prover. For normal scripting items it is
 `proof-done-advancing', for retract items
 `proof-done-retracting', but there are more possibilities (e.g.
-`proof-done-invisible', `proof-shell-set-silent' and
-`proof-shell-clear-silent').
+`proof-done-invisible', `proof-shell-set-silent',
+`proof-shell-clear-silent' and `proof-tree-show-goal-callback').
 
 The DISPLAYFLAGS are set
 for non-scripting commands or for when scripting should not
 bother the user.  They may include
 
-  'invisible		 non-script command (`proof-shell-invisible-command')
-  'no-response-display   do not display messages in *response* buffer
-  'no-error-display      do not display errors/take error action
-  'no-goals-display      do not goals in *goals* buffer
+  'invisible		    non-script command (`proof-shell-invisible-command')
+  'no-response-display      do not display messages in *response* buffer
+  'no-error-display         do not display errors/take error action
+  'no-goals-display         do not goals in *goals* buffer
+  'proof-tree-show-subgoal  item inserted by the proof-tree package
 
-If flags are non-empty, interactive cues will be surpressed.
-\(E.g., printing hints).
+Note that 'invisible does not imply any of the others. If flags
+are non-empty, interactive cues will be surpressed. (E.g.,
+printing hints).
 
 See the functions `proof-start-queue' and `proof-shell-exec-loop'.")
 

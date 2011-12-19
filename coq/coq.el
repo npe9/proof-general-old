@@ -2248,7 +2248,9 @@ The not yet delayed output is in the region
               (cons (proof-shell-action-list-item
                      (format "Show %s." subgoal-number)
                      (proof-tree-make-show-goal-callback state)
-                     '(invisible proof-tree-show-subgoal))
+                     '(no-goals-display
+                       no-response-display
+                       proof-tree-show-subgoal))
                     proof-action-list)))))
   (setq coq-sequent-id-assoc-valid nil))
   
