@@ -1144,6 +1144,13 @@ This is specific to `coq-mode'."
   ;; holes
   (if coq-use-editing-holes (holes-mode 1))
 
+  ;; prooftree config
+  (setq
+   proof-tree-configured t
+   proof-tree-get-proof-info 'coq-proof-tree-get-proof-info
+   proof-tree-find-begin-of-unfinished-proof
+     'coq-find-begin-of-unfinished-proof)   
+
   (proof-config-done)
 
   ;; outline
@@ -1224,12 +1231,9 @@ This is specific to `coq-mode'."
    proof-tree-additional-subgoal-ID-regexp
                               coq-proof-tree-additional-subgoal-ID-regexp
    proof-tree-proof-completed-regexp coq-proof-tree-proof-completed-regexp
-   proof-tree-get-proof-info 'coq-proof-tree-get-proof-info
    proof-tree-extract-instantiated-existentials
      'coq-extract-instantiated-existentials
    proof-tree-show-sequent-command 'coq-show-sequent-command
-   proof-tree-find-begin-of-unfinished-proof
-     'coq-find-begin-of-unfinished-proof
    )
         
   (proof-shell-config-done))
@@ -2140,7 +2144,7 @@ set to nil just before leaving `coq-show-sequent-command'.")
 
 (defun coq-proof-tree-get-proof-info ()
   "Coq instance of `proof-tree-get-proof-info'."
-  (let* ((info (coq-last-prompt-info-safe)))
+  (let* ((info (or (coq-last-prompt-info-safe) '(0 0 nil nil))))
          ;; info is now a list with
          ;; * the state number
          ;; * the proof stack depth

@@ -135,6 +135,9 @@
   :group 'proof-general-internals
   :package-version '(ProofGeneral . "4.X"))
 
+;; defcustom proof-tree-configured is in proof-config.el, because it is
+;; needed in pg-custom.el
+
 (defcustom proof-tree-ignored-commands-regexp nil
   "Commands that should be ignored for the prooftree display.
 The output of commands matching this regular expression is not
@@ -1058,6 +1061,19 @@ the flags and SPAN is the span."
   (catch 'proof-tree-exit
     (proof-tree-handle-delayed-output-internal cmd flags span)))
 
+
+;;
+;; Send undo command when leaving a buffer
+;;
+
+(defun proof-tree-leave-buffer ()
+  "Send an undo command to prooftree when leaving a buffer."
+  (if (and proof-tree-configured (proof-tree-is-running))
+      (proof-tree-send-undo 0)))
+
+(add-hook 'proof-deactivate-scripting-hook 'proof-tree-leave-buffer)
+
+
 ;;
 ;; User interface
 ;;
@@ -1094,6 +1110,8 @@ external proof-tree display is currently on, then this toggle
 will switch it off. At the end of the proof the proof-tree
 display is switched off."
   (interactive)
+  (unless proof-tree-configured
+    (error "External proof-tree display not configured for %s" proof-assistant))
   (cond
    (proof-tree-external-display
     ;; Currently on -> switch off
