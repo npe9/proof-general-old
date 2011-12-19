@@ -49,11 +49,8 @@
 ;; inside Proof General (mostly in this file) and the communication
 ;; protocol tries to achieve the following two goals:
 ;;
-;;   * Functionality is preferably transferred into prooftree, because
-;;     this is written in Ocaml, which I am more fluent with.
-;;
-;;   * An exception is regular expression matching, which I find
-;;     easier in Emacs lisp.
+;;   * Functionality is preferably transferred into prooftree, to
+;;     enlarge Proof General not unnecessarily.
 ;;
 ;;   * To avoid synchronization trouble the communication between
 ;;     Proof General and prooftree is one way: Only Proof General
@@ -88,11 +85,6 @@
 ;; - proof-shell-exec-loop might return t if proof-action-list is
 ;;   non-empty. This is because the last real proof command might be
 ;;   followed by a number of invisible show-goal commands.
-;;
-;; - proof-assert-until-point is called from within
-;;   proof-shell-filter-manage-output when a user starts prooftree in
-;;   the middle of a proof.
-
 
 
 ;;; Code:
@@ -386,21 +378,6 @@ properly working, this variable should only be changed by using
   "Alist mapping state numbers to old values of `proof-tree-existentials-alist'.
 Needed for undo.")
   
-(defvar proof-tree-redo-display-position nil
-  "Internal variable for starting the proof-tree display inside a proof.
-When the proof-tree display is started in the middle of a proof,
-this variable remembers the locked region and the cursor
-position. To display the proof, everything is retracted to the
-beginning of the proof. Then, the proof-tree display is switched
-on and `proof-tree-handle-delayed-output-internal' sees that this
-variable is non-nil and re-assert all the material that was
-locked before.
-
-If non-nil, the variable holds a list with 5 elements, the
-current scripting buffer, the end of the locked region, the
-position of point, the window that displays the scripting buffer
-and buffer start position in this window, in this order.")
-
 ;;
 ;; proof-tree-external-display manipulation
 ;;
@@ -955,14 +932,6 @@ This function is the main entry point of the Proof General
 prooftree support. It examines the delayed output in order to
 take appropriate actions and maintains the internal state.
 
-This function is called from `proof-shell-filter-manage-output',
-after `proof-shell-exec-loop' has finished. It can therefore call
-`proof-assert-until-point'. This function is therefore
-responsible for reasserting material when the user started the
-proof-tree display in the middle of a proof. For that it examines
-`proof-tree-redo-display-position' and takes appropriate actions
-if `proof-action-list' is empty.
-
 All arguments are (former) fields of the `proof-action-list'
 entry that is now finally retired. CMD is the command, FLAGS are
 the flags and SPAN is the span."
@@ -1001,22 +970,7 @@ the flags and SPAN is the span."
 	  (when current-proof-name
 	    ;; we are inside a proof: display something
 	    (proof-tree-ensure-running)
-	    (proof-tree-handle-proof-command cmd proof-info))))
-
-      ;; finally check if we must reassert some part of the proof, because
-      ;; someone started the proof-tree display in the middle of a proof.
-      (when (and proof-tree-redo-display-position (null proof-action-list))
-	;; bind proof-tree-redo-display-position locally to reset it before any
-	;; error can occur
-	(let ((redo-pos proof-tree-redo-display-position))
-	  (setq proof-tree-redo-display-position nil)
-	  (proof-tree-enable-external-display)
-	  (with-current-buffer (car redo-pos)
-	    (goto-char (nth 1 redo-pos))
-	    (proof-assert-until-point)
-	    (set-window-start (nth 3 redo-pos) (nth 4 redo-pos))
-	    (goto-char (nth 2 redo-pos))
-	    (set-window-point (nth 3 redo-pos) (nth 2 redo-pos))))))))
+	    (proof-tree-handle-proof-command cmd proof-info)))))))
 
 
 ;;
@@ -1050,13 +1004,18 @@ position of the current proof."
   (proof-shell-ready-prover)
   (assert proof-locked-span)
   (message "Start proof-tree display for current proof")
-  (let ((point (point))
-	(locked-end (span-end proof-locked-span)))
-    (setq proof-tree-redo-display-position
-	  (list (current-buffer) locked-end point
-		(selected-window) (window-start)))
-    (goto-char proof-start)
-    (proof-retract-until-point)))
+  (save-excursion
+    (save-window-excursion
+      (let ((locked-end (span-end proof-locked-span)))
+	(goto-char proof-start)
+	(proof-retract-until-point)
+	(while (consp proof-action-list)
+	  (accept-process-output))
+	(proof-tree-enable-external-display)
+	(goto-char locked-end)
+	(proof-assert-until-point)
+	(while (consp proof-action-list)
+	  (accept-process-output))))))
 
 (defun proof-tree-external-display-toggle ()
   "Toggle the external proof-tree display.
