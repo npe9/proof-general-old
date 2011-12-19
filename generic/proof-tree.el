@@ -172,9 +172,12 @@ prooftree."
 (defcustom proof-tree-update-goal-regexp nil
   "Regexp to match a goal and its ID.
 The regexp is matched against the output of additional show-goal
-commands inserted by Proof General. Proof General inserts such
+commands inserted by Proof General with a command returned by
+`proof-tree-show-sequent-command'. Proof General inserts such
 commands to update the goal text in prooftree. This is necessary,
-for instance, when existential variables get instantiated."
+for instance, when existential variables get instantiated. This
+regexp must have 2 grouping constructs, the first matching the ID
+of the goal, the second the complete sequent text."
   :type 'regexp
   :group 'proof-tree-internals)
 
@@ -264,12 +267,6 @@ function is called with `proof-shell-buffer' as current
 buffer and with two arguments start and stop, which designate the
 region containing the last output from the proof assistant.
 
-Depending on the distribution of existential variables the
-function `proof-tree-show-sequent-command' might be called
-shortly afterwards. Therefore
-`proof-tree-extract-instantiated-existentials' can setup a cache
-for `proof-tree-show-sequent-command'.
-
 `proof-tree-extract-list' might be useful for writing this
 function."
   :type 'function
@@ -285,11 +282,7 @@ that `proof-tree-update-sequent' will update the sequent ID
 inside prooftree.
 
 If the proof assistant is unable to redisplay sequent ID the
-function should return nil and prooftree will not get updated.
-
-This function is called after
-`proof-tree-extract-instantiated-existentials', so it can reuse
-information computed there."
+function should return nil and prooftree will not get updated."
   :type 'function
   :group 'proof-tree-internals)
 
@@ -313,11 +306,6 @@ before the next command is sent to the proof assistant. This hook
 can therefore be used to insert additional commands into
 `proof-action-list' that must be executed before the next real
 proof command.
-
-If `proof-tree-extract-instantiated-existentials' is called then
-it is called before this hook. However, if there are currently no
-uninstantiated existential variables, then the call to
-`proof-tree-extract-instantiated-existentials' might be skipped.
 
 Functions in this hook can rely on `proof-info' being bound to
 the result of `proof-tree-get-proof-info'.
@@ -760,10 +748,8 @@ current buffer."
 	(goto-char start)
 	(while (proof-re-search-forward proof-tree-additional-subgoal-ID-regexp
 					end t)
-	  (let ((next-start (match-end 0))
-		(other-id (match-string-no-properties 1)))
-	    (setq additional-goal-ids (cons other-id additional-goal-ids))
-	    (goto-char next-start)))
+	  (let ((other-id (match-string-no-properties 1)))
+	    (setq additional-goal-ids (cons other-id additional-goal-ids))))
 	(setq additional-goal-ids (nreverse additional-goal-ids))
 	(list sequent-id sequent-text additional-goal-ids))
     nil))

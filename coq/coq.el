@@ -210,7 +210,7 @@ On Windows you might need something like:
   :group 'coq-proof-tree)
 
 (defcustom coq-proof-tree-update-goal-regexp
-  (concat "^subgoal [0-9]+ (ID \\([0-9]+\\)) is:\n"
+  (concat "^goal / evar \\([0-9]+\\) is:\n"
           "\\s-*\n\\(\\(?:.+\n\\)*\\)\\(?:\n\\|$\\)")
   "Regexp for `proof-tree-update-goal-regexp'."
   :type 'regexp
@@ -247,18 +247,6 @@ On Windows you might need something like:
 (defcustom coq-proof-tree-proof-completed-regexp
   "^\\(?:Proof completed\\)\\|\\(?:No more subgoals\\)\\."
   "Regexp for `proof-tree-proof-completed-regexp'."
-  :type 'regexp
-  :group 'coq-proof-tree)
-
-(defcustom coq-additional-subgoal-regexp
-  "^subgoal \\([0-9]+\\) (ID \\([0-9]+\\)) is:"
-  "Regular expression to match additional subgoals.
-Subgroup 1 must be the subgoal number, subgroup 2 the ID. This
-regular expression is used to scan the additional subgoals in the
-Coq output inside `coq-proof-tree-get-new-subgoals'. Subgoals
-with new ID's are newly generated subgoals of the preceeding
-command for which additional Show commands are inserted into
-`proof-action-list'."
   :type 'regexp
   :group 'coq-proof-tree)
 
@@ -2119,29 +2107,6 @@ correct in the new scripting buffer."
 ;; prooftree support
 ;;
 
-(defvar coq-sequent-id-assoc nil
-  "Shared variable between three internal functions.
-`coq-extract-instantiated-existentials' stores in this variable
-an assoc list that maps sequent ID's to Coq sequent numbers of
-currently open goals. `coq-proof-tree-get-new-subgoals' and
-`coq-show-sequent-command' use this information then for their
-purposes.
-
-If there are some open goals then the car is the current goal,
-while the cdr contains the additionally open subgoals.")
-
-(defvar coq-sequent-id-assoc-valid nil
-  "Describes validity of `coq-sequent-id-assoc'.
-As part of the urgent actions the hook `coq-show-sequent-command'
-is always called. Before that
-`coq-extract-instantiated-existentials' might be called and fill
-`coq-sequent-id-assoc'. If this variable is t then
-`coq-show-sequent-command' will use the content of
-`coq-sequent-id-assoc', if nil will recompute the data itself.
-The variable is set to t inside `coq-extract-goal-numbers' and
-set to nil just before leaving `coq-show-sequent-command'.")
-
-
 (defun coq-proof-tree-get-proof-info ()
   "Coq instance of `proof-tree-get-proof-info'."
   (let* ((info (or (coq-last-prompt-info-safe) '(0 0 nil nil))))
@@ -2152,39 +2117,9 @@ set to nil just before leaving `coq-show-sequent-command'.")
          ;; * the name of the current proof or nil
     (list (car info) (nth 3 info))))
 
-(defun coq-extract-goal-numbers (start end)
-  "Store current sequent numbers in `coq-sequent-id-assoc'.
-This function parses the output between START and END and
-searches for the current and any additional goals. All goals
-found are stored in `coq-sequent-id-assoc' for later use."
-  (setq coq-sequent-id-assoc nil
-        coq-sequent-id-assoc-valid t)
-  (goto-char start)
-  (if (proof-re-search-forward coq-proof-tree-current-goal-regexp end t)
-      (let ((current-id (match-string-no-properties 1)))
-        (while (proof-re-search-forward coq-additional-subgoal-regexp end t)
-          (let ((subgoal-number (match-string-no-properties 1))
-                (subgoal-id (match-string-no-properties 2)))
-            (setq coq-sequent-id-assoc
-                  (cons (cons subgoal-id subgoal-number)
-                        coq-sequent-id-assoc))))
-        ;; add current sequent as car such that
-        ;; coq-proof-tree-get-new-subgoals can chop it off
-        (setq coq-sequent-id-assoc
-              (cons (cons current-id 1)
-                    coq-sequent-id-assoc)))))
-
 (defun coq-extract-instantiated-existentials (start end)
   "Coq specific function for `proof-tree-extract-instantiated-existentials'.
-This function is the first Coq specific function called as part
-of the urgent prooftree actions. Therefore, it sets up
-`coq-sequent-id-assoc' such that
-`coq-proof-tree-get-new-subgoals' and `coq-show-sequent-command'
-have access to the relevant information without needing to parse the
-current proof assistant output again.
-
-This function returns the list of currently instantiated existential variables."
-  (coq-extract-goal-numbers start end)
+Returns the list of currently instantiated existential variables."
   (proof-tree-extract-list
    start end
    coq-proof-tree-existentials-state-start-regexp
@@ -2192,14 +2127,8 @@ This function returns the list of currently instantiated existential variables."
    coq-proof-tree-instantiated-existential-regexp))
 
 (defun coq-show-sequent-command (sequent-id)
-  "Coq specific function for `proof-tree-show-sequent-command'.
-Because this is guaranteed to be called after
-`coq-extract-instantiated-existentials' it simply looks up
-SEQUENT-ID in `coq-sequent-id-assoc' and returns an appropriate
-Show command."
-  (let ((subgoal-number (assoc sequent-id coq-sequent-id-assoc)))
-    (if subgoal-number
-        (format "Show %s." (cdr subgoal-number)))))
+  "Coq specific function for `proof-tree-show-sequent-command'."
+  (format "Show Goal \"%s\"." sequent-id))
 
 (defun coq-proof-tree-get-new-subgoals ()
   "Check for new subgoals and issue appropriate Show commands.
@@ -2207,20 +2136,13 @@ This is a hook function for `proof-tree-urgent-action-hook'. This
 function examines the current goal output and searches for new
 unknown subgoals. Those subgoals have been generated by the last
 proof command and we must send their complete sequent text
-eventually to prooftree. Because subgoal numbers may change with
+eventually to prooftree. Because subgoals may change with
 the next proof command, we must execute the additionally needed
 Show commands before the next real proof command.
 
-If `coq-extract-instantiated-existentials' has been called
-before, this function reuses the information about currently open
-subgoals from `coq-sequent-id-assoc'. Otherwise it recomputes the
-necessary information itself from the current output. At the end
-`coq-sequent-id-assoc' is reset, to avoid working with old values
-the next time we are called.
-
 The ID's of the open goals are checked with
 `proof-tree-sequent-hash' in order to find out if they are new.
-For any new goal an appropriate Show command with a
+For any new goal an appropriate Show Goal command with a
 'proof-tree-show-subgoal flag is inserted into
 `proof-action-list'. Then, in the normal delayed output
 processing, the sequent text is send to prooftree as a sequent
@@ -2229,30 +2151,25 @@ sequent is registered as known in `proof-tree-sequent-hash'.
 
 The not yet delayed output is in the region
 \[proof-shell-delayed-output-start, proof-shell-delayed-output-end]."
-  (unless coq-sequent-id-assoc-valid
-    (with-current-buffer proof-shell-buffer
-      (coq-extract-goal-numbers proof-shell-delayed-output-start
-                                proof-shell-delayed-output-end)))
-  ;; (message "CPTGNS IDs %s start %s end %s"
-  ;;          coq-sequent-id-assoc
+  ;; (message "CPTGNS start %s end %s"
   ;;          proof-shell-delayed-output-start
   ;;          proof-shell-delayed-output-end)
-  ;; recall that the car of coq-sequent-id-assoc contains the current
-  ;; goal for which we don't need to issue a Show command.
-  (dolist (subgoal-assoc (cdr-safe coq-sequent-id-assoc))
-    (let ((subgoal-id (car subgoal-assoc))
-          (subgoal-number (cdr subgoal-assoc)))
-      (unless (or (gethash subgoal-id proof-tree-sequent-hash)
-                  (equal subgoal-number "1"))
-        (setq proof-action-list
-              (cons (proof-shell-action-list-item
-                     (format "Show %s." subgoal-number)
-                     (proof-tree-make-show-goal-callback state)
-                     '(no-goals-display
-                       no-response-display
-                       proof-tree-show-subgoal))
-                    proof-action-list)))))
-  (setq coq-sequent-id-assoc-valid nil))
+  (with-current-buffer proof-shell-buffer
+    (let ((start proof-shell-delayed-output-start)
+          (end proof-shell-delayed-output-end))
+      (goto-char start)
+      (while (proof-re-search-forward
+              coq-proof-tree-additional-subgoal-ID-regexp end t)
+        (let ((subgoal-id (match-string-no-properties 1)))
+          (unless (gethash subgoal-id proof-tree-sequent-hash)
+            (setq proof-action-list
+                  (cons (proof-shell-action-list-item
+                         (coq-show-sequent-command subgoal-id)
+                         (proof-tree-make-show-goal-callback (car proof-info))
+                         '(no-goals-display
+                           no-response-display
+                           proof-tree-show-subgoal))
+                        proof-action-list))))))))
   
 (add-hook 'proof-tree-urgent-action-hook 'coq-proof-tree-get-new-subgoals)
 
