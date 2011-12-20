@@ -1039,12 +1039,12 @@ display is switched off."
    (t
     ;; Currently off
     (let ((proof-start (funcall proof-tree-find-begin-of-unfinished-proof)))
-      (proof-tree-enable-external-display)
-      (setq proof-tree-current-proof nil)
-      (setq proof-tree-last-state (car (funcall proof-tree-get-proof-info)))
       ;; ensure internal variables are initialized, because otherwise
       ;; we cannot process undo's after this
       (proof-tree-ensure-running)
+      (proof-tree-enable-external-display)
+      (setq proof-tree-current-proof nil)
+      (setq proof-tree-last-state (car (funcall proof-tree-get-proof-info)))
       (proof-tree-send-undo proof-tree-last-state)
       (if proof-start
 	  ;; inside an unfinished proof -> start for this proof
