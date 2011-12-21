@@ -339,6 +339,10 @@ whenever this variable is t.")
   (concat "*" proof-tree-process-name "*")
   "Buffer for stdout and stderr of the prooftree process.")
 
+(defconst proof-tree-emacs-exec-regexp
+  "\nemacs exec: \\([-a-z]+\\) *\\([^\n]*\\)\n"
+  "Regular expression to match callback commands from the prooftree process.")
+
 (defvar proof-tree-last-state 0
   "Last state of the proof assistant.
 Used for undoing in prooftree.")
@@ -398,8 +402,61 @@ Reset `proof-full-annotation-internal' to the user preference in
 
 
 ;;
+;; process filter function that receives prooftree output
+;;
+
+(defun proof-tree-stop-external-display ()
+  "Prooftree callback for the command \"stop-displaying\"."
+  (if proof-tree-current-proof
+      (message "External proof-tree display switched off"))
+  (proof-tree-quit-proof)
+  (proof-tree-disable-external-display))
+
+
+(defun proof-tree-insert-output (string)
+  "Insert output or a message into the prooftree process buffer."
+  (with-current-buffer (get-buffer-create proof-tree-process-buffer)
+    (let ((moving (= (point) (point-max))))
+      (save-excursion
+	;; Insert the text, advancing the process marker.
+	(goto-char (point-max))
+	(insert string))
+      (if moving (goto-char (point-max))))))
+
+
+(defun proof-tree-process-filter (proc string)
+  "Output filter for prooftree.
+Records the output in the prooftree process buffer and checks for
+callback function requests."
+  (proof-tree-insert-output string)
+  (save-excursion
+    (let ((start 0))
+      (while (proof-string-match proof-tree-emacs-exec-regexp string start)
+	(let ((end (match-end 0))
+	      (cmd (match-string 1 string))
+	      (data (match-string 2 string)))
+	  (cond
+	   ((equal cmd "stop-displaying")
+	    (proof-tree-stop-external-display))
+	   (t
+	    (display-warning
+	     '(proof-general proof-tree)
+	     (format "Unknown prooftree command %s" cmd)
+	     :warning)))
+	  (setq start end))))))
+
+
+;;
 ;; Process creation
 ;;
+
+(defun proof-tree-process-sentinel (proc event)
+  "Sentinel for prooftee.
+Runs on process status changes and cleans up when prooftree dies."
+  (proof-tree-insert-output (concat "\nstatus change: " event))
+  (unless (proof-tree-is-running)
+    (proof-tree-stop-external-display)
+    (setq proof-tree-process nil)))
 
 (defun proof-tree-start-process ()
   "Start the external prooftree process.
@@ -409,13 +466,9 @@ variables."
     ;; first clean up any old processes
     (when old-proof-tree
       (delete-process old-proof-tree)
-      (with-current-buffer
-	  (get-buffer-create proof-tree-process-buffer)
-	(insert "\n\nProcess terminated by Proof General\n\n")))
+      (proof-tree-insert-output "\n\nProcess terminated by Proof General\n\n"))
     ;; now start the new process
-    (with-current-buffer
-	(get-buffer-create proof-tree-process-buffer)
-      (insert "Start new prooftree process\n\n"))
+    (proof-tree-insert-output "\nStart new prooftree process\n\n")
     (setq proof-tree-process
 	  (apply 'start-process
 	   proof-tree-process-name
@@ -423,6 +476,8 @@ variables."
 	   proof-tree-program
 	   proof-tree-arguments))
     (set-process-coding-system proof-tree-process 'utf-8-unix 'utf-8-unix)
+    (set-process-filter proof-tree-process 'proof-tree-process-filter)
+    (set-process-sentinel proof-tree-process 'proof-tree-process-sentinel)
     (set-process-query-on-exit-flag proof-tree-process nil)
     ;; other initializations
     (setq proof-tree-sequent-hash (make-hash-table :test 'equal)
