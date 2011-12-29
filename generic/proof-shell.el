@@ -1026,7 +1026,7 @@ If the action list becomes empty, unlock the process and remove
 the queue region.
 
 The return value is non-nil if the action list is now empty or
-contains only invisible elements for prooftree synchronization."
+contains only invisible elements for Prooftree synchronization."
   (unless (null proof-action-list)
     (save-excursion
       (if proof-script-buffer		      ; switch to active script
@@ -1046,6 +1046,13 @@ contains only invisible elements for prooftree synchronization."
 	(setq cbitems (cons item
 			    (proof-shell-slurp-comments)))
 
+	;; This is the point where old items have been removed from
+	;; proof-action-list and where the next item has not yet been
+	;; sent to the proof assistent. This is therefore one of the
+	;; few points where it is safe to manipulate
+	;; proof-action-list. The urgent proof-tree display actions
+	;; must therefore be called here, because they might add some
+	;; Show actions at the front of proof-action-list.
 	(if proof-tree-external-display
 	    (proof-tree-urgent-action flags))
 

@@ -102,7 +102,7 @@
 (defgroup proof-tree ()
   "Customization for the proof tree visualizer"
   :group 'proof-general
-  :package-version '(ProofGeneral . "4.X"))
+  :package-version '(ProofGeneral . "4.2"))
 
 (defcustom proof-tree-program (proof-locate-executable "prooftree" t nil)
   "Command to invoke prooftree."
@@ -122,7 +122,7 @@
 (defgroup proof-tree-internals ()
   "Proof assistant specific customization of prooftree."
   :group 'proof-general-internals
-  :package-version '(ProofGeneral . "4.X"))
+  :package-version '(ProofGeneral . "4.2"))
 
 ;; defcustom proof-tree-configured is in proof-config.el, because it is
 ;; needed in pg-custom.el
@@ -131,15 +131,17 @@
   "Commands that should be ignored for the prooftree display.
 The output of commands matching this regular expression is not
 send to prooftree. It should match commands that display
-additional information but do not make any proof progress."
-  :type 'regexp
+additional information but do not make any proof progress. Leave
+at nil to act on all commands."
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-navigation-command-regexp nil
   "Regexp to match a navigation command.
 A navigation command typically focusses on a different open goal
-without changing any of the open goals."
-  :type 'regexp
+without changing any of the open goals. Leave at nil if there are
+no navigation commands."
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-cheating-regexp nil
@@ -147,8 +149,8 @@ without changing any of the open goals."
 A cheating command finishes the current goal without proving it
 to permit the user to first focus on other parts of the
 development. Examples are \"sorry\" in Isabelle and \"admit\" in
-Coq."
-  :type 'regexp
+Coq. Leave at nil if there are no cheating commands."
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-current-goal-regexp nil
@@ -192,7 +194,7 @@ goal text or from a list of existential variables.
 
 Leave this variable at nil for proof assistants that do not have
 existential variables."
-  :type 'regexp
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-existentials-state-start-regexp nil
@@ -203,7 +205,7 @@ existential variables, which contains information about which
 existentials are still uninstantiated and about dependencies of
 instantiated existential variables. Leave this variable nil, if
 there is no such state display."
-  :type 'regexp
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-existentials-state-end-regexp nil
@@ -215,7 +217,7 @@ existentials are still uninstantiated and about dependencies of
 instantiated existential variables. If this variable is nil (and
 if `proof-tree-existentials-state-start-regexp' is non-nil), then
 the state display expands to the end of the prover output."
-  :type 'regexp
+  :type '(choice regexp (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-proof-completed-regexp nil
@@ -261,7 +263,7 @@ region containing the last output from the proof assistant.
 
 `proof-tree-extract-list' might be useful for writing this
 function."
-  :type 'function
+  :type '(choice function (const nil))
   :group 'proof-tree-internals)
 
 (defcustom proof-tree-show-sequent-command nil
@@ -847,8 +849,9 @@ The delayed output is in the region
 	 (end   proof-shell-delayed-output-end)
 	 (proof-state (car proof-info))
 	 (proof-name (cadr proof-info))
-	 (cheated-flag (proof-string-match
-			proof-tree-cheating-regexp cmd-string))
+	 (cheated-flag
+	  (and proof-tree-cheating-regexp
+	       (proof-string-match proof-tree-cheating-regexp cmd-string)))
 	 (current-goals (proof-tree-extract-goals start end)))
     (if current-goals
 	(let ((current-sequent-id (car current-goals))
@@ -902,8 +905,12 @@ The delayed output of the navigation command is in the region
   ;; (message "PTHPC")
   (let ((proof-state (car proof-info))
 	(cmd-string (mapconcat 'identity cmd " ")))
-    (unless (proof-string-match proof-tree-ignored-commands-regexp cmd-string)
-      (if (proof-string-match proof-tree-navigation-command-regexp cmd-string)
+    (unless (and proof-tree-ignored-commands-regexp
+		 (proof-string-match proof-tree-ignored-commands-regexp
+				     cmd-string))
+      (if (and proof-tree-navigation-command-regexp
+	       (proof-string-match proof-tree-navigation-command-regexp
+				   cmd-string))
 	  (proof-tree-handle-navigation proof-info)
 	(proof-tree-handle-proof-progress cmd-string proof-info)))
     (setq proof-tree-last-state (car proof-info))))

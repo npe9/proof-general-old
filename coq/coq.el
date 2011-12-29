@@ -237,12 +237,12 @@ On Windows you might need something like:
   "^(dependent evars:"
   "Coq instance of `proof-tree-existentials-state-start-regexp'."
   :type 'regexp
-  :group 'proof-tree-internals)
+  :group 'coq-proof-tree)
 
 (defcustom coq-proof-tree-existentials-state-end-regexp ")\n"
   "Coq instance of `proof-tree-existentials-state-end-regexp'."
   :type 'regexp
-  :group 'proof-tree-internals)
+  :group 'coq-proof-tree)
 
 (defcustom coq-proof-tree-proof-completed-regexp
   "^\\(?:Proof completed\\)\\|\\(?:No more subgoals\\)\\."
