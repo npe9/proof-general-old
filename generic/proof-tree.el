@@ -509,77 +509,106 @@ variables."
   "Send the current goal state to prooftree."
   ;; (message "PTSGS id %s sequent %s ex-info %s"
   ;; 	   current-sequent-id current-sequent-text existential-info)
-  (let ((add-id-string (mapconcat 'identity additional-sequent-ids " ")))
+  (let* ((add-id-string (mapconcat 'identity additional-sequent-ids " "))
+	 (second-line
+	  (format
+	   (concat "current-goals state %d current-sequent %s %s "
+		   "proof-name-bytes %d "
+		   "command-bytes %d sequent-text-bytes %d "
+		   "additional-id-bytes %d existential-bytes %d")
+	   state
+	   current-sequent-id
+	   (if cheated-flag "cheated" "not-cheated")
+	   (1+ (string-bytes proof-name))
+	   (1+ (string-bytes command-string))
+	   (1+ (string-bytes current-sequent-text))
+	   (1+ (string-bytes add-id-string))
+	   (1+ (string-bytes existential-info)))))
+    (assert (< (string-bytes second-line) 999))
     (process-send-string
      proof-tree-process
-     (format
-      (concat "current-goals state %d current-sequent %s %s "
-	      "proof-name-bytes %d "
-	      "command-bytes %d sequent-text-bytes %d "
-	      "additional-id-bytes %d existential-bytes %d\n"
-	      "%s\n%s\n%s\n%s\n%s\n")
-      state
-      current-sequent-id
-      (if cheated-flag "cheated" "not-cheated")
-      (1+ (string-bytes proof-name))
-      (1+ (string-bytes command-string))
-      (1+ (string-bytes current-sequent-text))
-      (1+ (string-bytes add-id-string))
-      (1+ (string-bytes existential-info))
-      proof-name
-      command-string
-      current-sequent-text
-      add-id-string
-      existential-info))))
+     (format "second line %03d\n%s\n%s\n%s\n%s\n%s\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line
+	     proof-name
+	     command-string
+	     current-sequent-text
+	     add-id-string
+	     existential-info))))
 
 (defun proof-tree-send-update-sequent (state proof-name sequent-id sequent-text)
   "Send the updated sequent text to prooftree."
-  (process-send-string
-   proof-tree-process
-   (format
-    (concat "update-sequent state %d sequent %s proof-name-bytes %d "
-	    "sequent-text-bytes %d\n%s\n%s\n")
-    state sequent-id
-    (1+ (string-bytes proof-name))
-    (1+ (string-bytes sequent-text))
-    proof-name
-    sequent-text)))
+  (let ((second-line
+	 (format
+	  (concat "update-sequent state %d sequent %s proof-name-bytes %d "
+		  "sequent-text-bytes %d")
+	  state sequent-id
+	  (1+ (string-bytes proof-name))
+	  (1+ (string-bytes sequent-text)))))
+    (assert (< (string-bytes second-line) 999))
+    (process-send-string
+     proof-tree-process
+     (format "second line %03d\n%s\n%s\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line
+	     proof-name
+	     sequent-text))))
 
 (defun proof-tree-send-switch-goal (proof-state proof-name current-id)
   "Send switch-to command to prooftree."
-  (process-send-string
-   proof-tree-process
-   (format "switch-goal state %d sequent %s proof-name-bytes %d\n%s\n"
-	   proof-state
-	   current-id
-	   (1+ (string-bytes proof-name))
-	   proof-name)))
+  (let ((second-line
+	 (format "switch-goal state %d sequent %s proof-name-bytes %d"
+		 proof-state
+		 current-id
+		 (1+ (string-bytes proof-name)))))
+    (assert (< (string-bytes second-line) 999))
+    (process-send-string
+     proof-tree-process
+     (format "second line %03d\n%s\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line
+	     proof-name))))
 
 (defun proof-tree-send-proof-completed (state proof-name
 					      cmd-string cheated-flag)
   "Send proof completed to prooftree."
-  (process-send-string
-   proof-tree-process
-   (format
-    "proof-complete state %d %s proof-name-bytes %d command-bytes %d\n%s\n%s\n"
-    state
-    (if cheated-flag "cheated" "not-cheated")
-    (1+ (string-bytes proof-name))
-    (1+ (string-bytes cmd-string))
-    proof-name
-    cmd-string)))
+  (let ((second-line
+	 (format
+	  "proof-complete state %d %s proof-name-bytes %d command-bytes %d"
+	  state
+	  (if cheated-flag "cheated" "not-cheated")
+	  (1+ (string-bytes proof-name))
+	  (1+ (string-bytes cmd-string)))))
+    (assert (< (string-bytes second-line) 999))
+    (process-send-string
+     proof-tree-process
+     (format "second line %03d\n%s\n%s\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line
+	     proof-name
+	     cmd-string))))
 
 (defun proof-tree-send-undo (proof-state)
   "Tell prooftree to undo."
-  (process-send-string proof-tree-process
-		       (format "undo-to state %d\n" proof-state)))
+  (let ((second-line (format "undo-to state %d" proof-state)))
+    (assert (< (string-bytes second-line) 999))
+    (process-send-string
+     proof-tree-process
+     (format "second line %03d\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line))))
 
 (defun proof-tree-send-quit-proof (proof-name)
   "Tell prooftree to close the window for PROOF-NAME."
-  (process-send-string proof-tree-process
-		       (format "quit-proof proof-name-bytes %d\n%s\n"
-			       (1+ (string-bytes proof-name))
-			       proof-name)))
+  (let ((second-line (format "quit-proof proof-name-bytes %d"
+			    (1+ (string-bytes proof-name)))))
+    (assert (< (string-bytes second-line) 999))
+    (process-send-string
+     proof-tree-process
+     (format "second line %03d\n%s\n%s\n"
+	     (1+ (string-bytes second-line))
+	     second-line
+	     proof-name))))
 
 ;;
 ;; proof-tree-existentials-alist manipulations and history
