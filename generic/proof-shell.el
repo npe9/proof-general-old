@@ -119,23 +119,6 @@ to tell hooks in `proof-deactivate-scripting-hook' to refrain
 from calling `proof-shell-exit'.")
 
 
-;;
-;; Setting/Clearing full annotation
-;;
-
-(defun proof-full-annotation ()
-  "Update fun for defcustom `proof-full-annotation'.
-Checks if we can follow the user preference, and, if yes, sets
-`proof-full-annotation-internal appropriately. Otherwise some
-other function will adjust `proof-full-annotation-internal' as
-soon as possible.
-
-Currently only a proof-tree display in progress (i.e.,
-`proof-tree-external-display' non-nil) prevents setting
-`proof-full-annotation-internal' to nil."
-  (unless (and proof-tree-external-display (not proof-full-annotation))
-    (setq proof-full-annotation-internal proof-full-annotation)))
-
 
 ;;
 ;; Indicator and fake minor mode for active scripting buffer
@@ -897,7 +880,8 @@ track what happens in the proof queue."
 (defsubst proof-shell-should-be-silent ()
   "Non-nil if we should switch to silent mode based on size of queue."
   (if (and proof-shell-start-silent-cmd ; configured
-	   (not proof-full-annotation-internal)  ; always noisy
+	   (not proof-full-annotation)  ; always noisy
+	   (not proof-tree-external-display) ; no proof-tree display 
 	   (not proof-shell-silent))	; already silent
 	  ;; NB: to be more accurate we should only count number
 	  ;; of scripting items in the list (not e.g. invisibles).

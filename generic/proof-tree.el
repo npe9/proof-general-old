@@ -39,11 +39,9 @@
 ;; Emacs idle, because it must first process the delayed part of the
 ;; undo command before reasserting is possible.
 ;; 
-;; A fourth problem is that proof tree display can only work when the
-;; prover output is not supressed (via `proof-full-annotation').
-;; Therefore, whenver proof-tree display is started
-;; `proof-full-annotation-internal' is set to t and reset to the value
-;; of `proof-full-annotation' when finished.
+;; A fourth problem is that proof-tree display can only work when the
+;; prover output is not suppressed (via `proof-full-annotation').
+;; `proof-shell-should-be-silent' takes care of that.
 ;; 
 ;; The design of prooftree (the visualization program), the glue code
 ;; inside Proof General (mostly in this file) and the communication
@@ -324,12 +322,7 @@ started since then, then there is obviously no proof-tree
 display. In this case, this variable stays t and the proof-tree
 display will be started for the next proof.
 
-Controlled by `proof-tree-external-display-toggle'.
-
-Should only be changed with `proof-tree-enable-external-display'
-and `proof-tree-disable-external-display' because of the required
-invariant that `proof-full-annotation-internal' must be t
-whenever this variable is t.")
+Controlled by `proof-tree-external-display-toggle'.")
 
 (defvar proof-tree-process nil
   "Emacs lisp process object of the prooftree process.")
@@ -384,24 +377,6 @@ properly working, this variable should only be changed by using
   "Alist mapping state numbers to old values of `proof-tree-existentials-alist'.
 Needed for undo.")
   
-;;
-;; proof-tree-external-display manipulation
-;;
-
-(defun proof-tree-enable-external-display ()
-  "Internal function for enabling proof-tree display.
-Ensure that `proof-tree-external-display' implies
-`proof-full-annotation-internal'."
-  (setq proof-tree-external-display t)
-  (setq proof-full-annotation-internal t))
-
-(defun proof-tree-disable-external-display ()
-  "Internal function for disabling proof-tree display.
-Reset `proof-full-annotation-internal' to the user preference in
-`proof-full-annotation'."
-  (setq proof-tree-external-display nil)
-  (setq proof-full-annotation-internal proof-full-annotation))
-
 
 ;;
 ;; process filter function that receives prooftree output
@@ -412,7 +387,7 @@ Reset `proof-full-annotation-internal' to the user preference in
   (if proof-tree-current-proof
       (message "External proof-tree display switched off"))
   (proof-tree-quit-proof)
-  (proof-tree-disable-external-display))
+  (setq proof-tree-external-display nil))
 
 
 (defun proof-tree-insert-output (string)
@@ -455,7 +430,7 @@ callback function requests."
 (defun proof-tree-process-sentinel (proc event)
   "Sentinel for prooftee.
 Runs on process status changes and cleans up when prooftree dies."
-  (proof-tree-insert-output (concat "\nstatus change: " event))
+  (proof-tree-insert-output (concat "\nsubprocess status change: " event))
   (unless (proof-tree-is-running)
     (proof-tree-stop-external-display)
     (setq proof-tree-process nil)))
@@ -969,7 +944,7 @@ points:
       (proof-tree-quit-proof))
     ;; disable proof tree display when undoing to a point outside a proof
     (unless proof-tree-current-proof
-      (proof-tree-disable-external-display))
+      (setq proof-tree-external-display nil))
     ;; send undo
     (if (proof-tree-is-running)
 	(proof-tree-send-undo proof-state))
@@ -1026,7 +1001,7 @@ take appropriate actions and maintains the internal state.
 All arguments are (former) fields of the `proof-action-list'
 entry that is now finally retired. CMD is the command, FLAGS are
 the flags and SPAN is the span."
-  ;; (message "PTHDOI cmd %s flags %s span %s-%s" cmd flags
+  ;; (message "PTHDO cmd %s flags %s span %s-%s" cmd flags
   ;; 	   (if span (span-start span)) (if span (span-end span)))
   (assert proof-tree-external-display)
   (unless (or (memq 'invisible flags) (memq 'proof-tree-show-subgoal flags))
@@ -1046,7 +1021,7 @@ the flags and SPAN is the span."
 	   ((and proof-tree-current-proof (null current-proof-name))
 	    ;; finished the current proof
 	    (proof-tree-quit-proof)
-	    (proof-tree-disable-external-display))
+	    (setq proof-tree-external-display nil))
 	   ((and proof-tree-current-proof current-proof-name
 		 (not (equal proof-tree-current-proof current-proof-name)))
 	    ;; new proof before old was finished?
@@ -1088,6 +1063,7 @@ retracts to the start of the current proof, switches the
 proof-tree display on, and reasserts then until the former end of
 the locked region. Argument PROOF-START must contain the start
 position of the current proof."
+  ;;(message "PTDCP %s" proof-tree-external-display)
   (unless (and proof-script-buffer
 	       (equal proof-script-buffer (current-buffer)))
     (error
@@ -1099,10 +1075,13 @@ position of the current proof."
     (save-window-excursion
       (let ((locked-end (span-end proof-locked-span)))
 	(goto-char proof-start)
+	;; enable external display to make sure the undo command is send
+	(setq proof-tree-external-display t)
 	(proof-retract-until-point)
 	(while (consp proof-action-list)
 	  (accept-process-output))
-	(proof-tree-enable-external-display)
+	;; undo switched external display off; switch on again
+	(setq proof-tree-external-display t)
 	(goto-char locked-end)
 	(proof-assert-until-point)
 	(while (consp proof-action-list)
@@ -1122,7 +1101,7 @@ display is switched off."
   (cond
    (proof-tree-external-display
     ;; Currently on -> switch off
-    (proof-tree-disable-external-display)
+    (setq proof-tree-external-display nil)
     (when proof-tree-current-proof
       (proof-tree-send-quit-proof proof-tree-current-proof)
       (proof-tree-quit-proof))
@@ -1133,14 +1112,14 @@ display is switched off."
       ;; ensure internal variables are initialized, because otherwise
       ;; we cannot process undo's after this
       (proof-tree-ensure-running)
-      (proof-tree-enable-external-display)
       (setq proof-tree-current-proof nil)
       (setq proof-tree-last-state (car (funcall proof-tree-get-proof-info)))
-      (proof-tree-send-undo proof-tree-last-state)
       (if proof-start
 	  ;; inside an unfinished proof -> start for this proof
 	  (proof-tree-display-current-proof proof-start)
 	;; outside a proof -> wait for the next proof
+	(setq proof-tree-external-display t)
+	(proof-tree-send-undo proof-tree-last-state)
 	(message
 	 "External proof-tree display switched on for the next proof"))))))
     

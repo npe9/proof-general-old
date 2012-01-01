@@ -355,21 +355,7 @@ setting is used to enable it, the proof script can be annotated
 with full details.  See also `proof-output-tooltips' to enable
 automatic display of output on mouse hovers."
   :type 'boolean
-  :set 'proof-set-value
   :group 'proof-user-options)
-
-(defvar proof-full-annotation-internal proof-full-annotation
-  "Same as `proof-full-annotation'.
-This is the internal version of `proof-full-annotation'. While
-the user option `proof-full-annotation' records the users
-intention, this variable really determinds if output is recorded
-or not.
-
-When special circumstances (such as the external proof-tree
-display) require full annotation the code switches this variable
-to t, disregarding the users preference. When full annotation is
-not required any more, the user preference in
-`proof-full-annotation' will again be honored.")
 
 (defcustom proof-output-tooltips t
   "*Non-nil causes Proof General to add tooltips for prover output.
