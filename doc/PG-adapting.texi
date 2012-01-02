@@ -2855,7 +2855,21 @@ proof-assistent proof-shell mode.
 @node Prooftree Adaption
 @subsection Prooftree Adaption
 
-XXX
+To make the new proof assistant known to Prooftree, the match in
+function @code{configure_prooftree} in @code{input.ml} must be
+extended. If the new proof assistant does not support existential
+variables adding a line
+@example
+  | "new-pa-name" -> ()
+@end example
+suffices.
+
+If the new prover supports existential variables, Prooftree must
+be extended with a parser for the existential variable
+information printout of the proof assistant. The parser for Coq
+is contained in the file @code{coq.ml}. Then the function
+@code{configure_prooftree} must assign this new parser to the
+reference @code{parse_existential_info}.
 
 
 @node Writing More Lisp Code
