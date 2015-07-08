@@ -1,4 +1,4 @@
-;; proof-site.el -- Loading stubs for Proof General.
+;;; proof-site.el -- Loading stubs for Proof General.
 ;;
 ;; Copyright (C) 1998-2003 LFCS Edinburgh.
 ;; Author:      David Aspinall <David.Aspinall@ed.ac.uk>
